@@ -188,7 +188,7 @@ function get_all_active_properties() {
     $table = get_videos_table_name($pdo);
 
     $stmt = $pdo->query("
-        SELECT id, slug, name, subtitle, guide_fr_url, guide_en_url,
+        SELECT id, slug, name, guide_fr_url, guide_en_url,
                (SELECT COUNT(*) FROM {$table} WHERE {$table}.property_id = properties.id AND {$table}.active = 1) AS videos_count,
                (SELECT COUNT(*) FROM {$table} WHERE {$table}.property_id = properties.id AND {$table}.active = 1) AS tutorials_count
         FROM properties 

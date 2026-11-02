@@ -1817,7 +1817,8 @@ const PropertyRenderer = {
 
         // Textes principaux
         document.getElementById('prop-name').textContent = prop.name;
-        document.getElementById('prop-subtitle').textContent = prop.subtitle || "Conciergerie Carré d'Hôtes";
+        const propSub = document.getElementById('prop-subtitle');
+        if (propSub) propSub.textContent = I18n.t('home_subtitle');
 
         // Bloc Wi-Fi
         const wifiCard = document.getElementById('prop-wifi-card');
@@ -1902,10 +1903,10 @@ const PropertyRenderer = {
         const welcomeTitleEl = document.getElementById('prop-welcome-title');
         const welcomeSubtitleEl = document.getElementById('prop-welcome-subtitle');
         if (welcomeTitleEl) {
-            welcomeTitleEl.textContent = prop.welcome_title || I18n.t('welcome_title');
+            welcomeTitleEl.textContent = I18n.t('welcome_title');
         }
         if (welcomeSubtitleEl) {
-            welcomeSubtitleEl.textContent = prop.welcome_subtitle || I18n.t('welcome_subtitle');
+            welcomeSubtitleEl.textContent = I18n.t('welcome_subtitle');
         }
 
         // 2. Carte unique Guide de bienvenue (FR ou EN selon langue active)
@@ -1937,19 +1938,7 @@ const PropertyRenderer = {
             cardBooking.style.animationDelay = prop.wifi_ssid ? '0.12s' : '0.08s';
         }
 
-        // 3. Bloc contact conciergerie
-        const contactBlock = document.getElementById('prop-contact-block');
-        if (prop.contact_phone) {
-            const phoneLink = document.getElementById('prop-contact-phone-link');
-            if (phoneLink) phoneLink.href = Utils.safeUrl(`tel:${prop.contact_phone}`);
-            const phoneLabel = document.getElementById('prop-contact-phone-label');
-            if (phoneLabel) phoneLabel.textContent = `${I18n.t('call_concierge')} : ${prop.contact_phone}`;
-            if (contactBlock) contactBlock.classList.remove('hidden');
-        } else if (contactBlock) {
-            contactBlock.classList.add('hidden');
-        }
-
-        // 4. Actualiser la grille des vidéos avec les titres traduits
+        // 3. Actualiser la grille des vidéos avec les titres traduits
         if (AppState.currentVideos && AppState.currentVideos.length > 0) {
             this.renderVideos(AppState.currentVideos);
         }

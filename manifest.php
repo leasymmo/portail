@@ -62,9 +62,7 @@ if (!empty($slug) && preg_match('/^[a-z0-9_\-]{1,100}$/', $slug)) {
             $propName = htmlspecialchars_decode($property['name'], ENT_QUOTES);
             $appName = "{$propName} | Carré d'Hôtes";
             $appShortName = $propName;
-            $appDesc = !empty($property['subtitle']) 
-                ? "{$propName} - {$property['subtitle']}" 
-                : "Livret d'accueil et vidéos des équipements pour votre séjour à {$propName}.";
+            $appDesc = "Livret d'accueil et vidéos des équipements pour votre séjour à {$propName}.";
         }
     } catch (Exception $e) {
         // En cas d'indisponibilité DB, le repli sur $prettySlug garantit que l'app pointe vers le logement

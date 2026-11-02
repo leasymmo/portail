@@ -14,15 +14,10 @@ CREATE TABLE IF NOT EXISTS `properties` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `slug` VARCHAR(100) NOT NULL UNIQUE COMMENT 'Identifiant URL unique (ex: maisonnette-en-jouhet)',
     `name` VARCHAR(255) NOT NULL COMMENT 'Nom public du logement',
-    `subtitle` VARCHAR(255) NOT NULL DEFAULT "Conciergerie Carré d'Hôtes" COMMENT 'Sous-titre affiché sous le nom',
-    `welcome_title` VARCHAR(255) NOT NULL DEFAULT "Livrets d'accueil" COMMENT 'Titre section guides',
-    `welcome_subtitle` VARCHAR(255) NOT NULL DEFAULT "Choisissez votre langue / Choose your language" COMMENT 'Sous-titre section guides',
     `guide_fr_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien Google Drive / PDF vers le livret FR',
     `guide_en_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien Google Drive / PDF vers le livret EN',
     `wifi_ssid` VARCHAR(100) DEFAULT NULL COMMENT 'Nom du réseau WiFi (optionnel)',
     `wifi_password` VARCHAR(100) DEFAULT NULL COMMENT 'Clé de sécurité WiFi (optionnel)',
-    `contact_phone` VARCHAR(50) DEFAULT NULL COMMENT 'Numéro d''urgence / conciergerie (optionnel)',
-    `contact_email` VARCHAR(150) DEFAULT NULL COMMENT 'Email conciergerie (optionnel)',
     `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse du logement (optionnel)',
     `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = visible, 0 = masqué',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -66,7 +61,7 @@ DELETE FROM properties;
 -- ----------------------------------------------------------------------
 -- Logement : Bataille (bataille)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('bataille', 'Bataille', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1x7yyx4NbnvjP4gigDsvjli4tOENQ98sU/view?usp=sharing', 'https://drive.google.com/file/d/1q5lbxNLdQQI-_rFBWjPHn6r-6IOiTLCI/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('bataille', 'Bataille', 'https://drive.google.com/file/d/1x7yyx4NbnvjP4gigDsvjli4tOENQ98sU/view?usp=sharing', 'https://drive.google.com/file/d/1q5lbxNLdQQI-_rFBWjPHn6r-6IOiTLCI/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 -- Vidéos pour Bataille
 INSERT INTO videos (property_id, slug, title_fr, title_en, icon, icon_bg_color, icon_text_color, video_url, display_order, active) VALUES (@last_prop_id, 'machine-a-laver', 'Machine à laver', 'Washing machine', '🫧', 'bg-blue-50', 'text-blue-500', 'https://drive.google.com/file/d/1NMkCkVSiQxLAURf384V_safGuTCZOn8s/view?usp=drive_link', 1, 1);
@@ -85,31 +80,31 @@ INSERT INTO videos (property_id, slug, title_fr, title_en, icon, icon_bg_color, 
 -- ----------------------------------------------------------------------
 -- Logement : Berthelot Design (berthelot-design)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('berthelot-design', 'Berthelot Design', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1zAdHHdK939qBsxs6niy96GhEoi5igaWA/view?usp=sharing', 'https://drive.google.com/file/d/19qN3w97vKEcfh-4_oo0SWAob9AoYfTb1/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('berthelot-design', 'Berthelot Design', 'https://drive.google.com/file/d/1zAdHHdK939qBsxs6niy96GhEoi5igaWA/view?usp=sharing', 'https://drive.google.com/file/d/19qN3w97vKEcfh-4_oo0SWAob9AoYfTb1/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 
 -- ----------------------------------------------------------------------
 -- Logement : Chez Denise Studio Cosy (chez-denise-studio-cosy)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('chez-denise-studio-cosy', 'Chez Denise Studio Cosy', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1jPpSFf6ZJ_pNWGhgeQ6yvA4d7v8GJ2Ks/view?usp=sharing', 'https://drive.google.com/file/d/14imaiZf6qakRhp1L-lkmFngWhca1TA9U/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('chez-denise-studio-cosy', 'Chez Denise Studio Cosy', 'https://drive.google.com/file/d/1jPpSFf6ZJ_pNWGhgeQ6yvA4d7v8GJ2Ks/view?usp=sharing', 'https://drive.google.com/file/d/14imaiZf6qakRhp1L-lkmFngWhca1TA9U/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 
 -- ----------------------------------------------------------------------
 -- Logement : Cosy et Design (cosy-et-design)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('cosy-et-design', 'Cosy et Design', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1ASzg5BjfSsfURyAXBcxZHSryOCvwQD8R/view?usp=sharing', 'https://drive.google.com/file/d/1OZG5-21emm2pyTbr1syqkCsM1K08a6pe/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('cosy-et-design', 'Cosy et Design', 'https://drive.google.com/file/d/1ASzg5BjfSsfURyAXBcxZHSryOCvwQD8R/view?usp=sharing', 'https://drive.google.com/file/d/1OZG5-21emm2pyTbr1syqkCsM1K08a6pe/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 
 -- ----------------------------------------------------------------------
 -- Logement : L’Atelier Cosy Félix (latelier-cosy-felix)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('latelier-cosy-felix', 'L’Atelier Cosy Félix', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1lnFUEqcgk4kqtYBTBP8X41TIczoLGOIM/view?usp=sharing', 'https://drive.google.com/file/d/1GWjlRxHxJ_OAL29Lr79XtaIigAAtwU4H/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('latelier-cosy-felix', 'L’Atelier Cosy Félix', 'https://drive.google.com/file/d/1lnFUEqcgk4kqtYBTBP8X41TIczoLGOIM/view?usp=sharing', 'https://drive.google.com/file/d/1GWjlRxHxJ_OAL29Lr79XtaIigAAtwU4H/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 
 -- ----------------------------------------------------------------------
 -- Logement : Maisonnette en Jouhet (maisonnette-en-jouhet)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('maisonnette-en-jouhet', 'Maisonnette en Jouhet', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1gr3S2qp1ViC8DQpRMDSct68XuN95yiEV/view?usp=sharing', 'https://drive.google.com/file/d/1nif9dnZykNjFuMi_VnRtaS0ZHudNQGT2/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('maisonnette-en-jouhet', 'Maisonnette en Jouhet', 'https://drive.google.com/file/d/1gr3S2qp1ViC8DQpRMDSct68XuN95yiEV/view?usp=sharing', 'https://drive.google.com/file/d/1nif9dnZykNjFuMi_VnRtaS0ZHudNQGT2/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 -- Vidéos pour Maisonnette en Jouhet
 INSERT INTO videos (property_id, slug, title_fr, title_en, icon, icon_bg_color, icon_text_color, video_url, display_order, active) VALUES (@last_prop_id, 'machine-a-laver', 'Machine à laver', 'Washing machine', '🫧', 'bg-blue-50', 'text-blue-500', 'https://drive.google.com/file/d/1AMmACiyOT33mBu6jpC2GqiJ5Di4JzgwY/view?usp=drive_link', 1, 1);
@@ -127,17 +122,17 @@ INSERT INTO videos (property_id, slug, title_fr, title_en, icon, icon_bg_color, 
 -- ----------------------------------------------------------------------
 -- Logement : Marietton Cosy (marietton-cosy)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('marietton-cosy', 'Marietton Cosy', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1Rtt8vDKmuxCxvkeqP5Pa_YeVrvIptAKT/view?usp=sharing', 'https://drive.google.com/file/d/13GuGwXIq--6wwWdrfhR17G6_F0lPTIsH/view?usp=sharing', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('marietton-cosy', 'Marietton Cosy', 'https://drive.google.com/file/d/1Rtt8vDKmuxCxvkeqP5Pa_YeVrvIptAKT/view?usp=sharing', 'https://drive.google.com/file/d/13GuGwXIq--6wwWdrfhR17G6_F0lPTIsH/view?usp=sharing', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 
 -- ----------------------------------------------------------------------
 -- Logement : Studio Cosy de Mel (studio-cosy-mel)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('studio-cosy-mel', 'Studio Cosy de Mel', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/191L29MG_TkTZxRAeu5ONPDtZmSbFvVVy/view?usp=drive_link', 'https://drive.google.com/file/d/1HHUxCYmKHK0DG8sJnDNUhlUhcydHnH13/view?usp=drive_link', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('studio-cosy-mel', 'Studio Cosy de Mel', 'https://drive.google.com/file/d/191L29MG_TkTZxRAeu5ONPDtZmSbFvVVy/view?usp=drive_link', 'https://drive.google.com/file/d/1HHUxCYmKHK0DG8sJnDNUhlUhcydHnH13/view?usp=drive_link', 1);
 SET @last_prop_id = LAST_INSERT_ID();
 
 -- ----------------------------------------------------------------------
 -- Logement : Studio Cosy de Paul (studio-cosy-paul)
 -- ----------------------------------------------------------------------
-INSERT INTO properties (slug, name, subtitle, guide_fr_url, guide_en_url, active) VALUES ('studio-cosy-paul', 'Studio Cosy de Paul', 'Conciergerie Carré d''Hôtes', 'https://drive.google.com/file/d/1Ux23AYhTgZSg_CebooeSHSsQIQXgwQ6G/view?usp=sharing', 'https://drive.google.com/file/d/1pcsmBsUj7K4v1T93hsbBY2d7bGVnOzUU/view?usp=drive_link', 1);
+INSERT INTO properties (slug, name, guide_fr_url, guide_en_url, active) VALUES ('studio-cosy-paul', 'Studio Cosy de Paul', 'https://drive.google.com/file/d/1Ux23AYhTgZSg_CebooeSHSsQIQXgwQ6G/view?usp=sharing', 'https://drive.google.com/file/d/1pcsmBsUj7K4v1T93hsbBY2d7bGVnOzUU/view?usp=drive_link', 1);
 SET @last_prop_id = LAST_INSERT_ID();
