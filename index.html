@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=6.2">
+    <link rel="stylesheet" href="assets/css/custom.css?v=6.3">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -520,7 +520,12 @@
                         <div id="card-guide-active" onclick="openCurrentGuide()" 
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span id="guide-active-flag" class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">📖</span>
+                                <span id="guide-active-flag" class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                    </svg>
+                                </span>
                                 <div class="min-w-0">
                                     <span id="guide-active-title" data-i18n="booklet_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Guide de bienvenue</span>
                                     <p id="guide-active-desc" data-i18n="booklet_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate">Toutes les infos pratiques</p>
@@ -560,7 +565,15 @@
                         <div id="card-booking-active" onclick="openBookingModal()" 
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">✨</span>
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                                        <path d="M5 3v4"/>
+                                        <path d="M19 17v4"/>
+                                        <path d="M3 5h4"/>
+                                        <path d="M17 19h4"/>
+                                    </svg>
+                                </span>
                                 <div class="min-w-0">
                                     <span data-i18n="booking_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Réservez votre prochain séjour</span>
                                     <p data-i18n="booking_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Bénéficiez de nos meilleurs tarifs en direct</p>
@@ -788,8 +801,14 @@
             <!-- Barre supérieure de la modale Réservation -->
             <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-amber-50 dark:bg-amber-900/30 text-gold">
-                        <span>✨</span>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                            <path d="M5 3v4"/>
+                            <path d="M19 17v4"/>
+                            <path d="M3 5h4"/>
+                            <path d="M17 19h4"/>
+                        </svg>
                     </div>
                     <div class="truncate">
                         <h3 data-i18n="booking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Réservez votre prochain séjour</h3>
@@ -969,6 +988,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=6.2" defer></script>
+    <script src="assets/js/app.js?v=6.3" defer></script>
 </body>
 </html>

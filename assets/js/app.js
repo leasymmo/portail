@@ -1911,7 +1911,6 @@ const PropertyRenderer = {
 
         // 2. Carte unique Guide de bienvenue (FR ou EN selon langue active)
         const cardActive = document.getElementById('card-guide-active');
-        const flagEl = document.getElementById('guide-active-flag');
         const titleEl = document.getElementById('guide-active-title');
         const descEl = document.getElementById('guide-active-desc');
 
@@ -1920,9 +1919,6 @@ const PropertyRenderer = {
             cardActive.classList.toggle('hidden', !hasGuide);
             cardActive.classList.add('cascade-item');
             cardActive.style.animationDelay = '0.04s';
-        }
-        if (flagEl) {
-            flagEl.textContent = '📖';
         }
         if (titleEl) {
             titleEl.textContent = I18n.t('booklet_title');
