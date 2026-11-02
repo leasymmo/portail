@@ -20,6 +20,7 @@ const AppState = {
     isVideoModalOpen: false,
     isBookingModalOpen: false,
     isWifiModalOpen: false,
+    isReviewModalOpen: false,
     isOffline: !navigator.onLine
 };
 
@@ -58,6 +59,14 @@ const I18n = {
             booklet_desc: "Toutes les infos pratiques",
             booking_card_title: "Réservez votre prochain séjour",
             booking_card_desc: "Bénéficiez de nos meilleurs tarifs en direct",
+            review_card_title: "Vous appréciez votre séjour ?",
+            review_card_desc: "Soutenez notre équipe avec 5 étoiles",
+            review_modal_title: "Votre avis compte pour nous !",
+            review_modal_subtitle: "Conciergerie Carré d'Hôtes · Avis Google",
+            review_modal_heading: "Votre satisfaction est notre priorité",
+            review_modal_msg: "Votre retour est la plus belle récompense pour notre équipe locale. 1 minute suffit pour illuminer notre journée et nous aider à faire rayonner notre conciergerie !",
+            review_modal_btn: "Laisser mes 5 étoiles sur Google ✨",
+            review_modal_help: "Une remarque ou un imprévu ? Contactez-nous en direct",
             need_help: "Besoin d'aide ?",
             call_concierge: "Appeler la conciergerie",
             videos_title: "Modes d'emploi",
@@ -126,6 +135,14 @@ const I18n = {
             booklet_desc: "All practical information",
             booking_card_title: "Book your next stay",
             booking_card_desc: "Enjoy our best direct rates without fees",
+            review_card_title: "Enjoying your stay?",
+            review_card_desc: "Support our local team with 5 stars",
+            review_modal_title: "Your feedback means the world to us!",
+            review_modal_subtitle: "Carré d'Hôtes Concierge · Google Review",
+            review_modal_heading: "Your satisfaction is our priority",
+            review_modal_msg: "Your feedback is the greatest reward for our local team. Just 1 minute to brighten our day and support our independent concierge!",
+            review_modal_btn: "Leave my 5 stars on Google ✨",
+            review_modal_help: "Any issue or suggestion? Contact us directly",
             need_help: "Need help?",
             call_concierge: "Call the concierge",
             videos_title: "Instructions & Tutorials",
@@ -448,7 +465,7 @@ const ScrollManager = {
     },
 
     unlock() {
-        if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen && !AppState.isWifiModalOpen) {
+        if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen && !AppState.isWifiModalOpen && !AppState.isReviewModalOpen) {
             document.body.classList.remove('modal-open');
             this.updatePageScrollState();
         }
@@ -985,12 +1002,74 @@ const ModalManager = {
         }, 340);
     },
 
+    // --- MODALE AVIS GOOGLE MY BUSINESS COMPACTE ---
+    openReview() {
+        const modal = document.getElementById('modal-review');
+        if (!modal) return;
+
+        // Réinitialise tout style restant
+        modal.classList.remove('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = '';
+            sheet.style.transition = '';
+        }
+        modal.style.opacity = '';
+        modal.style.backgroundColor = '';
+
+        // Étape 1 : active la modale dans le DOM (display: flex) à sa position fermée translateY(100%)
+        modal.classList.add('is-active');
+        void modal.offsetHeight;
+
+        // Étape 2 : déclenche l'animation d'ouverture fluide (montée depuis le bas)
+        requestAnimationFrame(() => {
+            modal.classList.add('open');
+            modal.classList.remove('is-active');
+            modal.setAttribute('aria-hidden', 'false');
+        });
+
+        AppState.isReviewModalOpen = true;
+        ScrollManager.lock();
+    },
+
+    closeReview(immediate = false) {
+        const modal = document.getElementById('modal-review');
+        if (!modal) return;
+
+        AppState.isReviewModalOpen = false;
+        ScrollManager.unlock();
+
+        if (immediate || !modal.classList.contains('open')) {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
+        modal.classList.add('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = 'translateY(100%)';
+        }
+        modal.style.opacity = '0';
+
+        setTimeout(() => {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
+        }, 340);
+    },
+
     onBackdropClick(event, type) {
         if (!event || !event.target || event.target.classList.contains('modal-overlay')) {
             if (type === 'pdf') this.closePdf();
             if (type === 'video') this.closeVideo();
             if (type === 'booking') this.closeBooking();
             if (type === 'wifi') this.closeWifi();
+            if (type === 'review') this.closeReview();
         }
     }
 };
@@ -1004,7 +1083,8 @@ const SheetGestureController = {
             { id: 'modal-pdf', close: (immediate) => ModalManager.closePdf(immediate) },
             { id: 'modal-video', close: (immediate) => ModalManager.closeVideo(immediate) },
             { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) },
-            { id: 'modal-wifi', close: (immediate) => ModalManager.closeWifi(immediate) }
+            { id: 'modal-wifi', close: (immediate) => ModalManager.closeWifi(immediate) },
+            { id: 'modal-review', close: (immediate) => ModalManager.closeReview(immediate) }
         ];
 
         modals.forEach(({ id, close }) => {
@@ -1835,14 +1915,14 @@ const PropertyRenderer = {
                 wifiCard.style.animationDelay = '0.08s';
             }
             if (infoGrid) {
-                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto';
+                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto';
             }
         } else {
             if (wifiCard) {
                 wifiCard.classList.add('hidden');
             }
             if (infoGrid) {
-                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto';
+                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto';
             }
         }
 
@@ -1932,6 +2012,13 @@ const PropertyRenderer = {
         if (cardBooking) {
             cardBooking.classList.add('cascade-item');
             cardBooking.style.animationDelay = prop.wifi_ssid ? '0.12s' : '0.08s';
+        }
+
+        // 2c. Carte Avis Google
+        const cardReview = document.getElementById('card-review-active');
+        if (cardReview) {
+            cardReview.classList.add('cascade-item');
+            cardReview.style.animationDelay = prop.wifi_ssid ? '0.16s' : '0.12s';
         }
 
         // 3. Actualiser la grille des vidéos avec les titres traduits
@@ -2507,6 +2594,7 @@ const App = {
                 if (AppState.isVideoModalOpen) ModalManager.closeVideo();
                 if (AppState.isBookingModalOpen) ModalManager.closeBooking();
                 if (AppState.isWifiModalOpen) ModalManager.closeWifi();
+                if (AppState.isReviewModalOpen) ModalManager.closeReview();
             }
         });
 
@@ -2526,6 +2614,10 @@ const App = {
             }
             if (AppState.isWifiModalOpen) {
                 ModalManager.closeWifi(true);
+                return;
+            }
+            if (AppState.isReviewModalOpen) {
+                ModalManager.closeReview(true);
                 return;
             }
             this.load();
@@ -2590,6 +2682,8 @@ window.onBookingLoaded = () => ModalManager.onBookingLoaded();
 window.onModalBackdropClick = (event, type) => ModalManager.onBackdropClick(event, type);
 window.openWifiModal = () => ModalManager.openWifi();
 window.closeWifiModal = () => ModalManager.closeWifi();
+window.openReviewModal = () => ModalManager.openReview();
+window.closeReviewModal = () => ModalManager.closeReview();
 window.copyNetworkName = (e) => App.copyNetwork(e);
 window.copyWifiPassword = (e) => App.copyWifi(e);
 window.filterVideos = () => VideoSearch.filter();
