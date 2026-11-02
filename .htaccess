@@ -25,7 +25,6 @@ Options -Indexes
 # 3. RÈGLES DE RÉÉCRITURE D'URL (SPA) & PROTECTION DES DOSSIERS INTERNES
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /portail/
 
     # Bloquer tout accès direct aux dossiers internes d'infrastructure
     RewriteRule ^(database|config)/ - [F,L]
@@ -41,7 +40,7 @@ Options -Indexes
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Redirection dynamique SPA vers index.php (injection SSR du manifeste PWA par logement)
+    # Redirection dynamique SPA vers index.php (compatible /portail/ et /portail/dev/)
     RewriteRule ^.*$ index.php [L]
 </IfModule>
 
@@ -58,7 +57,7 @@ Options -Indexes
         Header set Cache-Control "no-cache, no-store, must-revalidate"
         Header set Pragma "no-cache"
         Header set Expires "0"
-        Header set Service-Worker-Allowed "/portail/"
+        Header set Service-Worker-Allowed "/"
     </IfModule>
 </FilesMatch>
 

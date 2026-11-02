@@ -6,28 +6,31 @@
  * - API (api.php) : Network-First avec fallback Cache (consultation hors-ligne des guides)
  */
 
-const CACHE_VERSION = 'cdh-portail-v1.6.3';
+const CACHE_VERSION = 'cdh-portail-v1.6.4';
 const CACHE_NAME_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_NAME_API = `${CACHE_VERSION}-api`;
+
+// Détection dynamique du périmètre (/portail/ ou /portail/dev/)
+const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/?$/, '/');
 
 // Ressources fondamentales du noyau PWA (App Shell)
 // Note : Les manifestes dynamiques (manifest.php) ne sont pas pré-cachés pour préserver le ciblage par logement
 const PRECACHE_ASSETS = [
-    '/portail/',
-    '/portail/index.html',
-    '/portail/assets/css/custom.css?v=5.3',
-    '/portail/assets/js/app.js?v=5.3',
-    '/portail/assets/icons/icon-192.png',
-    '/portail/assets/icons/icon-512.png',
-    '/portail/assets/icons/apple-touch-icon.png',
-    '/portail/assets/icons/icon-maskable-192.png',
-    '/portail/assets/icons/icon-maskable-512.png',
-    '/portail/assets/images/picto-light.png',
-    '/portail/assets/images/picto-dark.png',
-    '/portail/assets/images/logo.svg',
-    '/portail/assets/images/favicon-32x32.png',
-    '/portail/assets/images/favicon-16x16.png',
-    '/portail/favicon.ico',
+    SCOPE_PATH,
+    SCOPE_PATH + 'index.html',
+    SCOPE_PATH + 'assets/css/custom.css?v=5.3',
+    SCOPE_PATH + 'assets/js/app.js?v=5.3',
+    SCOPE_PATH + 'assets/icons/icon-192.png',
+    SCOPE_PATH + 'assets/icons/icon-512.png',
+    SCOPE_PATH + 'assets/icons/apple-touch-icon.png',
+    SCOPE_PATH + 'assets/icons/icon-maskable-192.png',
+    SCOPE_PATH + 'assets/icons/icon-maskable-512.png',
+    SCOPE_PATH + 'assets/images/picto-light.png',
+    SCOPE_PATH + 'assets/images/picto-dark.png',
+    SCOPE_PATH + 'assets/images/logo.svg',
+    SCOPE_PATH + 'assets/images/favicon-32x32.png',
+    SCOPE_PATH + 'assets/images/favicon-16x16.png',
+    SCOPE_PATH + 'favicon.ico',
     'https://cdn.tailwindcss.com',
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
@@ -134,8 +137,8 @@ self.addEventListener('fetch', (event) => {
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request).catch(() => {
-                return caches.match('/portail/index.html').then((cachedIndex) => {
-                    return cachedIndex || caches.match('/portail/');
+                return caches.match(SCOPE_PATH + 'index.html').then((cachedIndex) => {
+                    return cachedIndex || caches.match(SCOPE_PATH);
                 });
             })
         );

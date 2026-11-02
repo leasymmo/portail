@@ -26,10 +26,19 @@ if (!function_exists('str_ends_with')) {
  */
 function load_env($filePath = null) {
     if ($filePath === null) {
-        $filePath = APP_ROOT . '/.env';
+        $candidates = [
+            APP_ROOT . '/.env',
+            dirname(APP_ROOT) . '/.env'
+        ];
+        foreach ($candidates as $cand) {
+            if (file_exists($cand)) {
+                $filePath = $cand;
+                break;
+            }
+        }
     }
 
-    if (!file_exists($filePath)) {
+    if (!$filePath || !file_exists($filePath)) {
         return false;
     }
 

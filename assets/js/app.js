@@ -312,10 +312,13 @@ const ThemeManager = {
 // -----------------------------------------------------------------------------
 // 5. ROUTEUR SPA PROPRE SANS HASH (/portail/{slug}/videos/{video})
 // -----------------------------------------------------------------------------
+const BASE_PATH = window.__CDH_BASE_PATH || (window.location.pathname.startsWith('/portail/dev') ? '/portail/dev/' : '/portail/');
+
 const Router = {
     parseRoute() {
         let path = window.location.pathname;
-        path = path.replace(/^\/portail\/?/, '').replace(/\/$/, '');
+        const prefixRegex = new RegExp('^' + BASE_PATH.replace(/\/$/, '') + '/?');
+        path = path.replace(prefixRegex, '').replace(/\/$/, '');
 
         if (!path || path === 'index.html' || path === 'index.php') {
             return { slug: '', section: '', subSection: '' };
@@ -355,7 +358,7 @@ const Router = {
     },
 
     setUrl(slug, section, subSection = '') {
-        let newPath = '/portail/';
+        let newPath = BASE_PATH;
         if (slug) {
             newPath += slug;
             if (section === 'videos') {
@@ -1523,7 +1526,7 @@ const PropertyRenderer = {
         }
         const canonicalLink = document.getElementById('app-canonical-link');
         if (canonicalLink && prop.slug) {
-            canonicalLink.href = `/portail/${encodeURIComponent(prop.slug)}`;
+            canonicalLink.href = `${BASE_PATH}${encodeURIComponent(prop.slug)}`;
         }
         if (prop && prop.slug) {
             try { localStorage.setItem('cdh_saved_property', prop.slug); } catch(e) {}
@@ -1763,7 +1766,7 @@ const ListRenderer = {
         }
         const canonicalLink = document.getElementById('app-canonical-link');
         if (canonicalLink) {
-            canonicalLink.href = '/portail/';
+            canonicalLink.href = BASE_PATH;
         }
 
         if (!props || props.length === 0) {
@@ -1780,7 +1783,7 @@ const ListRenderer = {
                 card.style.animationDelay = `${Math.min(index * 45, 500)}ms`;
                 // Navigation directe pour charger le manifeste PWA propre à ce logement
                 card.onclick = () => {
-                    window.location.href = '/portail/' + encodeURIComponent(p.slug);
+                    window.location.href = BASE_PATH + encodeURIComponent(p.slug);
                 };
                 
                 const count = parseInt(p.videos_count || p.tutorials_count || 0, 10);
@@ -1850,7 +1853,7 @@ const PwaManager = {
     registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/portail/sw.js', { scope: '/portail/' })
+                navigator.serviceWorker.register(`${BASE_PATH}sw.js`, { scope: BASE_PATH })
                     .then((reg) => {
                         reg.update();
                         // Écoute les mises à jour en tâche de fond

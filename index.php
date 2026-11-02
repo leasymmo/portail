@@ -15,7 +15,10 @@ require_once APP_ROOT . '/config/database.php';
 // Extraction et analyse du chemin URL demandé
 $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $path = parse_url($requestUri, PHP_URL_PATH);
-$pathWithoutPrefix = preg_replace('#^/portail/?#', '', (string)$path);
+
+// Détection automatique du préfixe de base (/portail/dev/ ou /portail/)
+$baseUri = (strpos((string)$path, '/portail/dev') === 0) ? '/portail/dev/' : '/portail/';
+$pathWithoutPrefix = preg_replace('#^' . preg_quote($baseUri, '#') . '#', '', (string)$path);
 $parts = explode('/', trim($pathWithoutPrefix, '/'));
 $slug = strtolower(trim($parts[0] ?? ''));
 
@@ -28,11 +31,11 @@ if (in_array($slug, ['', 'index.html', 'index.php', 'reservation', 'api.php', 's
 $appName = "Carré d'Hôtes";
 $pageTitle = "Portail Voyageurs | Conciergerie Carré d'Hôtes";
 $manifestUrl = "manifest.php";
-$canonicalUrl = "/portail/";
+$canonicalUrl = $baseUri;
 
 if (!empty($slug) && preg_match('/^[a-z0-9_\-]{1,100}$/', $slug)) {
     $manifestUrl = "manifest.php?slug=" . urlencode($slug);
-    $canonicalUrl = "/portail/" . urlencode($slug);
+    $canonicalUrl = $baseUri . urlencode($slug);
     $prettySlug = ucwords(str_replace(['-', '_'], ' ', $slug));
     $appName = $prettySlug;
     $pageTitle = "{$prettySlug} - Portail Voyageurs | Carré d'Hôtes";
@@ -59,6 +62,12 @@ if (!file_exists($htmlPath)) {
 $html = file_get_contents($htmlPath);
 
 // Remplacement dynamique du manifeste PWA
+$html = preg_replace(
+    '/<base href="[^"]*">/i',
+    '<base href="' . htmlspecialchars($baseUri, ENT_QUOTES, 'UTF-8') . '">',
+    $html
+);
+
 $html = preg_replace(
     '/<link id="app-manifest-link" rel="manifest" href="[^"]*">/i',
     '<link id="app-manifest-link" rel="manifest" href="' . htmlspecialchars($manifestUrl, ENT_QUOTES, 'UTF-8') . '">',

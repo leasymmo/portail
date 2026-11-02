@@ -118,7 +118,9 @@
 
             // 1. Détection mode autonome PWA (Ajouté à l'écran d'accueil)
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            const pathParts = window.location.pathname.replace(/^\/portail\/?/, '').split('/').filter(Boolean);
+            const baseUri = window.location.pathname.startsWith('/portail/dev') ? '/portail/dev/' : '/portail/';
+            window.__CDH_BASE_PATH = baseUri;
+            const pathParts = window.location.pathname.replace(new RegExp('^' + baseUri.replace(/\/$/, '') + '/?'), '').split('/').filter(Boolean);
             const currentSlug = pathParts[0] || '';
 
             if (currentSlug && !currentSlug.includes('.')) {
@@ -127,13 +129,13 @@
                 const manifestEl = document.getElementById('app-manifest-link');
                 if (manifestEl) manifestEl.href = 'manifest.php?slug=' + encodeURIComponent(currentSlug);
                 const canonicalEl = document.getElementById('app-canonical-link');
-                if (canonicalEl) canonicalEl.href = '/portail/' + encodeURIComponent(currentSlug);
+                if (canonicalEl) canonicalEl.href = baseUri + encodeURIComponent(currentSlug);
             } else if (isStandalone) {
                 // Si la PWA s'ouvre sur /portail/ sans slug : restauration immédiate du logement enregistré
                 try {
                     const savedSlug = localStorage.getItem('cdh_saved_property');
                     if (savedSlug && !savedSlug.includes('.')) {
-                        window.location.replace('/portail/' + encodeURIComponent(savedSlug));
+                        window.location.replace(baseUri + encodeURIComponent(savedSlug));
                         return;
                     }
                 } catch(e) {}
@@ -655,7 +657,7 @@
             <p id="not-found-msg" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
                 Aucun hébergement actif ne correspond à cette adresse.
             </p>
-            <button onclick="navigateToUrl('/portail/')" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-semibold hover:opacity-90 transition shadow-sm">
+            <button onclick="navigateToUrl(window.__CDH_BASE_PATH || '/portail/')" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-semibold hover:opacity-90 transition shadow-sm">
                 Voir tous les logements
             </button>
         </div>

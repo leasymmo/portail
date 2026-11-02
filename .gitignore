@@ -29,6 +29,7 @@ Thumbs.db
 *.swp
 *~
 
-# Dossiers d'agents locaux
-.agents/
+# Dossiers d'agents
+.agents/*
+!.agents/skills/
 .gemini/

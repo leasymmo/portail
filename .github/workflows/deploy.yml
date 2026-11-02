@@ -1,0 +1,43 @@
+name: Déploiement FTP OVH
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy:
+    name: ${{ github.ref_name == 'main' && 'Déploiement Production (main)' || 'Déploiement Développement (dev)' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Récupération du code source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 🚀 Déploiement FTP vers OVH
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ftp.cluster131.hosting.ovh.net
+          username: carredj
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          protocol: ftp
+          server-dir: ${{ github.ref_name == 'main' && 'www/portail/' || 'www/portail/dev/' }}
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github*
+            **/.github*/**
+            **/.agents*
+            **/.agents*/**
+            **/.gemini*
+            **/.gemini*/**
+            **/.env*
+            !.env.example
+            README.md
+            *.md
+            **/gateway-log*.jsonl

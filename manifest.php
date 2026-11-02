@@ -21,14 +21,21 @@ header('Expires: 0');
 define('APP_ROOT', __DIR__);
 require_once APP_ROOT . '/config/database.php';
 
+// 0. Détection automatique de l'environnement (/portail/dev/ ou /portail/)
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+$path = parse_url($requestUri, PHP_URL_PATH);
+$referer = $_SERVER['HTTP_REFERER'] ?? '';
+$isDev = (strpos((string)$path, '/portail/dev') === 0) || (strpos((string)$referer, '/portail/dev') !== false);
+$baseUri = $isDev ? '/portail/dev/' : '/portail/';
+
 // 1. Extraction du slug depuis GET
 $slug = $_GET['slug'] ?? '';
 $slug = strtolower(trim($slug));
 
 // 2. Repli automatique sur le Referer HTTP si le slug n'a pas été passé en paramètre
-if (empty($slug) && !empty($_SERVER['HTTP_REFERER'])) {
-    $refererPath = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH);
-    $pathWithoutPrefix = preg_replace('#^/portail/?#', '', (string)$refererPath);
+if (empty($slug) && !empty($referer)) {
+    $refererPath = parse_url($referer, PHP_URL_PATH);
+    $pathWithoutPrefix = preg_replace('#^' . preg_quote($baseUri, '#') . '#', '', (string)$refererPath);
     $parts = explode('/', trim($pathWithoutPrefix, '/'));
     $candidate = strtolower(trim($parts[0] ?? ''));
     if (!empty($candidate) && !in_array($candidate, ['', 'index.html', 'index.php', 'reservation', 'api.php', 'sw.js', 'manifest.php'])) {
@@ -40,13 +47,13 @@ if (empty($slug) && !empty($_SERVER['HTTP_REFERER'])) {
 $appName = "Portail Voyageurs | Carré d'Hôtes";
 $appShortName = "Carré d'Hôtes";
 $appDesc = "Portail d'accueil, livrets de bienvenue et vidéos explicatives pour les voyageurs de la conciergerie Carré d'Hôtes à Lyon.";
-$startUrl = "/portail/";
+$startUrl = $baseUri;
 
 if (!empty($slug) && preg_match('/^[a-z0-9_\-]{1,100}$/', $slug)) {
     $prettySlug = ucwords(str_replace(['-', '_'], ' ', $slug));
     $appName = "{$prettySlug} | Carré d'Hôtes";
     $appShortName = $prettySlug;
-    $startUrl = "/portail/{$slug}";
+    $startUrl = $baseUri . $slug;
     $appDesc = "Livret d'accueil et vidéos des équipements pour votre séjour à {$prettySlug}.";
 
     try {
@@ -70,7 +77,7 @@ $manifest = [
     "short_name" => $appShortName,
     "description" => $appDesc,
     "start_url" => $startUrl,
-    "scope" => "/portail/",
+    "scope" => $baseUri,
     "display" => "standalone",
     "display_override" => ["standalone", "minimal-ui"],
     "orientation" => "portrait-primary",
