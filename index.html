@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=5.7">
+    <link rel="stylesheet" href="assets/css/custom.css?v=5.8">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -531,25 +531,22 @@
                             </div>
                         </div>
 
-                        <!-- Carte 2 : Wi-Fi (affichée uniquement si configuré dans MySQL) -->
-                        <div id="prop-wifi-card" onclick="copyWifiPassword(event)"
+                        <!-- Carte 2 : Wi-Fi (affichée uniquement si configuré dans MySQL, ouvre la modale Wi-Fi) -->
+                        <div id="prop-wifi-card" onclick="openWifiModal()" 
                              class="hidden card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">📶</span>
                                 <div class="min-w-0">
-                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">
-                                        <span data-i18n="wifi_prefix">Wi-Fi : </span><span id="wifi-ssid"></span>
-                                    </span>
-                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">
-                                        <span data-i18n="wifi_pwd_prefix">Mot de passe : </span><span id="wifi-password" class="font-mono select-all font-medium text-ink dark:text-white"></span>
-                                    </p>
+                                    <span data-i18n="wifi_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Connexion Wi-Fi</span>
+                                    <p data-i18n="wifi_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Réseau & mot de passe</p>
                                 </div>
                             </div>
-                            <button id="wifi-copy-btn" onclick="copyWifiPassword(event)" type="button" 
-                                    class="btn-wifi-copy px-2.5 py-1.5 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium bg-[#f3f3ec] dark:bg-[#1e2739] text-ink dark:text-white border border-[#e2e4e6] dark:border-[#38455d] rounded-xl hover:text-gold hover:border-gold transition shadow-2xs flex-shrink-0 ml-1.5" 
-                                    data-i18n="wifi_copy" title="Copier le mot de passe">
-                                Copier
-                            </button>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </div>
                         </div>
 
                         <!-- Carte 3 : Réservez votre prochain séjour (Ouvre la modale de réservation) -->
@@ -830,10 +827,78 @@
         </div>
     </div>
 
-    <!-- Notification flottante "Mot de passe copié" -->
+    <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET 4 : INFORMATIONS DE CONNEXION WI-FI COMPACTE    -->
+    <!-- =================================================================== -->
+    <div id="modal-wifi" class="modal-overlay" onclick="onModalBackdropClick(event, 'wifi')">
+        <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle flex-shrink-0"></div>
+
+            <!-- Barre supérieure de la modale Wi-Fi -->
+            <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2.5 truncate pr-2">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-gold/15 text-gold">
+                        <span>📶</span>
+                    </div>
+                    <div class="truncate">
+                        <h3 data-i18n="wifi_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Connexion Wi-Fi</h3>
+                        <p data-i18n="wifi_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Accès Internet du logement</p>
+                    </div>
+                </div>
+                <button onclick="closeWifiModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Contenu : 2 belles cards (Réseau et Mot de passe) -->
+            <div class="p-5 sm:p-6 space-y-3">
+                <!-- Card 1 : Nom du réseau (SSID) -->
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between transition-colors">
+                    <div class="min-w-0 pr-3">
+                        <span data-i18n="wifi_modal_network_label" class="text-[10px] sm:text-[11px] font-semibold text-gold uppercase tracking-wider block">Nom du réseau (SSID)</span>
+                        <p id="wifi-modal-ssid" class="text-sm sm:text-base font-bold text-ink dark:text-white truncate mt-0.5 select-all"></p>
+                    </div>
+                    <button id="wifi-copy-ssid-btn" onclick="copyNetworkName(event)" type="button" 
+                            class="btn-copy-icon flex-shrink-0"
+                            title="Copier le nom du réseau" data-i18n-title="copy_network_title" aria-label="Copier le nom du réseau">
+                        <svg class="w-4 h-4 icon-copy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <svg class="w-4 h-4 icon-copied hidden text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Card 2 : Mot de passe -->
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between transition-colors">
+                    <div class="min-w-0 pr-3">
+                        <span data-i18n="wifi_modal_pwd_label" class="text-[10px] sm:text-[11px] font-semibold text-gold uppercase tracking-wider block">Mot de passe</span>
+                        <p id="wifi-modal-password" class="text-sm sm:text-base font-mono font-bold text-ink dark:text-white truncate mt-0.5 select-all"></p>
+                    </div>
+                    <button id="wifi-copy-pwd-btn" onclick="copyWifiPassword(event)" type="button" 
+                            class="btn-copy-icon flex-shrink-0"
+                            title="Copier le mot de passe" data-i18n-title="copy_pwd_title" aria-label="Copier le mot de passe">
+                        <svg class="w-4 h-4 icon-copy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <svg class="w-4 h-4 icon-copied hidden text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <p data-i18n="wifi_modal_hint" class="text-center text-[11px] text-ink-faint dark:text-gray-400 pt-1 pb-1">
+                    Touchez l'icône pour copier dans le presse-papiers
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification flottante de copie -->
     <div id="copy-toast" class="bg-ink text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
         <span>✓</span>
-        <span data-i18n="wifi_copied">Mot de passe WiFi copié !</span>
+        <span id="copy-toast-msg" data-i18n="wifi_copied">Mot de passe WiFi copié !</span>
     </div>
 
     <!-- Notification flottante "Mode hors-ligne" PWA -->
@@ -901,6 +966,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=5.7" defer></script>
+    <script src="assets/js/app.js?v=5.8" defer></script>
 </body>
 </html>

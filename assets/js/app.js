@@ -19,6 +19,7 @@ const AppState = {
     isPdfModalOpen: false,
     isVideoModalOpen: false,
     isBookingModalOpen: false,
+    isWifiModalOpen: false,
     isOffline: !navigator.onLine
 };
 
@@ -37,9 +38,18 @@ const I18n = {
             wifi_prefix: "Wi-Fi : ",
             wifi_pwd_prefix: "Mot de passe : ",
             wifi_card_title: "Connexion Wi-Fi",
+            wifi_card_desc: "Réseau & mot de passe",
+            wifi_modal_title: "Connexion Wi-Fi",
+            wifi_modal_subtitle: "Accès Internet du logement",
+            wifi_modal_network_label: "Nom du réseau (SSID)",
+            wifi_modal_pwd_label: "Mot de passe",
+            wifi_modal_hint: "Touchez l'icône pour copier dans le presse-papiers",
+            wifi_ssid_copied_toast: "Nom du réseau copié !",
             wifi_copy: "Copier",
             wifi_copied: "Copié !",
             wifi_copied_toast: "Mot de passe Wi-Fi copié !",
+            copy_network_title: "Copier le nom du réseau",
+            copy_pwd_title: "Copier le mot de passe",
             tab_infos: "Infos",
             tab_videos: "Vidéos",
             welcome_title: "Guide de bienvenue",
@@ -96,9 +106,18 @@ const I18n = {
             wifi_prefix: "Wi-Fi: ",
             wifi_pwd_prefix: "Password: ",
             wifi_card_title: "Wi-Fi Connection",
+            wifi_card_desc: "Network & password",
+            wifi_modal_title: "Wi-Fi Connection",
+            wifi_modal_subtitle: "Accommodation Internet access",
+            wifi_modal_network_label: "Network name (SSID)",
+            wifi_modal_pwd_label: "Password",
+            wifi_modal_hint: "Tap the icon to copy to clipboard",
+            wifi_ssid_copied_toast: "Network name copied!",
             wifi_copy: "Copy",
             wifi_copied: "Copied!",
             wifi_copied_toast: "Wi-Fi password copied!",
+            copy_network_title: "Copy network name",
+            copy_pwd_title: "Copy password",
             tab_infos: "Info",
             tab_videos: "Videos",
             welcome_title: "Welcome Guide",
@@ -429,7 +448,7 @@ const ScrollManager = {
     },
 
     unlock() {
-        if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen) {
+        if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen && !AppState.isWifiModalOpen) {
             document.body.classList.remove('modal-open');
             this.updatePageScrollState();
         }
@@ -904,11 +923,74 @@ const ModalManager = {
         if (spinner) spinner.classList.add('hidden');
     },
 
+    // --- MODALE WI-FI COMPACTE ---
+    openWifi() {
+        if (!AppState.currentProperty || !AppState.currentProperty.wifi_ssid) return;
+        const modal = document.getElementById('modal-wifi');
+        if (!modal) return;
+
+        // Réinitialise tout style restant
+        modal.classList.remove('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = '';
+            sheet.style.transition = '';
+        }
+        modal.style.opacity = '';
+        modal.style.backgroundColor = '';
+
+        // Étape 1 : active la modale dans le DOM (display: flex) à sa position fermée translateY(100%)
+        modal.classList.add('is-active');
+        void modal.offsetHeight;
+
+        // Étape 2 : déclenche l'animation d'ouverture fluide (montée depuis le bas)
+        requestAnimationFrame(() => {
+            modal.classList.add('open');
+            modal.classList.remove('is-active');
+            modal.setAttribute('aria-hidden', 'false');
+        });
+
+        AppState.isWifiModalOpen = true;
+        ScrollManager.lock();
+    },
+
+    closeWifi(immediate = false) {
+        const modal = document.getElementById('modal-wifi');
+        if (!modal) return;
+
+        AppState.isWifiModalOpen = false;
+        ScrollManager.unlock();
+
+        if (immediate || !modal.classList.contains('open')) {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
+        modal.classList.add('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = 'translateY(100%)';
+        }
+        modal.style.opacity = '0';
+
+        setTimeout(() => {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
+        }, 340);
+    },
+
     onBackdropClick(event, type) {
         if (!event || !event.target || event.target.classList.contains('modal-overlay')) {
             if (type === 'pdf') this.closePdf();
             if (type === 'video') this.closeVideo();
             if (type === 'booking') this.closeBooking();
+            if (type === 'wifi') this.closeWifi();
         }
     }
 };
@@ -921,13 +1003,14 @@ const SheetGestureController = {
         const modals = [
             { id: 'modal-pdf', close: (immediate) => ModalManager.closePdf(immediate) },
             { id: 'modal-video', close: (immediate) => ModalManager.closeVideo(immediate) },
-            { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) }
+            { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) },
+            { id: 'modal-wifi', close: (immediate) => ModalManager.closeWifi(immediate) }
         ];
 
         modals.forEach(({ id, close }) => {
             const overlay = document.getElementById(id);
             if (!overlay) return;
-            const sheet = overlay.querySelector('.modal-sheet');
+            const sheet = overlay.querySelector('.modal-sheet, .modal-sheet-compact');
             if (!sheet) return;
 
             this.attachGesture(overlay, sheet, close);
@@ -1740,14 +1823,11 @@ const PropertyRenderer = {
         const wifiCard = document.getElementById('prop-wifi-card');
         const infoGrid = document.getElementById('info-cards-grid');
         if (prop.wifi_ssid) {
-            const ssidEl = document.getElementById('wifi-ssid');
-            const pwdEl = document.getElementById('wifi-password');
-            const pwdPrefixEl = document.querySelector('[data-i18n="wifi_pwd_prefix"]');
-            if (ssidEl) ssidEl.textContent = prop.wifi_ssid;
-            if (pwdEl) pwdEl.textContent = prop.wifi_password || '';
-            if (pwdPrefixEl) {
-                pwdPrefixEl.style.display = prop.wifi_password ? '' : 'none';
-            }
+            const modalSsid = document.getElementById('wifi-modal-ssid');
+            const modalPwd = document.getElementById('wifi-modal-password');
+            if (modalSsid) modalSsid.textContent = prop.wifi_ssid;
+            if (modalPwd) modalPwd.textContent = prop.wifi_password || '—';
+
             if (wifiCard) {
                 wifiCard.classList.remove('hidden');
                 wifiCard.classList.add('cascade-item');
@@ -2367,38 +2447,51 @@ const App = {
         document.getElementById('view-error').classList.remove('hidden');
     },
 
-    copyWifi(e) {
-        if (e && e.stopPropagation) e.stopPropagation();
-        if (!AppState.currentProperty || !AppState.currentProperty.wifi_password) return;
-        const pwd = AppState.currentProperty.wifi_password;
-        const copyBtn = document.getElementById('wifi-copy-btn');
-        const originalText = I18n.t('wifi_copy');
+    showToast(message) {
+        const toast = document.getElementById('copy-toast');
+        if (toast) {
+            const span = document.getElementById('copy-toast-msg');
+            if (span && message) span.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+    },
 
+    copyText(text, btnElement, toastMsg) {
+        if (!text) return;
         const triggerFeedback = () => {
-            if (copyBtn) {
-                copyBtn.textContent = '✓ ' + I18n.t('wifi_copied');
-                copyBtn.classList.add('btn-wifi-copied');
+            if (btnElement) {
+                btnElement.classList.add('copied');
                 setTimeout(() => {
-                    copyBtn.textContent = originalText;
-                    copyBtn.classList.remove('btn-wifi-copied');
-                }, 2200);
+                    btnElement.classList.remove('copied');
+                }, 2000);
             }
-            const toast = document.getElementById('copy-toast');
-            if (toast) {
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2500);
-            }
+            this.showToast(toastMsg || I18n.t('wifi_copied_toast'));
         };
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(pwd).then(triggerFeedback).catch(() => {
-                this.fallbackCopyText(pwd);
+            navigator.clipboard.writeText(text).then(triggerFeedback).catch(() => {
+                this.fallbackCopyText(text);
                 triggerFeedback();
             });
         } else {
-            this.fallbackCopyText(pwd);
+            this.fallbackCopyText(text);
             triggerFeedback();
         }
+    },
+
+    copyNetwork(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (!AppState.currentProperty || !AppState.currentProperty.wifi_ssid) return;
+        const btn = document.getElementById('wifi-copy-ssid-btn');
+        this.copyText(AppState.currentProperty.wifi_ssid, btn, I18n.t('wifi_ssid_copied_toast'));
+    },
+
+    copyWifi(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (!AppState.currentProperty || !AppState.currentProperty.wifi_password) return;
+        const btn = document.getElementById('wifi-copy-pwd-btn');
+        this.copyText(AppState.currentProperty.wifi_password, btn, I18n.t('wifi_copied_toast'));
     },
 
     fallbackCopyText(text) {
@@ -2428,6 +2521,7 @@ const App = {
                 if (AppState.isPdfModalOpen) ModalManager.closePdf();
                 if (AppState.isVideoModalOpen) ModalManager.closeVideo();
                 if (AppState.isBookingModalOpen) ModalManager.closeBooking();
+                if (AppState.isWifiModalOpen) ModalManager.closeWifi();
             }
         });
 
@@ -2443,6 +2537,10 @@ const App = {
             }
             if (AppState.isBookingModalOpen) {
                 ModalManager.closeBooking(true);
+                return;
+            }
+            if (AppState.isWifiModalOpen) {
+                ModalManager.closeWifi(true);
                 return;
             }
             this.load();
@@ -2505,8 +2603,11 @@ window.openBookingModal = () => ModalManager.openBooking();
 window.closeBookingModal = () => ModalManager.closeBooking();
 window.onBookingLoaded = () => ModalManager.onBookingLoaded();
 window.onModalBackdropClick = (event, type) => ModalManager.onBackdropClick(event, type);
-window.filterVideos = () => VideoSearch.filter();
+window.openWifiModal = () => ModalManager.openWifi();
+window.closeWifiModal = () => ModalManager.closeWifi();
+window.copyNetworkName = (e) => App.copyNetwork(e);
 window.copyWifiPassword = (e) => App.copyWifi(e);
+window.filterVideos = () => VideoSearch.filter();
 window.navigateToUrl = (url) => Router.navigate(url);
 window.loadApp = () => App.load();
 window.resetScrollToTop = () => ScrollManager.resetToTop();
