@@ -638,6 +638,49 @@ html.dark .booking-full-container {
 }
 
 /* ==============================================================================
+   SÉLECTEUR DE LANGUE COMPACT (FR / EN)
+   ============================================================================== */
+.lang-switch-group {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 2px;
+    height: 34px;
+    box-sizing: border-box;
+    transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.lang-toggle-btn {
+    height: 28px;
+    padding: 0 6px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+    opacity: 0.45;
+}
+.lang-toggle-btn:hover {
+    opacity: 0.85;
+}
+.lang-toggle-btn.active {
+    background-color: var(--bg-app);
+    opacity: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.dark .lang-toggle-btn.active {
+    background-color: #1e2739;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* ==============================================================================
    BOUTON SWITCH THÈME (LIGHT / DARK)
    ============================================================================== */
 .theme-switch-btn {

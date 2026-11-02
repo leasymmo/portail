@@ -23,6 +23,187 @@ const AppState = {
 };
 
 // -----------------------------------------------------------------------------
+// 1b. GESTION DU MULTILINGUE (FR / EN) & I18N
+// -----------------------------------------------------------------------------
+const I18n = {
+    currentLang: 'fr',
+
+    translations: {
+        fr: {
+            app_loading: "Chargement de votre portail...",
+            topbar_visit: "Visiter carredhotes.fr",
+            theme_toggle: "Basculer le mode sombre / clair",
+            wifi_network: "Réseau WiFi",
+            wifi_copy: "Copier",
+            wifi_copied: "Copié !",
+            tab_infos: "Infos",
+            tab_videos: "Vidéos",
+            welcome_title: "Livret d'accueil",
+            welcome_subtitle: "Guide complet et informations pratiques pour votre séjour",
+            booklet_title: "Livret d'accueil",
+            booklet_desc: "Lire le livret d'accueil en direct",
+            booking_card_title: "Réserver votre prochaine destination",
+            booking_card_desc: "Bénéficiez de nos meilleurs tarifs en direct",
+            need_help: "Besoin d'aide ?",
+            call_concierge: "Appeler la conciergerie",
+            videos_title: "Modes d'emploi",
+            videos_subtitle: "Fonctionnement des équipements en vidéo",
+            video_search_placeholder: "Rechercher un équipement (ex: café, lave-linge...)",
+            no_video_found: "Aucun équipement trouvé pour cette recherche.",
+            home_title: "Portail Voyageurs",
+            home_subtitle: "Conciergerie Carré d'Hôtes",
+            home_welcome: "Bienvenue",
+            home_welcome_desc: "Sélectionnez votre hébergement pour consulter vos guides et vidéos.",
+            home_not_booked: "Vous n'avez pas encore réservé ?",
+            home_not_booked_desc: "Découvrez tous nos hébergements et réservez votre séjour en direct.",
+            home_book_btn: "Réserver votre prochaine destination",
+            not_found_title: "Logement introuvable",
+            not_found_desc: "Aucun hébergement actif ne correspond à cette adresse.",
+            not_found_btn: "Voir tous les logements",
+            error_title: "Configuration requise",
+            error_desc: "Impossible de se connecter à la base MySQL.",
+            error_retry: "Lancer le test de connexion",
+            footer_wish: "Nous vous souhaitons un excellent séjour !",
+            footer_concierge: "Carré d'Hôtes — Conciergerie à Lyon",
+            pdf_title_fr: "Livret d'accueil (Français)",
+            pdf_title_en: "Welcome Guide (English)",
+            pdf_reading: "Lecture directe",
+            pdf_open_drive: "Ouvrir dans un nouvel onglet",
+            pdf_loading: "Chargement du guide de bienvenue...",
+            pdf_close: "Fermer",
+            video_modal_title: "Vidéo explicative",
+            booking_modal_title: "Réserver votre prochaine destination",
+            booking_modal_subtitle: "Conciergerie Carré d'Hôtes · Réservation directe",
+            booking_spinner: "Chargement du moteur de recherche...",
+            offline_toast: "Mode hors-ligne actif (guides consultés disponibles)",
+            pwa_title: "Installer l'application",
+            pwa_desc: "Accédez à vos guides et vidéos en un clic depuis votre écran d'accueil, même hors ligne.",
+            pwa_later: "Plus tard",
+            pwa_add: "Ajouter à l'écran d'accueil",
+            pwa_ios_step1: "Appuyez sur Partager (en bas de votre écran)",
+            pwa_ios_step2: "Faites défiler et choisissez « Sur l'écran d'accueil »",
+            pwa_ios_gotit: "J'ai compris"
+        },
+        en: {
+            app_loading: "Loading your portal...",
+            topbar_visit: "Visit carredhotes.fr",
+            theme_toggle: "Toggle dark / light mode",
+            wifi_network: "WiFi Network",
+            wifi_copy: "Copy",
+            wifi_copied: "Copied!",
+            tab_infos: "Info",
+            tab_videos: "Videos",
+            welcome_title: "Welcome Booklet",
+            welcome_subtitle: "Complete guide and practical information for your stay",
+            booklet_title: "Welcome Booklet",
+            booklet_desc: "Read complete welcome booklet",
+            booking_card_title: "Book your next destination",
+            booking_card_desc: "Enjoy our best direct rates without fees",
+            need_help: "Need help?",
+            call_concierge: "Call the concierge",
+            videos_title: "Instructions & Tutorials",
+            videos_subtitle: "How to use equipment in video",
+            video_search_placeholder: "Search equipment (e.g. coffee, washer, stove)...",
+            no_video_found: "No equipment found for this search.",
+            home_title: "Guest Portal",
+            home_subtitle: "Carré d'Hôtes Concierge",
+            home_welcome: "Welcome",
+            home_welcome_desc: "Select your accommodation to access your guides and videos.",
+            home_not_booked: "Haven't booked yet?",
+            home_not_booked_desc: "Discover all our accommodations and book directly.",
+            home_book_btn: "Book your next destination",
+            not_found_title: "Accommodation not found",
+            not_found_desc: "No active accommodation matches this address.",
+            not_found_btn: "View all accommodations",
+            error_title: "Configuration required",
+            error_desc: "Unable to connect to the MySQL database.",
+            error_retry: "Run connection test",
+            footer_wish: "Have a wonderful stay in Lyon!",
+            footer_concierge: "Carré d'Hôtes — Concierge in Lyon",
+            pdf_title_fr: "Welcome Guide (French)",
+            pdf_title_en: "Welcome Guide (English)",
+            pdf_reading: "Direct reading",
+            pdf_open_drive: "Open in a new tab",
+            pdf_loading: "Loading welcome guide...",
+            pdf_close: "Close",
+            video_modal_title: "Tutorial video",
+            booking_modal_title: "Book your next destination",
+            booking_modal_subtitle: "Carré d'Hôtes Concierge · Direct booking",
+            booking_spinner: "Loading search engine...",
+            offline_toast: "Offline mode active (viewed guides available)",
+            pwa_title: "Install the app",
+            pwa_desc: "Access your guides and videos in one tap from your home screen, even offline.",
+            pwa_later: "Later",
+            pwa_add: "Add to home screen",
+            pwa_ios_step1: "Tap Share (at the bottom of your screen)",
+            pwa_ios_step2: "Scroll down and choose 'Add to Home Screen'",
+            pwa_ios_gotit: "Got it"
+        }
+    },
+
+    init() {
+        const saved = localStorage.getItem('cdh_language');
+        if (saved === 'fr' || saved === 'en') {
+            this.currentLang = saved;
+        } else {
+            const browserLang = (navigator.language || navigator.userLanguage || 'fr').toLowerCase();
+            this.currentLang = browserLang.startsWith('fr') ? 'fr' : 'en';
+        }
+        this.apply();
+    },
+
+    setLanguage(lang) {
+        if (lang !== 'fr' && lang !== 'en') return;
+        this.currentLang = lang;
+        try { localStorage.setItem('cdh_language', lang); } catch (e) {}
+        this.apply();
+        if (AppState.currentProperty) {
+            PropertyRenderer.updateLanguageContent();
+        } else if (AppState.allProperties && AppState.allProperties.length > 0) {
+            ListRenderer.render(AppState.allProperties);
+        }
+    },
+
+    t(key) {
+        return (this.translations[this.currentLang] && this.translations[this.currentLang][key])
+            || (this.translations['fr'] && this.translations['fr'][key])
+            || key;
+    },
+
+    apply() {
+        document.documentElement.lang = this.currentLang;
+        const btnFr = document.getElementById('lang-btn-fr');
+        const btnEn = document.getElementById('lang-btn-en');
+        if (btnFr) {
+            btnFr.classList.toggle('active', this.currentLang === 'fr');
+            btnFr.setAttribute('aria-pressed', this.currentLang === 'fr');
+        }
+        if (btnEn) {
+            btnEn.classList.toggle('active', this.currentLang === 'en');
+            btnEn.setAttribute('aria-pressed', this.currentLang === 'en');
+        }
+
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+            const key = el.getAttribute('data-i18n');
+            const translation = this.t(key);
+            if (translation) el.textContent = translation;
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            const translation = this.t(key);
+            if (translation) el.placeholder = translation;
+        });
+
+        document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+            const key = el.getAttribute('data-i18n-title');
+            const translation = this.t(key);
+            if (translation) el.title = translation;
+        });
+    }
+};
+
+// -----------------------------------------------------------------------------
 // 2. UTILITAIRES & SÉCURITÉ (XSS & URLS)
 // -----------------------------------------------------------------------------
 const Utils = {
@@ -343,7 +524,7 @@ const Router = {
         } else if (part1 === 'videos' || part1 === 'tutos') {
             section = 'videos';
             subSection = part2;
-        } else if (part1 === 'guides') {
+        } else if (part1 === 'guides' || part1 === 'infos' || part1 === 'info') {
             section = 'guides';
             subSection = part2;
         } else if (part1.startsWith('pdf-')) {
@@ -364,7 +545,7 @@ const Router = {
             if (section === 'videos') {
                 newPath += '/videos';
                 if (subSection) newPath += '/' + subSection;
-            } else if (section === 'guides') {
+            } else if (section === 'guides' || section === 'infos') {
                 if (subSection) newPath += '/guides/' + subSection;
             } else if (section === 'reservation') {
                 newPath += '/reservation';
@@ -420,9 +601,13 @@ const ApiService = {
 // -----------------------------------------------------------------------------
 const ModalManager = {
     // --- MODALE PDF ---
-    openPdf(lang = 'fr', updateUrl = true) {
+    openPdf(lang = null, updateUrl = true) {
         if (!AppState.currentProperty) return;
-        const pdfUrl = lang === 'en' ? AppState.currentProperty.guide_en_url : AppState.currentProperty.guide_fr_url;
+        const activeLang = lang || I18n.currentLang;
+        let pdfUrl = activeLang === 'en' ? AppState.currentProperty.guide_en_url : AppState.currentProperty.guide_fr_url;
+        if (!pdfUrl) {
+            pdfUrl = activeLang === 'en' ? AppState.currentProperty.guide_fr_url : AppState.currentProperty.guide_en_url;
+        }
         if (!pdfUrl) return;
 
         const modal = document.getElementById('modal-pdf');
@@ -431,8 +616,8 @@ const ModalManager = {
         const flagEl = document.getElementById('pdf-modal-flag');
         const extLink = document.getElementById('pdf-modal-external-link');
 
-        titleEl.textContent = lang === 'en' ? "Welcome Guide (English)" : "Livret d'accueil (Français)";
-        flagEl.textContent = lang === 'en' ? "🇬🇧" : "🇫🇷";
+        titleEl.textContent = activeLang === 'en' ? I18n.t('pdf_title_en') : I18n.t('pdf_title_fr');
+        flagEl.textContent = activeLang === 'en' ? "🇬🇧" : "🇫🇷";
         extLink.href = Utils.safeUrl(pdfUrl);
 
         // Réinitialise tout style restant d'un glissement gestuel
@@ -512,8 +697,9 @@ const ModalManager = {
         const iconEl = document.getElementById('video-modal-icon');
         const extLink = document.getElementById('video-external-btn');
 
-        titleEl.textContent = video.title_fr;
-        subtitleEl.textContent = video.title_en || '';
+        const isEn = I18n.currentLang === 'en';
+        titleEl.textContent = isEn ? (video.title_en || video.title_fr) : video.title_fr;
+        subtitleEl.textContent = isEn ? (video.title_en ? video.title_fr : '') : (video.title_en || '');
         iconEl.textContent = video.icon || '💡';
         extLink.href = Utils.safeUrl(video.video_url);
 
@@ -1535,8 +1721,6 @@ const PropertyRenderer = {
         // Textes principaux
         document.getElementById('prop-name').textContent = prop.name;
         document.getElementById('prop-subtitle').textContent = prop.subtitle || "Conciergerie Carré d'Hôtes";
-        document.getElementById('prop-welcome-title').textContent = prop.welcome_title || "Livrets d'accueil";
-        document.getElementById('prop-welcome-subtitle').textContent = prop.welcome_subtitle || "Choisissez votre langue / Choose your language";
 
         // Bloc Wi-Fi
         const wifiCard = document.getElementById('prop-wifi-card');
@@ -1548,30 +1732,8 @@ const PropertyRenderer = {
             wifiCard.classList.add('hidden');
         }
 
-        // Cartes des guides FR / EN avec animation fluide en cascade
-        const cardFr = document.getElementById('card-guide-fr');
-        const cardEn = document.getElementById('card-guide-en');
-        if (cardFr) {
-            cardFr.classList.toggle('hidden', !prop.guide_fr_url);
-            cardFr.classList.add('cascade-item');
-            cardFr.style.animationDelay = '0.04s';
-        }
-        if (cardEn) {
-            cardEn.classList.toggle('hidden', !prop.guide_en_url);
-            cardEn.classList.add('cascade-item');
-            cardEn.style.animationDelay = '0.09s';
-        }
-
-        // Bloc contact conciergerie
-        const contactBlock = document.getElementById('prop-contact-block');
-        if (prop.contact_phone) {
-            const phoneLink = document.getElementById('prop-contact-phone-link');
-            phoneLink.href = Utils.safeUrl(`tel:${prop.contact_phone}`);
-            document.getElementById('prop-contact-phone-label').textContent = `Appeler la conciergerie : ${prop.contact_phone}`;
-            contactBlock.classList.remove('hidden');
-        } else {
-            contactBlock.classList.add('hidden');
-        }
+        // Mise à jour de la carte du livret et des éléments dépendant de la langue
+        this.updateLanguageContent();
 
         // Onglets et Vidéos
         const tabsContainer = document.getElementById('property-tabs-container');
@@ -1601,8 +1763,10 @@ const PropertyRenderer = {
 
         // Traitement des deep-links dans l'URL
         if (route.subSection === 'pdf-fr') {
+            I18n.setLanguage('fr');
             ModalManager.openPdf('fr', false);
         } else if (route.subSection === 'pdf-en') {
+            I18n.setLanguage('en');
             ModalManager.openPdf('en', false);
         } else if (route.section === 'videos' && route.subSection) {
             const targetSlug = route.subSection.toLowerCase();
@@ -1616,9 +1780,78 @@ const PropertyRenderer = {
         }
     },
 
+    updateLanguageContent() {
+        if (!AppState.currentProperty) return;
+        const prop = AppState.currentProperty;
+        const isEn = I18n.currentLang === 'en';
+
+        // 1. Titres de bienvenue
+        const welcomeTitleEl = document.getElementById('prop-welcome-title');
+        const welcomeSubtitleEl = document.getElementById('prop-welcome-subtitle');
+        if (welcomeTitleEl) {
+            welcomeTitleEl.textContent = prop.welcome_title || I18n.t('welcome_title');
+        }
+        if (welcomeSubtitleEl) {
+            welcomeSubtitleEl.textContent = prop.welcome_subtitle || I18n.t('welcome_subtitle');
+        }
+
+        // 2. Carte unique Livret d'accueil (FR ou EN selon langue active)
+        const cardActive = document.getElementById('card-guide-active');
+        const flagEl = document.getElementById('guide-active-flag');
+        const titleEl = document.getElementById('guide-active-title');
+        const descEl = document.getElementById('guide-active-desc');
+
+        const hasGuide = Boolean(prop.guide_fr_url || prop.guide_en_url);
+        if (cardActive) {
+            cardActive.classList.toggle('hidden', !hasGuide);
+            cardActive.classList.add('cascade-item');
+            cardActive.style.animationDelay = '0.04s';
+        }
+        if (flagEl) {
+            flagEl.textContent = isEn ? '🇬🇧' : '🇫🇷';
+        }
+        if (titleEl) {
+            titleEl.textContent = I18n.t('booklet_title');
+        }
+        if (descEl) {
+            descEl.textContent = I18n.t('booklet_desc');
+        }
+
+        // 3. Bloc contact conciergerie
+        const contactBlock = document.getElementById('prop-contact-block');
+        if (prop.contact_phone) {
+            const phoneLink = document.getElementById('prop-contact-phone-link');
+            if (phoneLink) phoneLink.href = Utils.safeUrl(`tel:${prop.contact_phone}`);
+            const phoneLabel = document.getElementById('prop-contact-phone-label');
+            if (phoneLabel) phoneLabel.textContent = `${I18n.t('call_concierge')} : ${prop.contact_phone}`;
+            if (contactBlock) contactBlock.classList.remove('hidden');
+        } else if (contactBlock) {
+            contactBlock.classList.add('hidden');
+        }
+
+        // 4. Actualiser la grille des vidéos avec les titres traduits
+        if (AppState.currentVideos && AppState.currentVideos.length > 0) {
+            this.renderVideos(AppState.currentVideos);
+        }
+    },
+
+    openCurrentGuide() {
+        if (!AppState.currentProperty) return;
+        const prop = AppState.currentProperty;
+        const isEn = I18n.currentLang === 'en';
+        let targetLang = isEn ? 'en' : 'fr';
+        if (isEn && !prop.guide_en_url && prop.guide_fr_url) {
+            targetLang = 'fr';
+        } else if (!isEn && !prop.guide_fr_url && prop.guide_en_url) {
+            targetLang = 'en';
+        }
+        ModalManager.openPdf(targetLang);
+    },
+
     renderVideos(videos) {
         const container = document.getElementById('videos-list');
         container.innerHTML = '';
+        const isEn = I18n.currentLang === 'en';
 
         videos.forEach((video, index) => {
             const card = document.createElement('div');
@@ -1630,15 +1863,18 @@ const PropertyRenderer = {
             const bgClass = Utils.sanitizeClassName(video.icon_bg_color, 'bg-blue-50');
             const textClass = Utils.sanitizeClassName(video.icon_text_color, 'text-blue-500');
 
+            const primaryTitle = isEn ? (video.title_en || video.title_fr) : video.title_fr;
+            const secondaryTitle = isEn ? (video.title_en ? video.title_fr : '') : (video.title_en || '');
+
             card.innerHTML = `
                 <div class="w-11 h-11 flex-shrink-0 ${bgClass} ${textClass} rounded-xl flex items-center justify-center text-xl mr-3.5">
                     ${Utils.escapeHtml(video.icon || '💡')}
                 </div>
                 <div class="flex-1 min-w-0 pr-2">
                     <h3 class="font-semibold text-sm text-ink dark:text-white truncate group-hover:text-gold transition">
-                        ${Utils.escapeHtml(video.title_fr)}
+                        ${Utils.escapeHtml(primaryTitle)}
                     </h3>
-                    ${video.title_en ? `<p class="text-[11px] text-ink-faint dark:text-gray-400 truncate">${Utils.escapeHtml(video.title_en)}</p>` : ''}
+                    ${secondaryTitle ? `<p class="text-[11px] text-ink-faint dark:text-gray-400 truncate">${Utils.escapeHtml(secondaryTitle)}</p>` : ''}
                 </div>
                 <div class="w-8 h-8 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
                     <svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -1787,7 +2023,10 @@ const ListRenderer = {
                 };
                 
                 const count = parseInt(p.videos_count || p.tutorials_count || 0, 10);
-                const subtitleText = count > 0 ? `Guides & ${count} vidéos` : `Livret d'accueil (FR / EN)`;
+                const isEn = I18n.currentLang === 'en';
+                const subtitleText = count > 0 
+                    ? (isEn ? `Info & ${count} videos` : `Infos & ${count} vidéos`) 
+                    : (isEn ? `Welcome Booklet (FR / EN)` : `Livret d'accueil (FR / EN)`);
 
                 card.innerHTML = `
                     <div class="flex items-center min-w-0 pr-3">
@@ -2056,7 +2295,8 @@ const App = {
                 PropertyRenderer.render(result.data.property, videoList, route);
             } else if (result.type === 'list') {
                 ScrollManager.unlock();
-                ListRenderer.render(result.data.properties);
+                AppState.allProperties = result.data.properties || [];
+                ListRenderer.render(AppState.allProperties);
             }
 
             // Ouverture automatique si l'URL pointe vers la réservation
@@ -2091,11 +2331,11 @@ const App = {
         if (!AppState.currentProperty || !AppState.currentProperty.wifi_password) return;
         const pwd = AppState.currentProperty.wifi_password;
         const copyBtn = document.getElementById('wifi-copy-btn');
-        const originalText = copyBtn ? copyBtn.textContent : 'Copier';
+        const originalText = I18n.t('wifi_copy');
 
         const triggerFeedback = () => {
             if (copyBtn) {
-                copyBtn.textContent = '✓ Copié !';
+                copyBtn.textContent = '✓ ' + I18n.t('wifi_copied');
                 copyBtn.classList.add('btn-wifi-copied');
                 setTimeout(() => {
                     copyBtn.textContent = originalText;
@@ -2210,6 +2450,8 @@ const App = {
 // -----------------------------------------------------------------------------
 // 12. PONT DE COMPATIBILITÉ GLOBALE (POUR LES GESTIONNAIRES ONCLICK EN HTML)
 // -----------------------------------------------------------------------------
+window.setLanguage = (lang) => I18n.setLanguage(lang);
+window.openCurrentGuide = () => PropertyRenderer.openCurrentGuide();
 window.toggleTheme = () => ThemeManager.toggle();
 window.navigateToTab = (tabId) => PropertyRenderer.navigateTab(tabId);
 window.openPdfModal = (lang) => ModalManager.openPdf(lang);
@@ -2238,6 +2480,7 @@ window.showInstallPrompt = (type = null) => {
 // 13. INITIALISATION AU CHARGEMENT DU DOM
 // -----------------------------------------------------------------------------
 window.addEventListener('DOMContentLoaded', () => {
+    I18n.init();
     ScrollManager.init();
     ScrollManager.resetToTop();
     ThemeManager.init();

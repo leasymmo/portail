@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=5.3">
+    <link rel="stylesheet" href="assets/css/custom.css?v=5.4">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -438,21 +438,33 @@
         <!-- BARRE SUPÉRIEURE : LOGO + TITRE CARRÉ D'HÔTES + THEME           -->
         <!-- =============================================================== -->
         <header id="main-topbar" class="app-topbar px-5 sm:px-8 flex items-center justify-between border-b border-[#e2e4e6] dark:border-[#38455d] bg-[#faf9f6] dark:bg-[#243047] transition-colors duration-200" style="padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-bottom: 10px;">
-            <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2.5 group" title="Visiter carredhotes.fr">
+            <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2.5 group" title="Visiter carredhotes.fr" data-i18n-title="topbar_visit">
                 <img id="brand-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-7 w-7 object-contain transition-transform group-hover:scale-105">
                 <span class="text-xs sm:text-sm font-bold tracking-wider uppercase text-gold group-hover:text-gold-hover transition">Carré d'Hôtes</span>
             </a>
-            <button id="theme-toggle-btn" onclick="toggleTheme()" class="theme-switch-btn" title="Basculer le mode sombre / clair" aria-label="Basculer le mode sombre / clair">
-                <!-- Icône Soleil (visible en mode dark pour passer en light) -->
-                <svg id="icon-sun" class="w-4 h-4 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="5" stroke-width="2"/>
-                    <path stroke-linecap="round" stroke-width="2" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                </svg>
-                <!-- Icône Lune (visible en mode light pour passer en dark) -->
-                <svg id="icon-moon" class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-                </svg>
-            </button>
+            <div class="flex items-center space-x-2 sm:space-x-2.5">
+                <!-- Sélecteur de langue compact [ 🇫🇷 | 🇬🇧 ] -->
+                <div id="lang-switch-container" class="lang-switch-group">
+                    <button id="lang-btn-fr" onclick="setLanguage('fr')" type="button" class="lang-toggle-btn active" title="Passer en Français" aria-label="Passer en Français" aria-pressed="true">
+                        <span>🇫🇷</span>
+                    </button>
+                    <button id="lang-btn-en" onclick="setLanguage('en')" type="button" class="lang-toggle-btn" title="Switch to English" aria-label="Switch to English" aria-pressed="false">
+                        <span>🇬🇧</span>
+                    </button>
+                </div>
+                <!-- Bascule Mode Sombre / Clair -->
+                <button id="theme-toggle-btn" onclick="toggleTheme()" class="theme-switch-btn" title="Basculer le mode sombre / clair" aria-label="Basculer le mode sombre / clair" data-i18n-title="theme_toggle">
+                    <!-- Icône Soleil (visible en mode dark pour passer en light) -->
+                    <svg id="icon-sun" class="w-4 h-4 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5" stroke-width="2"/>
+                        <path stroke-linecap="round" stroke-width="2" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                    <!-- Icône Lune (visible en mode light pour passer en dark) -->
+                    <svg id="icon-moon" class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <!-- =============================================================== -->
@@ -486,22 +498,22 @@
                             <p id="wifi-password" class="text-[11px] sm:text-xs text-ink-soft dark:text-gray-300 font-mono"></p>
                         </div>
                     </div>
-                    <button id="wifi-copy-btn" onclick="copyWifiPassword()" class="btn-wifi-copy px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium bg-white dark:bg-[#28344c] text-ink dark:text-white border border-[#e2e4e6] dark:border-[#38455d] rounded-lg hover:text-gold transition shadow-xs">
+                    <button id="wifi-copy-btn" onclick="copyWifiPassword()" class="btn-wifi-copy px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium bg-white dark:bg-[#28344c] text-ink dark:text-white border border-[#e2e4e6] dark:border-[#38455d] rounded-lg hover:text-gold transition shadow-xs" data-i18n="wifi_copy">
                         Copier
                     </button>
                 </div>
             </header>
 
-            <!-- CONTRÔLEUR D'ONGLETS SEGMENTÉS (« Guides » vs « Vidéos ») STICKY -->
+            <!-- CONTRÔLEUR D'ONGLETS SEGMENTÉS (« Infos » vs « Vidéos ») STICKY -->
             <div id="property-tabs-container" class="property-tabs-sticky px-5 sm:px-8 py-2 bg-white dark:bg-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
                 <div class="segmented-nav max-w-md mx-auto sm:max-w-lg" role="tablist">
                     <button id="btn-tab-guides" onclick="navigateToTab('guides')" role="tab" aria-selected="true" class="segmented-btn active">
-                        <span class="tab-icon text-base">📚</span>
-                        <span>Guides</span>
+                        <span class="tab-icon text-base">ℹ️</span>
+                        <span id="tab-label-guides" data-i18n="tab_infos">Infos</span>
                     </button>
                     <button id="btn-tab-videos" onclick="navigateToTab('videos')" role="tab" aria-selected="false" class="segmented-btn">
                         <span class="tab-icon text-base">🎥</span>
-                        <span>Vidéos</span>
+                        <span id="tab-label-videos" data-i18n="tab_videos">Vidéos</span>
                         <span id="videos-badge-count" class="text-[10px] bg-gold/15 text-gold font-bold px-1.5 py-0.5 rounded-full ml-0.5">0</span>
                     </button>
                 </div>
@@ -513,38 +525,23 @@
 
                 <!-- ----------------------------------------------------------- -->
                 <!-- ----------------------------------------------------------- -->
-                <!-- SECTION 1 : GUIDES & LIVRETS D'ACCUEIL                      -->
+                <!-- SECTION 1 : INFOS & LIVRET D'ACCUEIL                        -->
                 <!-- ----------------------------------------------------------- -->
                 <section id="content-guides" class="space-y-3 sm:space-y-4">
                     <div class="text-center mb-2.5 sm:mb-4">
-                        <h2 id="prop-welcome-title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Livrets d'accueil</h2>
-                        <p id="prop-welcome-subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Choisissez votre langue / Choose your language</p>
+                        <h2 id="prop-welcome-title" data-i18n="welcome_title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Livret d'accueil</h2>
+                        <p id="prop-welcome-subtitle" data-i18n="welcome_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Guide complet et informations pratiques pour votre séjour</p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-3.5">
-                        <!-- Carte Guide Français (Ouvre la modale PDF) -->
-                        <div id="card-guide-fr" onclick="openPdfModal('fr')" 
-                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
+                        <!-- Carte unique Livret d'accueil (Affiche directement dans la langue sélectionnée) -->
+                        <div id="card-guide-active" onclick="openCurrentGuide()" 
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🇫🇷</span>
+                                <span id="guide-active-flag" class="text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🇫🇷</span>
                                 <div class="min-w-0">
-                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Français</span>
-                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate">Lire le livret d'accueil en direct</p>
-                                </div>
-                            </div>
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </div>
-                        </div>
-
-                        <!-- Carte Guide Anglais (Ouvre la modale PDF) -->
-                        <div id="card-guide-en" onclick="openPdfModal('en')" 
-                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group">
-                            <div class="flex items-center min-w-0 pr-2">
-                                <span class="text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🇬🇧</span>
-                                <div class="min-w-0">
-                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">English</span>
-                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate">Read complete welcome booklet</p>
+                                    <span id="guide-active-title" data-i18n="booklet_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Livret d'accueil</span>
+                                    <p id="guide-active-desc" data-i18n="booklet_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate">Lire le livret d'accueil en direct</p>
                                 </div>
                             </div>
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
@@ -554,12 +551,12 @@
 
                         <!-- Carte Réserver votre prochaine destination (Ouvre la modale de réservation) -->
                         <div onclick="openBookingModal()" 
-                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group">
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span class="text-2xl mr-3.5 drop-shadow-xs flex-shrink-0">✨</span>
                                 <div class="min-w-0">
-                                    <span class="text-xs sm:text-sm font-semibold text-ink dark:text-white group-hover:text-gold transition block leading-tight">Réserver votre prochaine destination</span>
-                                    <p class="text-[11px] text-ink-soft dark:text-gray-300 mt-0.5 truncate">Book your next destination</p>
+                                    <span data-i18n="booking_card_title" class="text-xs sm:text-sm font-semibold text-ink dark:text-white group-hover:text-gold transition block leading-tight">Réserver votre prochaine destination</span>
+                                    <p data-i18n="booking_card_desc" class="text-[11px] text-ink-soft dark:text-gray-300 mt-0.5 truncate">Bénéficiez de nos meilleurs tarifs en direct</p>
                                 </div>
                             </div>
                             <div class="w-8 h-8 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 ml-1">
@@ -570,10 +567,10 @@
 
                     <!-- Contact & Assistance Conciergerie (optionnel si configuré) -->
                     <div id="prop-contact-block" class="hidden mt-4 pt-3 sm:mt-6 sm:pt-4 border-t border-[#e2e4e6] dark:border-[#38455d] text-center max-w-md mx-auto">
-                        <p class="text-[11px] sm:text-xs font-semibold text-ink-faint dark:text-gray-400 uppercase tracking-wider mb-2 sm:mb-3">Besoin d'aide ?</p>
+                        <p data-i18n="need_help" class="text-[11px] sm:text-xs font-semibold text-ink-faint dark:text-gray-400 uppercase tracking-wider mb-2 sm:mb-3">Besoin d'aide ?</p>
                         <a id="prop-contact-phone-link" href="#" class="inline-flex items-center justify-center gap-2 py-2 px-3.5 sm:py-2.5 sm:px-4 bg-[#f3f3ec] dark:bg-[#1e2739] rounded-xl text-xs font-semibold text-ink dark:text-white hover:text-gold transition">
                             <span>📞</span>
-                            <span id="prop-contact-phone-label">Appeler la conciergerie</span>
+                            <span id="prop-contact-phone-label" data-i18n="call_concierge">Appeler la conciergerie</span>
                         </a>
                     </div>
                 </section>
@@ -583,14 +580,15 @@
                 <!-- ----------------------------------------------------------- -->
                 <section id="content-videos" class="hidden space-y-4">
                     <div class="text-center mb-3 sm:mb-4">
-                        <h2 class="text-lg sm:text-xl font-bold text-ink dark:text-white">Modes d'emploi</h2>
-                        <p class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-1">Fonctionnement des équipements en vidéo</p>
+                        <h2 data-i18n="videos_title" class="text-lg sm:text-xl font-bold text-ink dark:text-white">Modes d'emploi</h2>
+                        <p data-i18n="videos_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-1">Fonctionnement des équipements en vidéo</p>
                     </div>
 
                     <!-- Filtre de recherche rapide -->
                     <div class="relative mb-4 max-w-md mx-auto">
                         <input type="text" id="video-search" oninput="filterVideos()" 
                                placeholder="Rechercher un équipement (ex: café, lave-linge...)" 
+                               data-i18n-placeholder="video_search_placeholder"
                                class="w-full pl-9 pr-4 py-2.5 bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] rounded-xl text-xs sm:text-sm text-ink dark:text-white placeholder-ink-light focus:outline-none focus:border-gold transition shadow-2xs">
                         <span class="absolute left-3 top-2.5 text-xs text-ink-faint">🔍</span>
                     </div>
@@ -598,7 +596,7 @@
                     <!-- Grille des vidéos -->
                     <div id="videos-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
 
-                    <p id="no-video-found" class="hidden text-center text-xs text-ink-faint py-6">
+                    <p id="no-video-found" data-i18n="no_video_found" class="hidden text-center text-xs text-ink-faint py-6">
                         Aucun équipement trouvé pour cette recherche.
                     </p>
                 </section>
@@ -612,18 +610,18 @@
         <!-- =============================================================== -->
         <div id="view-list" class="hidden flex-1 flex flex-col">
             <header class="px-6 sm:px-10 py-3 sm:py-4 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
-                <h1 class="text-2xl sm:text-3xl font-bold text-ink dark:text-white tracking-tight mb-0.5 font-serif-brand">
+                <h1 data-i18n="home_title" class="text-2xl sm:text-3xl font-bold text-ink dark:text-white tracking-tight mb-0.5 font-serif-brand">
                     Portail Voyageurs
                 </h1>
-                <p class="text-xs sm:text-sm font-semibold text-gold uppercase tracking-wider">
+                <p data-i18n="home_subtitle" class="text-xs sm:text-sm font-semibold text-gold uppercase tracking-wider">
                     Conciergerie Carré d'Hôtes
                 </p>
             </header>
 
             <div id="list-scroll-container" class="flex-1 p-5 sm:p-8">
                 <div class="text-center mb-6">
-                    <h2 class="text-base sm:text-lg font-bold text-ink dark:text-white">Bienvenue</h2>
-                    <p class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5">Sélectionnez votre hébergement pour consulter vos guides et vidéos.</p>
+                    <h2 data-i18n="home_welcome" class="text-base sm:text-lg font-bold text-ink dark:text-white">Bienvenue</h2>
+                    <p data-i18n="home_welcome_desc" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5">Sélectionnez votre hébergement pour consulter vos guides et vidéos.</p>
                 </div>
 
                 <div id="properties-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -633,11 +631,11 @@
                 <!-- Invitation réservation sur page d'accueil -->
                 <div class="mt-8 pt-6 border-t border-[#e2e4e6] dark:border-[#38455d] max-w-lg mx-auto">
                     <div class="rounded-2xl p-5 bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] text-center">
-                        <p class="text-xs font-semibold text-ink dark:text-white mb-1">Vous n'avez pas encore réservé ?</p>
-                        <p class="text-[11px] text-ink-faint dark:text-gray-400 mb-3">Découvrez tous nos hébergements et réservez votre séjour en direct.</p>
+                        <p data-i18n="home_not_booked" class="text-xs font-semibold text-ink dark:text-white mb-1">Vous n'avez pas encore réservé ?</p>
+                        <p data-i18n="home_not_booked_desc" class="text-[11px] text-ink-faint dark:text-gray-400 mb-3">Découvrez tous nos hébergements et réservez votre séjour en direct.</p>
                         <button type="button" onclick="openBookingModal()" 
                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-ink dark:bg-gold text-white dark:text-ink text-xs font-semibold rounded-xl hover:opacity-90 transition cursor-pointer">
-                            <span>Réserver votre prochaine destination</span>
+                            <span data-i18n="home_book_btn">Réserver votre prochaine destination</span>
                             <span>→</span>
                         </button>
                     </div>
@@ -653,11 +651,11 @@
             <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/30 text-rose-500 flex items-center justify-center text-3xl mb-4 border border-rose-100 dark:border-rose-800">
                 🔍
             </div>
-            <h2 class="text-lg font-bold text-ink dark:text-white mb-1">Logement introuvable</h2>
-            <p id="not-found-msg" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
+            <h2 data-i18n="not_found_title" class="text-lg font-bold text-ink dark:text-white mb-1">Logement introuvable</h2>
+            <p id="not-found-msg" data-i18n="not_found_desc" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
                 Aucun hébergement actif ne correspond à cette adresse.
             </p>
-            <button onclick="navigateToUrl(window.__CDH_BASE_PATH || '/portail/')" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-semibold hover:opacity-90 transition shadow-sm">
+            <button onclick="navigateToUrl(window.__CDH_BASE_PATH || '/portail/')" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-semibold hover:opacity-90 transition shadow-sm" data-i18n="not_found_btn">
                 Voir tous les logements
             </button>
         </div>
@@ -683,11 +681,10 @@
         <!-- PIED DE PAGE EN FLUX NORMAL (SOUS LE CONTENU)                   -->
         <!-- =============================================================== -->
         <footer class="mt-auto py-3 sm:py-3.5 text-center text-xs bg-[#faf9f6] dark:bg-[#243047] border-t border-[#e2e4e6] dark:border-[#38455d] px-4 transition-colors duration-200" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));">
-            <p class="font-medium text-ink-soft dark:text-gray-300">Nous vous souhaitons un excellent séjour !</p>
-            <p class="text-[11px] text-ink-faint dark:text-gray-400 mt-0.5">Have a wonderful stay in Lyon!</p>
+            <p data-i18n="footer_wish" class="font-medium text-ink-soft dark:text-gray-300">Nous vous souhaitons un excellent séjour !</p>
 
             <div class="mt-2 text-[10px] text-ink-faint dark:text-gray-400">
-                <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition font-medium">
+                <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition font-medium" data-i18n="footer_concierge">
                     Carré d'Hôtes &mdash; Conciergerie à Lyon
                 </a>
             </div>
@@ -708,15 +705,15 @@
                     <span id="pdf-modal-flag" class="text-xl">🇫🇷</span>
                     <div>
                         <h3 id="pdf-modal-title" class="text-sm font-bold text-ink dark:text-white truncate">Livret d'accueil</h3>
-                        <p class="text-[10px] text-ink-faint dark:text-gray-400">Lecture directe</p>
+                        <p id="pdf-modal-status-label" class="text-[10px] text-ink-faint dark:text-gray-400" data-i18n="pdf_reading">Lecture directe</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 flex-shrink-0">
                     <a id="pdf-modal-external-link" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet">
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" data-i18n-title="pdf_open_drive">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
-                    <button onclick="closePdfModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer">
+                    <button onclick="closePdfModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
                         ✕
                     </button>
                 </div>
@@ -727,7 +724,7 @@
                 <!-- Indicateur de chargement -->
                 <div id="pdf-loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-[#1e2739]/95 z-20 transition-opacity p-4 text-center">
                     <div class="w-8 h-8 border-3 border-gold border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span id="pdf-loading-status" class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du guide de bienvenue...</span>
+                    <span id="pdf-loading-status" data-i18n="pdf_loading" class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du guide de bienvenue...</span>
                 </div>
 
                 <!-- Zone de pages PDF manipulée par transform scale & translate centré -->
@@ -752,16 +749,16 @@
                         <span id="video-modal-icon">🫧</span>
                     </div>
                     <div class="truncate">
-                        <h3 id="video-modal-title" class="text-sm font-bold text-ink dark:text-white truncate">Vidéo explicative</h3>
+                        <h3 id="video-modal-title" data-i18n="video_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Vidéo explicative</h3>
                         <p id="video-modal-subtitle" class="text-[11px] text-ink-faint dark:text-gray-400 truncate"></p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
                     <a id="video-external-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet">
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" data-i18n-title="pdf_open_drive">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
-                    <button onclick="closeVideoModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer">
+                    <button onclick="closeVideoModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
                         ✕
                     </button>
                 </div>
@@ -797,16 +794,16 @@
                         <span>✨</span>
                     </div>
                     <div class="truncate">
-                        <h3 class="text-sm font-bold text-ink dark:text-white truncate">Réserver votre prochaine destination</h3>
-                        <p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Conciergerie Carré d'Hôtes &middot; Réservation directe</p>
+                        <h3 data-i18n="booking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Réserver votre prochaine destination</h3>
+                        <p data-i18n="booking_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Conciergerie Carré d'Hôtes &middot; Réservation directe</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 flex-shrink-0">
                     <a href="https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search" target="_blank" rel="noopener noreferrer" 
-                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet">
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" data-i18n-title="pdf_open_drive">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
-                    <button onclick="closeBookingModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer">
+                    <button onclick="closeBookingModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
                         ✕
                     </button>
                 </div>
@@ -816,7 +813,7 @@
             <div class="booking-full-container flex-1 min-h-0 w-full relative bg-white dark:bg-[#1b2333] overflow-hidden">
                 <div id="booking-loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-[#28344c]/90 z-10 transition-opacity">
                     <div class="w-8 h-8 border-3 border-gold border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du moteur de recherche...</span>
+                    <span data-i18n="booking_spinner" class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du moteur de recherche...</span>
                 </div>
                 <iframe src="https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search" 
                         width="100%" 
@@ -833,11 +830,14 @@
     <!-- Notification flottante "Mot de passe copié" -->
     <div id="copy-toast" class="bg-ink text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
         <span>✓</span>
-        <span>Mot de passe WiFi copié !</span>
+        <span data-i18n="wifi_copied">Mot de passe WiFi copié !</span>
     </div>
 
     <!-- Notification flottante "Mode hors-ligne" PWA -->
     <div id="offline-toast" class="bg-amber-600 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium flex items-center gap-2">
+        <span>📶</span>
+        <span data-i18n="offline_toast">Mode hors-ligne actif (guides consultés disponibles)</span>
+    </div>
         <span>📶</span>
         <span>Mode hors-ligne actif (guides consultés disponibles)</span>
     </div>
@@ -858,10 +858,10 @@
                 <img src="assets/icons/apple-touch-icon.png" alt="Carré d'Hôtes" class="w-12 h-12 rounded-xl object-cover shadow-xs flex-shrink-0 border border-[#e2e4e6] dark:border-[#38455d]">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1.5 flex-wrap">
-                        <h4 id="pwa-prompt-title" class="text-sm font-bold text-ink dark:text-white truncate">Installer l'application</h4>
+                        <h4 id="pwa-prompt-title" data-i18n="pwa_title" class="text-sm font-bold text-ink dark:text-white truncate">Installer l'application</h4>
                         <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">PWA</span>
                     </div>
-                    <p id="pwa-prompt-desc" class="text-xs text-ink-soft dark:text-gray-300 mt-0.5 line-clamp-2">
+                    <p id="pwa-prompt-desc" data-i18n="pwa_desc" class="text-xs text-ink-soft dark:text-gray-300 mt-0.5 line-clamp-2">
                         Accédez à vos guides et vidéos en un clic depuis votre écran d'accueil, même hors ligne.
                     </p>
                 </div>
@@ -869,12 +869,12 @@
 
             <!-- CONTENU A : Mode Android / Chrome / Navigateurs avec prompt natif -->
             <div id="pwa-prompt-native" class="mt-3.5 flex items-center justify-end space-x-2">
-                <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3 py-2 text-xs font-semibold text-ink-faint dark:text-gray-400 hover:text-ink dark:hover:text-white transition rounded-xl cursor-pointer">
+                <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3 py-2 text-xs font-semibold text-ink-faint dark:text-gray-400 hover:text-ink dark:hover:text-white transition rounded-xl cursor-pointer" data-i18n="pwa_later">
                     Plus tard
                 </button>
                 <button type="button" onclick="PwaManager.installApp()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-gold to-gold-hover text-white text-xs font-bold rounded-xl shadow-xs hover:opacity-95 transition transform active:scale-95 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span>Ajouter à l'écran d'accueil</span>
+                    <span data-i18n="pwa_add">Ajouter à l'écran d'accueil</span>
                 </button>
             </div>
 
@@ -882,14 +882,14 @@
             <div id="pwa-prompt-ios" class="hidden mt-3 pt-3 border-t border-[#e2e4e6] dark:border-[#38455d] space-y-2">
                 <div class="flex items-center gap-2.5 text-xs text-ink-soft dark:text-gray-300">
                     <div class="w-6 h-6 rounded-lg bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink dark:text-white flex-shrink-0 shadow-2xs font-bold text-[11px]">1</div>
-                    <p>Appuyez sur <span class="font-semibold text-ink dark:text-white">Partager</span> <svg class="inline-block w-4 h-4 text-blue-500 align-sub mx-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 3v13m0-13l-4 4m4-4l4 4"/></svg> (en bas de votre écran)</p>
+                    <p data-i18n="pwa_ios_step1">Appuyez sur Partager (en bas de votre écran)</p>
                 </div>
                 <div class="flex items-center gap-2.5 text-xs text-ink-soft dark:text-gray-300">
                     <div class="w-6 h-6 rounded-lg bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink dark:text-white flex-shrink-0 shadow-2xs font-bold text-[11px]">2</div>
-                    <p>Faites défiler et choisissez <span class="font-semibold text-ink dark:text-white">« Sur l'écran d'accueil »</span> ➕</p>
+                    <p data-i18n="pwa_ios_step2">Faites défiler et choisissez « Sur l'écran d'accueil »</p>
                 </div>
                 <div class="pt-1 text-right">
-                    <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3.5 py-1.5 text-xs font-bold text-gold hover:text-gold-hover transition cursor-pointer">
+                    <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3.5 py-1.5 text-xs font-bold text-gold hover:text-gold-hover transition cursor-pointer" data-i18n="pwa_ios_gotit">
                         J'ai compris
                     </button>
                 </div>
@@ -901,6 +901,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=5.3" defer></script>
+    <script src="assets/js/app.js?v=5.4" defer></script>
 </body>
 </html>
