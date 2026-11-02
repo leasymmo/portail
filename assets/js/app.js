@@ -1070,6 +1070,11 @@ const ModalManager = {
     },
 
     closeReview(immediate = false) {
+        if (this._modalSwitchTimer) {
+            clearTimeout(this._modalSwitchTimer);
+            this._modalSwitchTimer = null;
+        }
+
         const modal = document.getElementById('modal-review');
         if (!modal) return;
 
@@ -1140,6 +1145,11 @@ const ModalManager = {
     },
 
     closeContact(immediate = false) {
+        if (this._modalSwitchTimer) {
+            clearTimeout(this._modalSwitchTimer);
+            this._modalSwitchTimer = null;
+        }
+
         const modal = document.getElementById('modal-contact-anthony');
         if (!modal) return;
 
@@ -1170,7 +1180,97 @@ const ModalManager = {
         }, 340);
     },
 
+    // --- TRANSITION FLUIDE FEUILLE-À-FEUILLE SANS CLIGNOTEMENT DU FOND (HANDOFF) ---
+    _modalSwitchTimer: null,
+
+    switchFromReviewToContact(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        this.switchSheet('modal-review', 'modal-contact-anthony', () => {
+            AppState.isReviewModalOpen = false;
+            AppState.isContactModalOpen = true;
+
+            const prop = AppState.currentProperty;
+            const triageWifi = document.getElementById('contact-triage-wifi');
+            if (triageWifi) {
+                triageWifi.classList.toggle('hidden', !(prop && prop.wifi_ssid));
+            }
+            const triageVideos = document.getElementById('contact-triage-videos');
+            if (triageVideos) {
+                triageVideos.classList.toggle('hidden', !(AppState.currentVideos && AppState.currentVideos.length > 0));
+            }
+        });
+    },
+
+    switchSheet(fromId, toId, beforeOpenFn) {
+        const modalFrom = document.getElementById(fromId);
+        const modalTo = document.getElementById(toId);
+        if (!modalFrom || !modalTo) return;
+
+        if (this._modalSwitchTimer) {
+            clearTimeout(this._modalSwitchTimer);
+            this._modalSwitchTimer = null;
+        }
+
+        // 1. Maintien strict du verrouillage de défilement (ScrollManager.lock reste actif)
+        // 2. Descente rapide et soyeuse de la feuille sortante (180ms) SANS toucher au fond sombre
+        const sheetFrom = modalFrom.querySelector('.modal-sheet, .modal-sheet-compact');
+        if (sheetFrom) {
+            sheetFrom.style.transition = 'transform 0.18s cubic-bezier(0.32, 0.72, 0, 1)';
+            sheetFrom.style.transform = 'translateY(100%)';
+        }
+
+        // 3. À 180ms, échange instantané des modales dans la même trame visuelle
+        this._modalSwitchTimer = setTimeout(() => {
+            this._modalSwitchTimer = null;
+
+            // Masque la modale sortante immédiatement
+            modalFrom.classList.remove('open', 'is-active', 'is-closing');
+            modalFrom.setAttribute('aria-hidden', 'true');
+            if (sheetFrom) {
+                sheetFrom.style.transform = '';
+                sheetFrom.style.transition = '';
+            }
+
+            // Exécution du callback métier
+            if (typeof beforeOpenFn === 'function') {
+                beforeOpenFn();
+            }
+
+            // Prépare la feuille entrante en position basse
+            const sheetTo = modalTo.querySelector('.modal-sheet, .modal-sheet-compact');
+            if (sheetTo) {
+                sheetTo.style.transition = 'none';
+                sheetTo.style.transform = 'translateY(100%)';
+            }
+
+            // Affiche la modale cible avec son fond noir DÉJÀ opaque (aucun clignotement blanc/noir)
+            modalTo.style.transition = 'none';
+            modalTo.classList.remove('is-closing');
+            modalTo.classList.add('open');
+            modalTo.setAttribute('aria-hidden', 'false');
+            void modalTo.offsetHeight; // Forçage du reflow
+
+            // Déclenche l'ascension soyeuse de la feuille entrante
+            if (sheetTo) {
+                sheetTo.style.transition = 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)';
+                requestAnimationFrame(() => {
+                    sheetTo.style.transform = 'translateY(0)';
+                });
+            }
+
+            // Rétablit les transitions CSS par défaut
+            setTimeout(() => {
+                modalTo.style.transition = '';
+                if (sheetTo) {
+                    sheetTo.style.transition = '';
+                    sheetTo.style.transform = '';
+                }
+            }, 400);
+        }, 180);
+    },
+
     onBackdropClick(event, type) {
+        if (this._modalSwitchTimer) return;
         if (!event || !event.target || event.target.classList.contains('modal-overlay')) {
             if (type === 'pdf') this.closePdf();
             if (type === 'video') this.closeVideo();
@@ -2813,13 +2913,19 @@ function goToVideosFromContact() {
 }
 
 function goToWifiFromContact() {
-    ModalManager.closeContact(true);
-    ModalManager.openWifi();
+    ModalManager.switchSheet('modal-contact-anthony', 'modal-wifi', () => {
+        AppState.isContactModalOpen = false;
+        AppState.isWifiModalOpen = true;
+    });
 }
 
 function goToGuideFromContact() {
     ModalManager.closeContact(true);
     PropertyRenderer.openCurrentGuide();
+}
+
+function switchFromReviewToContact(e) {
+    ModalManager.switchFromReviewToContact(e);
 }
 
 // -----------------------------------------------------------------------------
@@ -2843,6 +2949,7 @@ window.openWifiModal = () => ModalManager.openWifi();
 window.closeWifiModal = () => ModalManager.closeWifi();
 window.openReviewModal = () => ModalManager.openReview();
 window.closeReviewModal = () => ModalManager.closeReview();
+window.switchFromReviewToContact = (e) => switchFromReviewToContact(e);
 window.openContactModal = () => ModalManager.openContact();
 window.closeContactModal = () => ModalManager.closeContact();
 window.openWhatsAppAnthony = (e) => openWhatsAppAnthony(e);

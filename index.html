@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=6.8">
+    <link rel="stylesheet" href="assets/css/custom.css?v=6.9">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -1014,8 +1014,8 @@
 
                 <!-- Lien discret d'assistance pour désamorcer les avis négatifs -->
                 <div class="pt-1">
-                    <button type="button" onclick="closeReviewModal(); openContactModal();" 
-                            class="text-[11px] sm:text-xs text-ink-faint dark:text-gray-400 hover:text-gold dark:hover:text-gold transition inline-flex items-center gap-1 underline decoration-dotted cursor-pointer">
+                    <button type="button" onclick="switchFromReviewToContact(event)" 
+                            class="text-[11px] sm:text-xs text-ink-faint dark:text-gray-400 hover:text-gold dark:hover:text-gold transition inline-flex items-center gap-1.5 underline decoration-dotted cursor-pointer py-1 px-2 rounded-lg hover:bg-gold/5 active:scale-95">
                         <span>💬</span>
                         <span data-i18n="review_modal_help">Une remarque ou un imprévu ? Contactez-nous en direct</span>
                     </button>
@@ -1208,6 +1208,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=6.8" defer></script>
+    <script src="assets/js/app.js?v=6.9" defer></script>
 </body>
 </html>
