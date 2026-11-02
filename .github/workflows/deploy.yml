@@ -20,10 +20,10 @@ jobs:
       - name: 🚀 Déploiement FTP vers OVH
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ftp.cluster131.hosting.ovh.net
-          username: carredj
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
+          port: ${{ secrets.FTP_PORT || '21' }}
           protocol: ftp
           server-dir: ${{ github.ref_name == 'main' && 'www/portail/' || 'www/portail/dev/' }}
           dangerous-clean-slate: false
