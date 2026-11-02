@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=6.5">
+    <link rel="stylesheet" href="assets/css/custom.css?v=6.6">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -603,6 +603,37 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- BANDEAU HAUT DE GAMME : CONCIERGE PRIVÉ ANTHONY -->
+                    <div id="banner-contact-anthony" onclick="openContactModal()" 
+                         class="card-interactive cursor-pointer rounded-2xl p-4 sm:p-5 border border-[#e2e4e6] dark:border-[#38455d] max-w-3xl mx-auto mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 sm:gap-4 group">
+                        <div class="flex items-center min-w-0 pr-1">
+                            <!-- Avatar Anthony avec pastille en ligne -->
+                            <div class="relative flex-shrink-0 mr-3.5 sm:mr-4">
+                                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-gold to-gold-hover text-white flex items-center justify-center font-bold text-base sm:text-lg shadow-xs">
+                                    A
+                                </div>
+                                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-[#243047] rounded-full shadow-2xs" title="En ligne"></span>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition">Anthony</span>
+                                    <span data-i18n="anthony_role" class="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">Concierge Référent</span>
+                                </div>
+                                <p data-i18n="anthony_banner_desc" class="text-xs text-ink-soft dark:text-gray-300 mt-1 line-clamp-2">
+                                    Une question durant votre séjour ? Anthony et l'équipe vous accompagnent par messagerie directe.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-end flex-shrink-0 sm:self-center">
+                            <span class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 group-hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold shadow-xs transition group-hover:shadow-md">
+                                <svg class="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.08-1.1l-.29-.17-3.04.8 0.81-2.96-.19-.3a8.19 8.19 0 0 1-1.26-4.51c0-4.54 3.7-8.24 8.24-8.24m-3.53 4.26c-.19 0-.5.07-.76.35-.26.29-1 .98-1 2.39s1.02 2.78 1.16 2.97c.15.19 2 3.05 4.85 4.28.68.29 1.21.46 1.63.6.68.22 1.3.19 1.79.11.55-.08 1.69-.69 1.93-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.33s-1.69-.83-1.95-.93c-.26-.09-.45-.14-.64.14-.19.29-.74.93-.91 1.12-.17.19-.34.22-.63.07-.29-.14-1.22-.45-2.33-1.44-.86-.77-1.44-1.72-1.61-2.01-.17-.29-.02-.45.13-.59.13-.13.29-.34.43-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.5s-.64-1.54-.88-2.11c-.23-.55-.47-.48-.64-.49-.17-.01-.36-.01-.56-.01"/>
+                                </svg>
+                                <span data-i18n="anthony_btn_label">Contacter Anthony</span>
+                            </span>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- ----------------------------------------------------------- -->
@@ -997,11 +1028,124 @@
 
                 <!-- Lien discret d'assistance pour désamorcer les avis négatifs -->
                 <div class="pt-1">
-                    <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" 
-                       class="text-[11px] sm:text-xs text-ink-faint dark:text-gray-400 hover:text-gold dark:hover:text-gold transition inline-flex items-center gap-1 underline decoration-dotted">
+                    <button type="button" onclick="closeReviewModal(); openContactModal();" 
+                            class="text-[11px] sm:text-xs text-ink-faint dark:text-gray-400 hover:text-gold dark:hover:text-gold transition inline-flex items-center gap-1 underline decoration-dotted cursor-pointer">
                         <span>💬</span>
                         <span data-i18n="review_modal_help">Une remarque ou un imprévu ? Contactez-nous en direct</span>
-                    </a>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET 6 : CONTACT CONCIERGE ANTHONY & AUTO-DÉPANNAGE  -->
+    <!-- =================================================================== -->
+    <div id="modal-contact-anthony" class="modal-overlay" onclick="onModalBackdropClick(event, 'contact')">
+        <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle flex-shrink-0"></div>
+
+            <!-- Barre supérieure de la modale Contact -->
+            <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2.5 truncate pr-2">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold text-base shadow-2xs">
+                        A
+                    </div>
+                    <div class="truncate">
+                        <h3 data-i18n="contact_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Contacter votre référent</h3>
+                        <p data-i18n="contact_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Anthony · Conciergerie Carré d'Hôtes</p>
+                    </div>
+                </div>
+                <button onclick="closeContactModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Contenu de la modale : Triage bienveillant + CTA WhatsApp -->
+            <div class="p-5 sm:p-6 space-y-4">
+                <!-- Bloc 1 : Réponses immédiates / Triage -->
+                <div class="space-y-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-gold text-xs">⚡️</span>
+                        <p data-i18n="contact_triage_heading" class="text-[11px] font-semibold text-gold uppercase tracking-wider">
+                            Réponses immédiates en 1 clic
+                        </p>
+                    </div>
+
+                    <!-- Raccourci 1 : Vidéos équipements -->
+                    <div id="contact-triage-videos" onclick="goToVideosFromContact()" class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 data-i18n="triage_videos_title" class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Modes d'emploi des équipements</h4>
+                                <p data-i18n="triage_videos_desc" class="text-[11px] text-ink-soft dark:text-gray-300 truncate">Cafetière, lave-linge, TV, chauffage en vidéo...</p>
+                            </div>
+                        </div>
+                        <span data-i18n="triage_see" class="text-xs font-semibold text-gold flex-shrink-0 group-hover:translate-x-0.5 transition">Voir →</span>
+                    </div>
+
+                    <!-- Raccourci 2 : Wi-Fi -->
+                    <div id="contact-triage-wifi" onclick="goToWifiFromContact()" class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                                    <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                                    <circle cx="12" cy="20" r="1.2" fill="currentColor" stroke="none"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 data-i18n="triage_wifi_title" class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Code & Mot de passe Wi-Fi</h4>
+                                <p data-i18n="triage_wifi_desc" class="text-[11px] text-ink-soft dark:text-gray-300 truncate">Copiez les identifiants en un clic</p>
+                            </div>
+                        </div>
+                        <span data-i18n="triage_see" class="text-xs font-semibold text-gold flex-shrink-0 group-hover:translate-x-0.5 transition">Voir →</span>
+                    </div>
+
+                    <!-- Raccourci 3 : Guide de bienvenue (PDF) -->
+                    <div id="contact-triage-guide" onclick="goToGuideFromContact()" class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 data-i18n="triage_guide_title" class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Guide de bienvenue complet</h4>
+                                <p data-i18n="triage_guide_desc" class="text-[11px] text-ink-soft dark:text-gray-300 truncate">Règles, départ, poubelles, commerces...</p>
+                            </div>
+                        </div>
+                        <span data-i18n="triage_see" class="text-xs font-semibold text-gold flex-shrink-0 group-hover:translate-x-0.5 transition">Voir →</span>
+                    </div>
+                </div>
+
+                <!-- Ligne de séparation élégante -->
+                <div class="relative py-1">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-[#e2e4e6] dark:border-[#38455d]"></div></div>
+                    <div class="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-ink-faint bg-[#ffffff] dark:bg-[#243047] px-2.5 w-max mx-auto">
+                        <span data-i18n="contact_direct_heading">Autre demande ou urgence ?</span>
+                    </div>
+                </div>
+
+                <!-- Bloc 2 : CTA WhatsApp direct vers Anthony -->
+                <div class="space-y-2">
+                    <button onclick="openWhatsAppAnthony(event)" type="button" 
+                            class="inline-flex items-center justify-center gap-2.5 w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition transform active:scale-98 cursor-pointer">
+                        <svg class="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.08-1.1l-.29-.17-3.04.8 0.81-2.96-.19-.3a8.19 8.19 0 0 1-1.26-4.51c0-4.54 3.7-8.24 8.24-8.24m-3.53 4.26c-.19 0-.5.07-.76.35-.26.29-1 .98-1 2.39s1.02 2.78 1.16 2.97c.15.19 2 3.05 4.85 4.28.68.29 1.21.46 1.63.6.68.22 1.3.19 1.79.11.55-.08 1.69-.69 1.93-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.33s-1.69-.83-1.95-.93c-.26-.09-.45-.14-.64.14-.19.29-.74.93-.91 1.12-.17.19-.34.22-.63.07-.29-.14-1.22-.45-2.33-1.44-.86-.77-1.44-1.72-1.61-2.01-.17-.29-.02-.45.13-.59.13-.13.29-.34.43-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.5s-.64-1.54-.88-2.11c-.23-.55-.47-.48-.64-.49-.17-.01-.36-.01-.56-.01"/>
+                        </svg>
+                        <span data-i18n="contact_whatsapp_btn">Écrire à Anthony sur WhatsApp</span>
+                    </button>
+
+                    <p data-i18n="contact_hours_hint" class="text-center text-[10px] sm:text-[11px] text-ink-faint dark:text-gray-400">
+                        Réponse rapide par WhatsApp · Disponibilité 7j/7 de 9h à 21h (urgences 24h/24)
+                    </p>
                 </div>
             </div>
         </div>
@@ -1078,6 +1222,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=6.5" defer></script>
+    <script src="assets/js/app.js?v=6.6" defer></script>
 </body>
 </html>

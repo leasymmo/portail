@@ -21,6 +21,7 @@ const AppState = {
     isBookingModalOpen: false,
     isWifiModalOpen: false,
     isReviewModalOpen: false,
+    isContactModalOpen: false,
     isOffline: !navigator.onLine
 };
 
@@ -67,6 +68,22 @@ const I18n = {
             review_modal_msg: "Votre retour est la plus belle récompense pour notre équipe locale. 1 minute suffit pour illuminer notre journée et nous aider à faire rayonner notre conciergerie !",
             review_modal_btn: "Laisser mes 5 étoiles sur Google ✨",
             review_modal_help: "Une remarque ou un imprévu ? Contactez-nous en direct",
+            anthony_role: "Concierge Référent",
+            anthony_banner_desc: "Une question durant votre séjour ? Anthony et l'équipe vous accompagnent par messagerie directe.",
+            anthony_btn_label: "Contacter Anthony",
+            contact_modal_title: "Contacter votre référent",
+            contact_modal_subtitle: "Anthony · Conciergerie Carré d'Hôtes",
+            contact_triage_heading: "Réponses immédiates en 1 clic",
+            triage_videos_title: "Modes d'emploi des équipements",
+            triage_videos_desc: "Cafetière, lave-linge, TV, chauffage en vidéo...",
+            triage_wifi_title: "Code & Mot de passe Wi-Fi",
+            triage_wifi_desc: "Copiez les identifiants en un clic",
+            triage_guide_title: "Guide de bienvenue complet",
+            triage_guide_desc: "Règles, départ, poubelles, commerces...",
+            triage_see: "Voir →",
+            contact_direct_heading: "Autre demande ou urgence ?",
+            contact_whatsapp_btn: "Écrire à Anthony sur WhatsApp",
+            contact_hours_hint: "Réponse rapide par WhatsApp · Disponibilité 7j/7 de 9h à 21h (urgences 24h/24)",
             need_help: "Besoin d'aide ?",
             call_concierge: "Appeler la conciergerie",
             videos_title: "Modes d'emploi",
@@ -143,6 +160,22 @@ const I18n = {
             review_modal_msg: "Your feedback is the greatest reward for our local team. Just 1 minute to brighten our day and support our independent concierge!",
             review_modal_btn: "Leave my 5 stars on Google ✨",
             review_modal_help: "Any issue or suggestion? Contact us directly",
+            anthony_role: "Guest Referent",
+            anthony_banner_desc: "Have a question during your stay? Anthony and the team are available via direct messaging.",
+            anthony_btn_label: "Contact Anthony",
+            contact_modal_title: "Contact your referent",
+            contact_modal_subtitle: "Anthony · Carré d'Hôtes Concierge",
+            contact_triage_heading: "Instant answers in 1 click",
+            triage_videos_title: "Equipment video guides",
+            triage_videos_desc: "Coffee machine, washer, TV, heating tutorials...",
+            triage_wifi_title: "Wi-Fi Name & Password",
+            triage_wifi_desc: "Copy credentials in one tap",
+            triage_guide_title: "Complete Welcome Guide",
+            triage_guide_desc: "Rules, checkout, waste disposal, local tips...",
+            triage_see: "View →",
+            contact_direct_heading: "Other inquiry or emergency?",
+            contact_whatsapp_btn: "Message Anthony on WhatsApp",
+            contact_hours_hint: "Fast WhatsApp reply · 7/7 availability from 9am to 9pm (emergencies 24/7)",
             need_help: "Need help?",
             call_concierge: "Call the concierge",
             videos_title: "Instructions & Tutorials",
@@ -465,7 +498,7 @@ const ScrollManager = {
     },
 
     unlock() {
-        if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen && !AppState.isWifiModalOpen && !AppState.isReviewModalOpen) {
+        if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen && !AppState.isWifiModalOpen && !AppState.isReviewModalOpen && !AppState.isContactModalOpen) {
             document.body.classList.remove('modal-open');
             this.updatePageScrollState();
         }
@@ -1063,6 +1096,76 @@ const ModalManager = {
         }, 340);
     },
 
+    // --- MODALE CONTACT ANTHONY (TRIAGE & WHATSAPP) ---
+    openContact() {
+        const modal = document.getElementById('modal-contact-anthony');
+        if (!modal) return;
+
+        // Met à jour l'affichage conditionnel des raccourcis selon le logement
+        const prop = AppState.currentProperty;
+        const triageWifi = document.getElementById('contact-triage-wifi');
+        if (triageWifi) {
+            triageWifi.classList.toggle('hidden', !(prop && prop.wifi_ssid));
+        }
+        const triageVideos = document.getElementById('contact-triage-videos');
+        if (triageVideos) {
+            triageVideos.classList.toggle('hidden', !(AppState.currentVideos && AppState.currentVideos.length > 0));
+        }
+
+        // Réinitialise tout style restant
+        modal.classList.remove('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = '';
+            sheet.style.transition = '';
+        }
+        modal.style.opacity = '';
+        modal.style.backgroundColor = '';
+
+        modal.classList.add('is-active');
+        void modal.offsetHeight;
+
+        requestAnimationFrame(() => {
+            modal.classList.add('open');
+            modal.classList.remove('is-active');
+            modal.setAttribute('aria-hidden', 'false');
+        });
+
+        AppState.isContactModalOpen = true;
+        ScrollManager.lock();
+    },
+
+    closeContact(immediate = false) {
+        const modal = document.getElementById('modal-contact-anthony');
+        if (!modal) return;
+
+        AppState.isContactModalOpen = false;
+        ScrollManager.unlock();
+
+        if (immediate || !modal.classList.contains('open')) {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
+        modal.classList.add('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = 'translateY(100%)';
+        }
+        modal.style.opacity = '0';
+
+        setTimeout(() => {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
+        }, 340);
+    },
+
     onBackdropClick(event, type) {
         if (!event || !event.target || event.target.classList.contains('modal-overlay')) {
             if (type === 'pdf') this.closePdf();
@@ -1070,6 +1173,7 @@ const ModalManager = {
             if (type === 'booking') this.closeBooking();
             if (type === 'wifi') this.closeWifi();
             if (type === 'review') this.closeReview();
+            if (type === 'contact') this.closeContact();
         }
     }
 };
@@ -1084,7 +1188,8 @@ const SheetGestureController = {
             { id: 'modal-video', close: (immediate) => ModalManager.closeVideo(immediate) },
             { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) },
             { id: 'modal-wifi', close: (immediate) => ModalManager.closeWifi(immediate) },
-            { id: 'modal-review', close: (immediate) => ModalManager.closeReview(immediate) }
+            { id: 'modal-review', close: (immediate) => ModalManager.closeReview(immediate) },
+            { id: 'modal-contact-anthony', close: (immediate) => ModalManager.closeContact(immediate) }
         ];
 
         modals.forEach(({ id, close }) => {
@@ -2021,6 +2126,13 @@ const PropertyRenderer = {
             cardReview.style.animationDelay = prop.wifi_ssid ? '0.16s' : '0.12s';
         }
 
+        // 2d. Bandeau Contact Anthony
+        const bannerContact = document.getElementById('banner-contact-anthony');
+        if (bannerContact) {
+            bannerContact.classList.add('cascade-item');
+            bannerContact.style.animationDelay = prop.wifi_ssid ? '0.20s' : '0.16s';
+        }
+
         // 3. Actualiser la grille des vidéos avec les titres traduits
         if (AppState.currentVideos && AppState.currentVideos.length > 0) {
             this.renderVideos(AppState.currentVideos);
@@ -2595,6 +2707,7 @@ const App = {
                 if (AppState.isBookingModalOpen) ModalManager.closeBooking();
                 if (AppState.isWifiModalOpen) ModalManager.closeWifi();
                 if (AppState.isReviewModalOpen) ModalManager.closeReview();
+                if (AppState.isContactModalOpen) ModalManager.closeContact();
             }
         });
 
@@ -2618,6 +2731,10 @@ const App = {
             }
             if (AppState.isReviewModalOpen) {
                 ModalManager.closeReview(true);
+                return;
+            }
+            if (AppState.isContactModalOpen) {
+                ModalManager.closeContact(true);
                 return;
             }
             this.load();
@@ -2664,6 +2781,39 @@ const App = {
 };
 
 // -----------------------------------------------------------------------------
+// 11b. ACTIONS & FONCTIONS D'ASSISTANCE WHATSAPP & CONTACT ANTHONY
+// -----------------------------------------------------------------------------
+function openWhatsAppAnthony(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const propName = (AppState.currentProperty && AppState.currentProperty.name)
+        ? AppState.currentProperty.name
+        : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
+
+    const msg = I18n.currentLang === 'en'
+        ? `Hello Anthony, I am currently staying at "${propName}" and I have a question regarding my stay: `
+        : `Bonjour Anthony, je séjourne actuellement au logement "${propName}" et j'ai une question concernant mon séjour : `;
+
+    const phone = '33675883791';
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function goToVideosFromContact() {
+    ModalManager.closeContact(true);
+    PropertyRenderer.navigateTab('videos');
+}
+
+function goToWifiFromContact() {
+    ModalManager.closeContact(true);
+    ModalManager.openWifi();
+}
+
+function goToGuideFromContact() {
+    ModalManager.closeContact(true);
+    PropertyRenderer.openCurrentGuide();
+}
+
+// -----------------------------------------------------------------------------
 // 12. PONT DE COMPATIBILITÉ GLOBALE (POUR LES GESTIONNAIRES ONCLICK EN HTML)
 // -----------------------------------------------------------------------------
 window.setLanguage = (lang) => I18n.setLanguage(lang);
@@ -2684,6 +2834,12 @@ window.openWifiModal = () => ModalManager.openWifi();
 window.closeWifiModal = () => ModalManager.closeWifi();
 window.openReviewModal = () => ModalManager.openReview();
 window.closeReviewModal = () => ModalManager.closeReview();
+window.openContactModal = () => ModalManager.openContact();
+window.closeContactModal = () => ModalManager.closeContact();
+window.openWhatsAppAnthony = (e) => openWhatsAppAnthony(e);
+window.goToVideosFromContact = () => goToVideosFromContact();
+window.goToWifiFromContact = () => goToWifiFromContact();
+window.goToGuideFromContact = () => goToGuideFromContact();
 window.copyNetworkName = (e) => App.copyNetwork(e);
 window.copyWifiPassword = (e) => App.copyWifi(e);
 window.filterVideos = () => VideoSearch.filter();
