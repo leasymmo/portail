@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=6.6">
+    <link rel="stylesheet" href="assets/css/custom.css?v=6.7">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -601,37 +601,23 @@
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- BANDEAU HAUT DE GAMME : CONCIERGE PRIVÉ ANTHONY -->
-                    <div id="banner-contact-anthony" onclick="openContactModal()" 
-                         class="card-interactive cursor-pointer rounded-2xl p-4 sm:p-5 border border-[#e2e4e6] dark:border-[#38455d] max-w-3xl mx-auto mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5 sm:gap-4 group">
-                        <div class="flex items-center min-w-0 pr-1">
-                            <!-- Avatar Anthony avec pastille en ligne -->
-                            <div class="relative flex-shrink-0 mr-3.5 sm:mr-4">
-                                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-gold to-gold-hover text-white flex items-center justify-center font-bold text-base sm:text-lg shadow-xs">
-                                    A
+                        <!-- Carte 5 : Contacter Anthony (Ouvre la modale de contact & triage WhatsApp) -->
+                        <div id="card-contact-active" onclick="openContactModal()" 
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d] sm:col-span-2">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.08-1.1l-.29-.17-3.04.8 0.81-2.96-.19-.3a8.19 8.19 0 0 1-1.26-4.51c0-4.54 3.7-8.24 8.24-8.24m-3.53 4.26c-.19 0-.5.07-.76.35-.26.29-1 .98-1 2.39s1.02 2.78 1.16 2.97c.15.19 2 3.05 4.85 4.28.68.29 1.21.46 1.63.6.68.22 1.3.19 1.79.11.55-.08 1.69-.69 1.93-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.33s-1.69-.83-1.95-.93c-.26-.09-.45-.14-.64.14-.19.29-.74.93-.91 1.12-.17.19-.34.22-.63.07-.29-.14-1.22-.45-2.33-1.44-.86-.77-1.44-1.72-1.61-2.01-.17-.29-.02-.45.13-.59.13-.13.29-.34.43-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.5s-.64-1.54-.88-2.11c-.23-.55-.47-.48-.64-.49-.17-.01-.36-.01-.56-.01"/>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <span data-i18n="contact_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Une question ? Contacter Anthony</span>
+                                    <p data-i18n="contact_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Votre concierge référent disponible 7j/7</p>
                                 </div>
-                                <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white dark:border-[#243047] rounded-full shadow-2xs" title="En ligne"></span>
                             </div>
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition">Anthony</span>
-                                    <span data-i18n="anthony_role" class="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">Concierge Référent</span>
-                                </div>
-                                <p data-i18n="anthony_banner_desc" class="text-xs text-ink-soft dark:text-gray-300 mt-1 line-clamp-2">
-                                    Une question durant votre séjour ? Anthony et l'équipe vous accompagnent par messagerie directe.
-                                </p>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
-                        </div>
-                        <div class="flex items-center justify-end flex-shrink-0 sm:self-center">
-                            <span class="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 group-hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold shadow-xs transition group-hover:shadow-md">
-                                <svg class="w-4 h-4 fill-current flex-shrink-0" viewBox="0 0 24 24">
-                                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.23 8.23 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.44 0-2.85-.38-4.08-1.1l-.29-.17-3.04.8 0.81-2.96-.19-.3a8.19 8.19 0 0 1-1.26-4.51c0-4.54 3.7-8.24 8.24-8.24m-3.53 4.26c-.19 0-.5.07-.76.35-.26.29-1 .98-1 2.39s1.02 2.78 1.16 2.97c.15.19 2 3.05 4.85 4.28.68.29 1.21.46 1.63.6.68.22 1.3.19 1.79.11.55-.08 1.69-.69 1.93-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.19-.55-.33s-1.69-.83-1.95-.93c-.26-.09-.45-.14-.64.14-.19.29-.74.93-.91 1.12-.17.19-.34.22-.63.07-.29-.14-1.22-.45-2.33-1.44-.86-.77-1.44-1.72-1.61-2.01-.17-.29-.02-.45.13-.59.13-.13.29-.34.43-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.5s-.64-1.54-.88-2.11c-.23-.55-.47-.48-.64-.49-.17-.01-.36-.01-.56-.01"/>
-                                </svg>
-                                <span data-i18n="anthony_btn_label">Contacter Anthony</span>
-                            </span>
                         </div>
                     </div>
                 </section>
@@ -1222,6 +1208,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=6.6" defer></script>
+    <script src="assets/js/app.js?v=6.7" defer></script>
 </body>
 </html>

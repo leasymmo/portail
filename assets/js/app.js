@@ -68,6 +68,8 @@ const I18n = {
             review_modal_msg: "Votre retour est la plus belle récompense pour notre équipe locale. 1 minute suffit pour illuminer notre journée et nous aider à faire rayonner notre conciergerie !",
             review_modal_btn: "Laisser mes 5 étoiles sur Google ✨",
             review_modal_help: "Une remarque ou un imprévu ? Contactez-nous en direct",
+            contact_card_title: "Une question ? Contacter Anthony",
+            contact_card_desc: "Votre concierge référent disponible 7j/7",
             anthony_role: "Concierge Référent",
             anthony_banner_desc: "Une question durant votre séjour ? Anthony et l'équipe vous accompagnent par messagerie directe.",
             anthony_btn_label: "Contacter Anthony",
@@ -160,6 +162,8 @@ const I18n = {
             review_modal_msg: "Your feedback is the greatest reward for our local team. Just 1 minute to brighten our day and support our independent concierge!",
             review_modal_btn: "Leave my 5 stars on Google ✨",
             review_modal_help: "Any issue or suggestion? Contact us directly",
+            contact_card_title: "Any questions? Contact Anthony",
+            contact_card_desc: "Your dedicated concierge available 7/7",
             anthony_role: "Guest Referent",
             anthony_banner_desc: "Have a question during your stay? Anthony and the team are available via direct messaging.",
             anthony_btn_label: "Contact Anthony",
@@ -2027,7 +2031,7 @@ const PropertyRenderer = {
                 wifiCard.classList.add('hidden');
             }
             if (infoGrid) {
-                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto';
+                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto';
             }
         }
 
@@ -2126,11 +2130,16 @@ const PropertyRenderer = {
             cardReview.style.animationDelay = prop.wifi_ssid ? '0.16s' : '0.12s';
         }
 
-        // 2d. Bandeau Contact Anthony
-        const bannerContact = document.getElementById('banner-contact-anthony');
-        if (bannerContact) {
-            bannerContact.classList.add('cascade-item');
-            bannerContact.style.animationDelay = prop.wifi_ssid ? '0.20s' : '0.16s';
+        // 2d. Carte Contact Anthony
+        const cardContact = document.getElementById('card-contact-active');
+        if (cardContact) {
+            cardContact.classList.add('cascade-item');
+            cardContact.style.animationDelay = prop.wifi_ssid ? '0.20s' : '0.16s';
+            if (prop.wifi_ssid) {
+                cardContact.classList.add('sm:col-span-2');
+            } else {
+                cardContact.classList.remove('sm:col-span-2');
+            }
         }
 
         // 3. Actualiser la grille des vidéos avec les titres traduits
