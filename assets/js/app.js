@@ -43,7 +43,7 @@ const I18n = {
             welcome_title: "Guide de bienvenue",
             welcome_subtitle: "Toutes les informations pratiques pour votre séjour",
             booklet_title: "Guide de bienvenue",
-            booklet_desc: "Conseils, accès et informations utiles pour votre séjour",
+            booklet_desc: "Toutes les infos pratiques",
             booking_card_title: "Réservez votre prochain séjour",
             booking_card_desc: "Bénéficiez de nos meilleurs tarifs en direct",
             need_help: "Besoin d'aide ?",
@@ -100,7 +100,7 @@ const I18n = {
             welcome_title: "Welcome Guide",
             welcome_subtitle: "Practical information and tips for a wonderful stay",
             booklet_title: "Welcome Guide",
-            booklet_desc: "Essential tips, access & practical info for your stay",
+            booklet_desc: "All practical information",
             booking_card_title: "Book your next stay",
             booking_card_desc: "Enjoy our best direct rates without fees",
             need_help: "Need help?",
@@ -480,8 +480,8 @@ const ThemeManager = {
         const iconSun = document.getElementById('icon-sun');
         const iconMoon = document.getElementById('icon-moon');
         if (iconSun && iconMoon) {
-            iconSun.classList.toggle('hidden', !isDark);
-            iconMoon.classList.toggle('hidden', isDark);
+            iconSun.classList.toggle('hidden', isDark);
+            iconMoon.classList.toggle('hidden', !isDark);
         }
 
         const logoPath = isDark ? 'assets/images/picto-dark.png' : 'assets/images/picto-light.png';
@@ -1831,7 +1831,7 @@ const PropertyRenderer = {
             cardActive.style.animationDelay = '0.04s';
         }
         if (flagEl) {
-            flagEl.textContent = isEn ? '🇬🇧' : '🇫🇷';
+            flagEl.textContent = '📖';
         }
         if (titleEl) {
             titleEl.textContent = I18n.t('booklet_title');
