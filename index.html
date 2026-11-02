@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=6.1">
+    <link rel="stylesheet" href="assets/css/custom.css?v=6.2">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -535,7 +535,14 @@
                         <div id="prop-wifi-card" onclick="openWifiModal()" 
                              class="hidden card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🛜</span>
+                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                                        <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                                        <circle cx="12" cy="20" r="1.2" fill="currentColor" stroke="none"/>
+                                    </svg>
+                                </span>
                                 <div class="min-w-0">
                                     <span data-i18n="wifi_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Connexion Wi-Fi</span>
                                     <p data-i18n="wifi_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Réseau & mot de passe</p>
@@ -828,8 +835,13 @@
             <!-- Barre supérieure de la modale Wi-Fi -->
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-gold/15 text-gold">
-                        <span>🛜</span>
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+                            <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                            <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                            <circle cx="12" cy="20" r="1.2" fill="currentColor" stroke="none"/>
+                        </svg>
                     </div>
                     <div class="truncate">
                         <h3 data-i18n="wifi_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Connexion Wi-Fi</h3>
@@ -957,6 +969,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=6.1" defer></script>
+    <script src="assets/js/app.js?v=6.2" defer></script>
 </body>
 </html>
