@@ -34,6 +34,8 @@ const I18n = {
             topbar_visit: "Visiter carredhotes.fr",
             theme_toggle: "Basculer le mode sombre / clair",
             wifi_network: "Réseau WiFi",
+            wifi_prefix: "Wi-Fi : ",
+            wifi_pwd_prefix: "Mot de passe : ",
             wifi_card_title: "Connexion Wi-Fi",
             wifi_copy: "Copier",
             wifi_copied: "Copié !",
@@ -91,6 +93,8 @@ const I18n = {
             topbar_visit: "Visit carredhotes.fr",
             theme_toggle: "Toggle dark / light mode",
             wifi_network: "WiFi Network",
+            wifi_prefix: "Wi-Fi: ",
+            wifi_pwd_prefix: "Password: ",
             wifi_card_title: "Wi-Fi Connection",
             wifi_copy: "Copy",
             wifi_copied: "Copied!",
@@ -1736,8 +1740,14 @@ const PropertyRenderer = {
         const wifiCard = document.getElementById('prop-wifi-card');
         const infoGrid = document.getElementById('info-cards-grid');
         if (prop.wifi_ssid) {
-            document.getElementById('wifi-ssid').textContent = prop.wifi_ssid;
-            document.getElementById('wifi-password').textContent = prop.wifi_password || '';
+            const ssidEl = document.getElementById('wifi-ssid');
+            const pwdEl = document.getElementById('wifi-password');
+            const pwdPrefixEl = document.querySelector('[data-i18n="wifi_pwd_prefix"]');
+            if (ssidEl) ssidEl.textContent = prop.wifi_ssid;
+            if (pwdEl) pwdEl.textContent = prop.wifi_password || '';
+            if (pwdPrefixEl) {
+                pwdPrefixEl.style.display = prop.wifi_password ? '' : 'none';
+            }
             if (wifiCard) {
                 wifiCard.classList.remove('hidden');
                 wifiCard.classList.add('cascade-item');

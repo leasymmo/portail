@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=5.6">
+    <link rel="stylesheet" href="assets/css/custom.css?v=5.7">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -537,11 +537,11 @@
                             <div class="flex items-center min-w-0 pr-2">
                                 <span class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">📶</span>
                                 <div class="min-w-0">
-                                    <span data-i18n="wifi_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Connexion Wi-Fi</span>
+                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">
+                                        <span data-i18n="wifi_prefix">Wi-Fi : </span><span id="wifi-ssid"></span>
+                                    </span>
                                     <p class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">
-                                        <span id="wifi-ssid" class="font-semibold text-ink dark:text-white"></span>
-                                        <span class="text-ink-faint mx-1">&bull;</span>
-                                        <span id="wifi-password" class="font-mono text-ink-soft dark:text-gray-300 select-all"></span>
+                                        <span data-i18n="wifi_pwd_prefix">Mot de passe : </span><span id="wifi-password" class="font-mono select-all font-medium text-ink dark:text-white"></span>
                                     </p>
                                 </div>
                             </div>
@@ -901,6 +901,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=5.6" defer></script>
+    <script src="assets/js/app.js?v=5.7" defer></script>
 </body>
 </html>
