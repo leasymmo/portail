@@ -88,8 +88,8 @@ const I18n = {
             error_retry: "Lancer le test de connexion",
             footer_wish: "Nous vous souhaitons un excellent séjour !",
             footer_concierge: "Carré d'Hôtes — Conciergerie à Lyon",
-            pdf_title_fr: "Guide de bienvenue (Français)",
-            pdf_title_en: "Welcome Guide (English)",
+            pdf_title_fr: "Guide de bienvenue",
+            pdf_title_en: "Welcome Guide",
             pdf_reading: "Lecture directe",
             pdf_open_drive: "Ouvrir dans un nouvel onglet",
             pdf_loading: "Chargement du guide de bienvenue...",
@@ -164,8 +164,8 @@ const I18n = {
             error_retry: "Run connection test",
             footer_wish: "Have a wonderful stay in Lyon!",
             footer_concierge: "Carré d'Hôtes — Concierge in Lyon",
-            pdf_title_fr: "Welcome Guide (French)",
-            pdf_title_en: "Welcome Guide (English)",
+            pdf_title_fr: "Guide de bienvenue",
+            pdf_title_en: "Welcome Guide",
             pdf_reading: "Direct reading",
             pdf_open_drive: "Open in a new tab",
             pdf_loading: "Loading welcome guide...",
@@ -663,11 +663,11 @@ const ModalManager = {
         const modal = document.getElementById('modal-pdf');
         if (!modal) return;
         const titleEl = document.getElementById('pdf-modal-title');
-        const flagEl = document.getElementById('pdf-modal-flag');
+        const descEl = document.getElementById('pdf-modal-status-label');
         const extLink = document.getElementById('pdf-modal-external-link');
 
-        titleEl.textContent = activeLang === 'en' ? I18n.t('pdf_title_en') : I18n.t('pdf_title_fr');
-        flagEl.textContent = activeLang === 'en' ? "🇬🇧" : "🇫🇷";
+        if (titleEl) titleEl.textContent = I18n.t('booklet_title');
+        if (descEl) descEl.textContent = I18n.t('booklet_desc');
         extLink.href = Utils.safeUrl(pdfUrl);
 
         // Réinitialise tout style restant d'un glissement gestuel
