@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=5.4">
+    <link rel="stylesheet" href="assets/css/custom.css?v=5.5">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -443,15 +443,11 @@
                 <span class="text-xs sm:text-sm font-bold tracking-wider uppercase text-gold group-hover:text-gold-hover transition">Carré d'Hôtes</span>
             </a>
             <div class="flex items-center space-x-2 sm:space-x-2.5">
-                <!-- Sélecteur de langue compact [ 🇫🇷 | 🇬🇧 ] -->
-                <div id="lang-switch-container" class="lang-switch-group">
-                    <button id="lang-btn-fr" onclick="setLanguage('fr')" type="button" class="lang-toggle-btn active" title="Passer en Français" aria-label="Passer en Français" aria-pressed="true">
-                        <span>🇫🇷</span>
-                    </button>
-                    <button id="lang-btn-en" onclick="setLanguage('en')" type="button" class="lang-toggle-btn" title="Switch to English" aria-label="Switch to English" aria-pressed="false">
-                        <span>🇬🇧</span>
-                    </button>
-                </div>
+                <!-- Bouton Switch Langue (Même design que le bouton thème) -->
+                <button id="lang-toggle-btn" onclick="toggleLanguage()" type="button" class="theme-switch-btn" title="Switch to English" aria-label="Switch to English">
+                    <span id="lang-flag-fr" class="text-sm select-none leading-none">🇫🇷</span>
+                    <span id="lang-flag-en" class="text-sm select-none leading-none hidden">🇬🇧</span>
+                </button>
                 <!-- Bascule Mode Sombre / Clair -->
                 <button id="theme-toggle-btn" onclick="toggleTheme()" class="theme-switch-btn" title="Basculer le mode sombre / clair" aria-label="Basculer le mode sombre / clair" data-i18n-title="theme_toggle">
                     <!-- Icône Soleil (visible en mode dark pour passer en light) -->
@@ -488,20 +484,6 @@
                 <p id="prop-subtitle" class="text-[10px] sm:text-xs font-semibold text-gold uppercase tracking-widest">
                     Conciergerie Carré d'Hôtes
                 </p>
-
-                <!-- Bloc WiFi (visible seulement si configuré dans MySQL) -->
-                <div id="prop-wifi-card" class="hidden mt-2.5 max-w-lg mx-auto p-2.5 sm:p-3 bg-[#f3f3ec] dark:bg-[#1e2739] border border-[#e8dcbe] dark:border-[#3d4a63] rounded-xl flex items-center justify-between text-left">
-                    <div class="flex items-center space-x-2.5">
-                        <span class="text-lg sm:text-xl">📶</span>
-                        <div>
-                            <p id="wifi-ssid" class="text-xs sm:text-sm font-bold text-ink dark:text-white"></p>
-                            <p id="wifi-password" class="text-[11px] sm:text-xs text-ink-soft dark:text-gray-300 font-mono"></p>
-                        </div>
-                    </div>
-                    <button id="wifi-copy-btn" onclick="copyWifiPassword()" class="btn-wifi-copy px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium bg-white dark:bg-[#28344c] text-ink dark:text-white border border-[#e2e4e6] dark:border-[#38455d] rounded-lg hover:text-gold transition shadow-xs" data-i18n="wifi_copy">
-                        Copier
-                    </button>
-                </div>
             </header>
 
             <!-- CONTRÔLEUR D'ONGLETS SEGMENTÉS (« Infos » vs « Vidéos ») STICKY -->
@@ -525,23 +507,23 @@
 
                 <!-- ----------------------------------------------------------- -->
                 <!-- ----------------------------------------------------------- -->
-                <!-- SECTION 1 : INFOS & LIVRET D'ACCUEIL                        -->
+                <!-- SECTION 1 : INFOS & GUIDES DE BIENVENUE                     -->
                 <!-- ----------------------------------------------------------- -->
                 <section id="content-guides" class="space-y-3 sm:space-y-4">
                     <div class="text-center mb-2.5 sm:mb-4">
-                        <h2 id="prop-welcome-title" data-i18n="welcome_title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Livret d'accueil</h2>
-                        <p id="prop-welcome-subtitle" data-i18n="welcome_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Guide complet et informations pratiques pour votre séjour</p>
+                        <h2 id="prop-welcome-title" data-i18n="welcome_title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Guide de bienvenue</h2>
+                        <p id="prop-welcome-subtitle" data-i18n="welcome_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Toutes les informations pratiques pour votre séjour</p>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
-                        <!-- Carte unique Livret d'accueil (Affiche directement dans la langue sélectionnée) -->
+                    <div id="info-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
+                        <!-- Carte 1 : Guide de bienvenue (Affiche directement dans la langue sélectionnée) -->
                         <div id="card-guide-active" onclick="openCurrentGuide()" 
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span id="guide-active-flag" class="text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🇫🇷</span>
                                 <div class="min-w-0">
-                                    <span id="guide-active-title" data-i18n="booklet_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Livret d'accueil</span>
-                                    <p id="guide-active-desc" data-i18n="booklet_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate">Lire le livret d'accueil en direct</p>
+                                    <span id="guide-active-title" data-i18n="booklet_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Guide de bienvenue</span>
+                                    <p id="guide-active-desc" data-i18n="booklet_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate">Conseils, accès et informations utiles pour votre séjour</p>
                                 </div>
                             </div>
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
@@ -549,18 +531,39 @@
                             </div>
                         </div>
 
-                        <!-- Carte Réserver votre prochaine destination (Ouvre la modale de réservation) -->
-                        <div onclick="openBookingModal()" 
-                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
+                        <!-- Carte 2 : Wi-Fi (affichée uniquement si configuré dans MySQL) -->
+                        <div id="prop-wifi-card" onclick="copyWifiPassword(event)"
+                             class="hidden card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="text-2xl mr-3.5 drop-shadow-xs flex-shrink-0">✨</span>
+                                <span class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">📶</span>
                                 <div class="min-w-0">
-                                    <span data-i18n="booking_card_title" class="text-xs sm:text-sm font-semibold text-ink dark:text-white group-hover:text-gold transition block leading-tight">Réserver votre prochaine destination</span>
-                                    <p data-i18n="booking_card_desc" class="text-[11px] text-ink-soft dark:text-gray-300 mt-0.5 truncate">Bénéficiez de nos meilleurs tarifs en direct</p>
+                                    <span data-i18n="wifi_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Connexion Wi-Fi</span>
+                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">
+                                        <span id="wifi-ssid" class="font-semibold text-ink dark:text-white"></span>
+                                        <span class="text-ink-faint mx-1">&bull;</span>
+                                        <span id="wifi-password" class="font-mono text-ink-soft dark:text-gray-300 select-all"></span>
+                                    </p>
                                 </div>
                             </div>
-                            <div class="w-8 h-8 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 ml-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            <button id="wifi-copy-btn" onclick="copyWifiPassword(event)" type="button" 
+                                    class="btn-wifi-copy px-2.5 py-1.5 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium bg-[#f3f3ec] dark:bg-[#1e2739] text-ink dark:text-white border border-[#e2e4e6] dark:border-[#38455d] rounded-xl hover:text-gold hover:border-gold transition shadow-2xs flex-shrink-0 ml-1.5" 
+                                    data-i18n="wifi_copy" title="Copier le mot de passe">
+                                Copier
+                            </button>
+                        </div>
+
+                        <!-- Carte 3 : Réservez votre prochain séjour (Ouvre la modale de réservation) -->
+                        <div id="card-booking-active" onclick="openBookingModal()" 
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="text-2xl sm:text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">✨</span>
+                                <div class="min-w-0">
+                                    <span data-i18n="booking_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Réservez votre prochain séjour</span>
+                                    <p data-i18n="booking_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Bénéficiez de nos meilleurs tarifs en direct</p>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
                     </div>
@@ -635,7 +638,7 @@
                         <p data-i18n="home_not_booked_desc" class="text-[11px] text-ink-faint dark:text-gray-400 mb-3">Découvrez tous nos hébergements et réservez votre séjour en direct.</p>
                         <button type="button" onclick="openBookingModal()" 
                            class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-ink dark:bg-gold text-white dark:text-ink text-xs font-semibold rounded-xl hover:opacity-90 transition cursor-pointer">
-                            <span data-i18n="home_book_btn">Réserver votre prochaine destination</span>
+                            <span data-i18n="home_book_btn">Réservez votre prochain séjour</span>
                             <span>→</span>
                         </button>
                     </div>
@@ -704,7 +707,7 @@
                 <div class="flex items-center space-x-2 truncate pr-2">
                     <span id="pdf-modal-flag" class="text-xl">🇫🇷</span>
                     <div>
-                        <h3 id="pdf-modal-title" class="text-sm font-bold text-ink dark:text-white truncate">Livret d'accueil</h3>
+                        <h3 id="pdf-modal-title" class="text-sm font-bold text-ink dark:text-white truncate">Guide de bienvenue</h3>
                         <p id="pdf-modal-status-label" class="text-[10px] text-ink-faint dark:text-gray-400" data-i18n="pdf_reading">Lecture directe</p>
                     </div>
                 </div>
@@ -794,7 +797,7 @@
                         <span>✨</span>
                     </div>
                     <div class="truncate">
-                        <h3 data-i18n="booking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Réserver votre prochaine destination</h3>
+                        <h3 data-i18n="booking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Réservez votre prochain séjour</h3>
                         <p data-i18n="booking_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Conciergerie Carré d'Hôtes &middot; Réservation directe</p>
                     </div>
                 </div>
@@ -837,9 +840,6 @@
     <div id="offline-toast" class="bg-amber-600 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium flex items-center gap-2">
         <span>📶</span>
         <span data-i18n="offline_toast">Mode hors-ligne actif (guides consultés disponibles)</span>
-    </div>
-        <span>📶</span>
-        <span>Mode hors-ligne actif (guides consultés disponibles)</span>
     </div>
 
     <!-- =================================================================== -->
@@ -901,6 +901,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=5.4" defer></script>
+    <script src="assets/js/app.js?v=5.5" defer></script>
 </body>
 </html>

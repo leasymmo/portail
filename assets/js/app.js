@@ -34,15 +34,17 @@ const I18n = {
             topbar_visit: "Visiter carredhotes.fr",
             theme_toggle: "Basculer le mode sombre / clair",
             wifi_network: "Réseau WiFi",
+            wifi_card_title: "Connexion Wi-Fi",
             wifi_copy: "Copier",
             wifi_copied: "Copié !",
+            wifi_copied_toast: "Mot de passe Wi-Fi copié !",
             tab_infos: "Infos",
             tab_videos: "Vidéos",
-            welcome_title: "Livret d'accueil",
-            welcome_subtitle: "Guide complet et informations pratiques pour votre séjour",
-            booklet_title: "Livret d'accueil",
-            booklet_desc: "Lire le livret d'accueil en direct",
-            booking_card_title: "Réserver votre prochaine destination",
+            welcome_title: "Guide de bienvenue",
+            welcome_subtitle: "Toutes les informations pratiques pour votre séjour",
+            booklet_title: "Guide de bienvenue",
+            booklet_desc: "Conseils, accès et informations utiles pour votre séjour",
+            booking_card_title: "Réservez votre prochain séjour",
             booking_card_desc: "Bénéficiez de nos meilleurs tarifs en direct",
             need_help: "Besoin d'aide ?",
             call_concierge: "Appeler la conciergerie",
@@ -56,7 +58,7 @@ const I18n = {
             home_welcome_desc: "Sélectionnez votre hébergement pour consulter vos guides et vidéos.",
             home_not_booked: "Vous n'avez pas encore réservé ?",
             home_not_booked_desc: "Découvrez tous nos hébergements et réservez votre séjour en direct.",
-            home_book_btn: "Réserver votre prochaine destination",
+            home_book_btn: "Réservez votre prochain séjour",
             not_found_title: "Logement introuvable",
             not_found_desc: "Aucun hébergement actif ne correspond à cette adresse.",
             not_found_btn: "Voir tous les logements",
@@ -65,14 +67,14 @@ const I18n = {
             error_retry: "Lancer le test de connexion",
             footer_wish: "Nous vous souhaitons un excellent séjour !",
             footer_concierge: "Carré d'Hôtes — Conciergerie à Lyon",
-            pdf_title_fr: "Livret d'accueil (Français)",
+            pdf_title_fr: "Guide de bienvenue (Français)",
             pdf_title_en: "Welcome Guide (English)",
             pdf_reading: "Lecture directe",
             pdf_open_drive: "Ouvrir dans un nouvel onglet",
             pdf_loading: "Chargement du guide de bienvenue...",
             pdf_close: "Fermer",
             video_modal_title: "Vidéo explicative",
-            booking_modal_title: "Réserver votre prochaine destination",
+            booking_modal_title: "Réservez votre prochain séjour",
             booking_modal_subtitle: "Conciergerie Carré d'Hôtes · Réservation directe",
             booking_spinner: "Chargement du moteur de recherche...",
             offline_toast: "Mode hors-ligne actif (guides consultés disponibles)",
@@ -89,15 +91,17 @@ const I18n = {
             topbar_visit: "Visit carredhotes.fr",
             theme_toggle: "Toggle dark / light mode",
             wifi_network: "WiFi Network",
+            wifi_card_title: "Wi-Fi Connection",
             wifi_copy: "Copy",
             wifi_copied: "Copied!",
+            wifi_copied_toast: "Wi-Fi password copied!",
             tab_infos: "Info",
             tab_videos: "Videos",
-            welcome_title: "Welcome Booklet",
-            welcome_subtitle: "Complete guide and practical information for your stay",
-            booklet_title: "Welcome Booklet",
-            booklet_desc: "Read complete welcome booklet",
-            booking_card_title: "Book your next destination",
+            welcome_title: "Welcome Guide",
+            welcome_subtitle: "Practical information and tips for a wonderful stay",
+            booklet_title: "Welcome Guide",
+            booklet_desc: "Essential tips, access & practical info for your stay",
+            booking_card_title: "Book your next stay",
             booking_card_desc: "Enjoy our best direct rates without fees",
             need_help: "Need help?",
             call_concierge: "Call the concierge",
@@ -111,7 +115,7 @@ const I18n = {
             home_welcome_desc: "Select your accommodation to access your guides and videos.",
             home_not_booked: "Haven't booked yet?",
             home_not_booked_desc: "Discover all our accommodations and book directly.",
-            home_book_btn: "Book your next destination",
+            home_book_btn: "Book your next stay",
             not_found_title: "Accommodation not found",
             not_found_desc: "No active accommodation matches this address.",
             not_found_btn: "View all accommodations",
@@ -127,7 +131,7 @@ const I18n = {
             pdf_loading: "Loading welcome guide...",
             pdf_close: "Close",
             video_modal_title: "Tutorial video",
-            booking_modal_title: "Book your next destination",
+            booking_modal_title: "Book your next stay",
             booking_modal_subtitle: "Carré d'Hôtes Concierge · Direct booking",
             booking_spinner: "Loading search engine...",
             offline_toast: "Offline mode active (viewed guides available)",
@@ -152,6 +156,10 @@ const I18n = {
         this.apply();
     },
 
+    toggle() {
+        this.setLanguage(this.currentLang === 'fr' ? 'en' : 'fr');
+    },
+
     setLanguage(lang) {
         if (lang !== 'fr' && lang !== 'en') return;
         this.currentLang = lang;
@@ -172,15 +180,17 @@ const I18n = {
 
     apply() {
         document.documentElement.lang = this.currentLang;
-        const btnFr = document.getElementById('lang-btn-fr');
-        const btnEn = document.getElementById('lang-btn-en');
-        if (btnFr) {
-            btnFr.classList.toggle('active', this.currentLang === 'fr');
-            btnFr.setAttribute('aria-pressed', this.currentLang === 'fr');
+        const flagFr = document.getElementById('lang-flag-fr');
+        const flagEn = document.getElementById('lang-flag-en');
+        if (flagFr && flagEn) {
+            flagFr.classList.toggle('hidden', this.currentLang !== 'fr');
+            flagEn.classList.toggle('hidden', this.currentLang !== 'en');
         }
-        if (btnEn) {
-            btnEn.classList.toggle('active', this.currentLang === 'en');
-            btnEn.setAttribute('aria-pressed', this.currentLang === 'en');
+        const langBtn = document.getElementById('lang-toggle-btn');
+        if (langBtn) {
+            const title = this.currentLang === 'fr' ? 'Switch to English' : 'Passer en Français';
+            langBtn.title = title;
+            langBtn.setAttribute('aria-label', title);
         }
 
         document.querySelectorAll('[data-i18n]').forEach((el) => {
@@ -1724,12 +1734,25 @@ const PropertyRenderer = {
 
         // Bloc Wi-Fi
         const wifiCard = document.getElementById('prop-wifi-card');
+        const infoGrid = document.getElementById('info-cards-grid');
         if (prop.wifi_ssid) {
             document.getElementById('wifi-ssid').textContent = prop.wifi_ssid;
             document.getElementById('wifi-password').textContent = prop.wifi_password || '';
-            wifiCard.classList.remove('hidden');
+            if (wifiCard) {
+                wifiCard.classList.remove('hidden');
+                wifiCard.classList.add('cascade-item');
+                wifiCard.style.animationDelay = '0.08s';
+            }
+            if (infoGrid) {
+                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto';
+            }
         } else {
-            wifiCard.classList.add('hidden');
+            if (wifiCard) {
+                wifiCard.classList.add('hidden');
+            }
+            if (infoGrid) {
+                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto';
+            }
         }
 
         // Mise à jour de la carte du livret et des éléments dépendant de la langue
@@ -1795,7 +1818,7 @@ const PropertyRenderer = {
             welcomeSubtitleEl.textContent = prop.welcome_subtitle || I18n.t('welcome_subtitle');
         }
 
-        // 2. Carte unique Livret d'accueil (FR ou EN selon langue active)
+        // 2. Carte unique Guide de bienvenue (FR ou EN selon langue active)
         const cardActive = document.getElementById('card-guide-active');
         const flagEl = document.getElementById('guide-active-flag');
         const titleEl = document.getElementById('guide-active-title');
@@ -1815,6 +1838,13 @@ const PropertyRenderer = {
         }
         if (descEl) {
             descEl.textContent = I18n.t('booklet_desc');
+        }
+
+        // 2b. Carte Réservez votre prochain séjour
+        const cardBooking = document.getElementById('card-booking-active');
+        if (cardBooking) {
+            cardBooking.classList.add('cascade-item');
+            cardBooking.style.animationDelay = prop.wifi_ssid ? '0.12s' : '0.08s';
         }
 
         // 3. Bloc contact conciergerie
@@ -2026,7 +2056,7 @@ const ListRenderer = {
                 const isEn = I18n.currentLang === 'en';
                 const subtitleText = count > 0 
                     ? (isEn ? `Info & ${count} videos` : `Infos & ${count} vidéos`) 
-                    : (isEn ? `Welcome Booklet (FR / EN)` : `Livret d'accueil (FR / EN)`);
+                    : (isEn ? `Welcome Guide (FR / EN)` : `Guide de bienvenue (FR / EN)`);
 
                 card.innerHTML = `
                     <div class="flex items-center min-w-0 pr-3">
@@ -2327,7 +2357,8 @@ const App = {
         document.getElementById('view-error').classList.remove('hidden');
     },
 
-    copyWifi() {
+    copyWifi(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
         if (!AppState.currentProperty || !AppState.currentProperty.wifi_password) return;
         const pwd = AppState.currentProperty.wifi_password;
         const copyBtn = document.getElementById('wifi-copy-btn');
@@ -2451,6 +2482,7 @@ const App = {
 // 12. PONT DE COMPATIBILITÉ GLOBALE (POUR LES GESTIONNAIRES ONCLICK EN HTML)
 // -----------------------------------------------------------------------------
 window.setLanguage = (lang) => I18n.setLanguage(lang);
+window.toggleLanguage = () => I18n.toggle();
 window.openCurrentGuide = () => PropertyRenderer.openCurrentGuide();
 window.toggleTheme = () => ThemeManager.toggle();
 window.navigateToTab = (tabId) => PropertyRenderer.navigateTab(tabId);
@@ -2464,7 +2496,7 @@ window.closeBookingModal = () => ModalManager.closeBooking();
 window.onBookingLoaded = () => ModalManager.onBookingLoaded();
 window.onModalBackdropClick = (event, type) => ModalManager.onBackdropClick(event, type);
 window.filterVideos = () => VideoSearch.filter();
-window.copyWifiPassword = () => App.copyWifi();
+window.copyWifiPassword = (e) => App.copyWifi(e);
 window.navigateToUrl = (url) => Router.navigate(url);
 window.loadApp = () => App.load();
 window.resetScrollToTop = () => ScrollManager.resetToTop();

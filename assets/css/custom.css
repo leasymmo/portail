@@ -681,9 +681,10 @@ html.dark .booking-full-container {
 }
 
 /* ==============================================================================
-   BOUTON SWITCH THÈME (LIGHT / DARK)
+   BOUTONS SWITCH THÈME & LANGUE (LIGHT/DARK & FR/EN)
    ============================================================================== */
-.theme-switch-btn {
+.theme-switch-btn,
+.lang-switch-btn {
     width: 34px;
     height: 34px;
     border-radius: 10px;
@@ -697,12 +698,14 @@ html.dark .booking-full-container {
     transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
     -webkit-tap-highlight-color: transparent;
 }
-.theme-switch-btn:hover {
+.theme-switch-btn:hover,
+.lang-switch-btn:hover {
     border-color: var(--gold);
     color: var(--gold);
     transform: scale(1.08);
 }
-.theme-switch-btn:active {
+.theme-switch-btn:active,
+.lang-switch-btn:active {
     transform: scale(0.92);
 }
 
