@@ -1,0 +1,86 @@
+# ==============================================================================
+# CONFIGURATION APACHE & RÉÉCRITURE D'URL
+# Conciergerie Carré d'Hôtes - Portail Voyageurs
+# Emplacement cible : www/portail/ (URL: carredhotes.fr/portail/)
+# ==============================================================================
+
+AddDefaultCharset UTF-8
+DirectoryIndex index.php index.html
+
+# 1. DÉSACTIVER LE LISTAGE DES RÉPERTOIRES
+Options -Indexes
+
+# 2. BLOCAGE STRICT DES FICHIERS ET EXTENSIONS SENSIBLES
+# Empêche quiconque de lire les fichiers .env, .sql, .md, .log, .off, backups, composer, etc.
+<FilesMatch "(\.env|\.env\..*|\.sql|\.md|\.log|\.jsonl|\.off|\.bak|\.backup|\.old|composer\.(json|lock)|\.git.*)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 3. RÈGLES DE RÉÉCRITURE D'URL (SPA) & PROTECTION DES DOSSIERS INTERNES
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /portail/
+
+    # Bloquer tout accès direct aux dossiers internes d'infrastructure
+    RewriteRule ^(database|config)/ - [F,L]
+
+    # Bloquer l'accès aux fichiers cachés commençant par un point (ex: .git)
+    RewriteRule (^|/)\.(?!well-known) - [F,L]
+
+    # Redirection spécifique du manifeste PWA avec slug optionnel
+    RewriteRule ^manifest-([a-z0-9_\-]+)\.webmanifest$ manifest.php?slug=$1 [L,QSA]
+
+    # Ne pas réécrire les fichiers ou dossiers physiques existants (api.php, assets, test-db.php, manifest.php)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Redirection dynamique SPA vers index.php (injection SSR du manifeste PWA par logement)
+    RewriteRule ^.*$ index.php [L]
+</IfModule>
+
+# 4. TYPES MIME & CONFIGURATION PWA
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType application/javascript .js
+    AddType image/svg+xml .svg
+</IfModule>
+
+# En-têtes spécifiques pour le Service Worker et Manifest PWA (pas de cache, mise à jour immédiate)
+<FilesMatch "^(sw\.js|manifest\.php|manifest\.webmanifest)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+        Header set Service-Worker-Allowed "/portail/"
+    </IfModule>
+</FilesMatch>
+
+# 5. EN-TÊTES DE SÉCURITÉ HTTP RECOMMANDÉS
+<IfModule mod_headers.c>
+    # Empêche le reniflage de type MIME (MIME-sniffing)
+    Header set X-Content-Type-Options "nosniff"
+
+    # Protection contre le Clickjacking
+    Header set X-Frame-Options "SAMEORIGIN"
+
+    # Protection XSS pour anciens navigateurs
+    Header set X-XSS-Protection "1; mode=block"
+
+    # Politique de référent stricte
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Désactivation des fonctionnalités sensibles non utilisées (caméra, micro, etc.)
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# 6. COMPRESSION GZIP / DEFLATE (OPTIMISATION PERFORMANCES)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>

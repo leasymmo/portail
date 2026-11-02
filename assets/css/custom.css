@@ -1,0 +1,795 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Jost:wght@300;400;500;600;700&display=swap');
+
+/* ==============================================================================
+   VARIABLES DE COULEUR & THÈMES CARRÉ D'HÔTES
+   ============================================================================== */
+:root {
+    /* Mode Clair */
+    --bg-page: #f3f3ec;
+    --bg-card: #ffffff;
+    --bg-card-subtle: #faf9f6;
+    --bg-pill: #e9ebe6;
+    --ink: #28344c;
+    --ink-soft: #4b566d;
+    --ink-faint: #6f788a;
+    --gold: #ba9641;
+    --gold-hover: #a38234;
+    --gold-soft: #fcf9f2;
+    --gold-border: #e8dcc0;
+    --line: #e2e4e6;
+    --line-subtle: #f0f1ed;
+    --shadow-main: 0 20px 40px -15px rgba(40, 52, 76, 0.12);
+    --font-serif: 'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Jost', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --topbar-height: calc(55px + env(safe-area-inset-top, 0px));
+}
+
+html.dark {
+    /* Mode Sombre (inspiré de carredhotes.fr) */
+    --bg-page: #1b2333;
+    --bg-card: #28344c;
+    --bg-card-subtle: #243047;
+    --bg-pill: #1e2739;
+    --ink: #f3f3ec;
+    --ink-soft: #d9dcd7;
+    --ink-faint: #bcc2cb;
+    --gold: #d4af53;
+    --gold-hover: #e2be67;
+    --gold-soft: #323d54;
+    --gold-border: #4d5b77;
+    --line: #38455d;
+    --line-subtle: #2f3b52;
+    --shadow-main: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+}
+
+html {
+    height: 100%;
+    touch-action: pan-x pan-y;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: -webkit-fill-available;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans);
+    background-color: var(--bg-page);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    touch-action: pan-x pan-y;
+}
+
+#main-app,
+main {
+    flex: 1 0 auto;
+    width: 100%;
+    min-height: 100%;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.hidden {
+    display: none !important;
+}
+
+footer {
+    margin-top: auto;
+}
+
+html.no-scroll,
+body.no-scroll {
+    overflow-y: hidden !important;
+    overscroll-behavior-y: none !important;
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(140, 150, 170, 0.35) transparent;
+}
+
+/* ==============================================================================
+   BARRE SUPÉRIEURE (NAVBAR) & ADAPTATION SAFE AREA PWA
+   ============================================================================== */
+.ios-statusbar-guard {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: env(safe-area-inset-top, 0px) !important;
+    background-color: var(--bg-card-subtle) !important;
+    z-index: 95 !important;
+    pointer-events: none !important;
+    transition: background-color 0.25s ease;
+}
+
+.app-topbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 10px !important;
+    padding-left: calc(1.25rem + env(safe-area-inset-left, 0px)) !important;
+    padding-right: calc(1.25rem + env(safe-area-inset-right, 0px)) !important;
+    background-color: var(--bg-card-subtle) !important;
+    border-bottom: 1px solid var(--line) !important;
+    box-sizing: border-box !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Onglets Guides / Vidéos collants sous la navbar lors du scroll */
+.property-tabs-sticky {
+    position: sticky !important;
+    top: var(--topbar-height, calc(55px + env(safe-area-inset-top, 0px))) !important;
+    z-index: 40 !important;
+    background-color: var(--bg-card) !important;
+    border-bottom: 1px solid var(--line) !important;
+}
+html.dark .property-tabs-sticky {
+    background-color: var(--bg-card) !important;
+    border-bottom-color: var(--line) !important;
+}
+
+#scroll-container,
+#list-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(140, 150, 170, 0.35) transparent;
+}
+
+.font-serif-brand {
+    font-family: var(--font-serif);
+}
+
+/* ==============================================================================
+   CONTRÔLEUR D'ONGLETS SEGMENTÉS HAUTE LISIBILITÉ & ANIMATIONS FLUIDES
+   ============================================================================== */
+.segmented-nav {
+    background-color: var(--bg-pill);
+    padding: 5px;
+    border-radius: 18px;
+    display: flex;
+    gap: 6px;
+    border: 1px solid var(--line);
+    transition: all 0.25s ease;
+}
+
+.segmented-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    border: 1px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.segmented-btn:active {
+    transform: scale(0.96);
+}
+
+/* Onglet Inactif */
+.segmented-btn:not(.active) {
+    color: var(--ink-faint);
+    background-color: transparent;
+}
+.segmented-btn:not(.active):hover {
+    color: var(--ink);
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Onglet Actif */
+.segmented-btn.active {
+    background-color: var(--bg-card);
+    color: var(--ink);
+    font-weight: 700;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--line);
+}
+html.dark .segmented-btn.active {
+    background-color: var(--bg-card-subtle);
+    color: var(--gold);
+    border-color: var(--gold-border);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.tab-icon {
+    display: inline-block;
+    transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.segmented-btn.active .tab-icon {
+    transform: scale(1.18);
+}
+
+/* ==============================================================================
+   ANIMATIONS DE GLISSEMENT D'ÉCRAN GAUCHE/DROITE (NAVIGATION ONGLETS)
+   ============================================================================== */
+#scroll-container {
+    overflow-x: hidden !important;
+}
+
+#tab-panels-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.tab-slide-out-left {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    pointer-events: none !important;
+    animation: tabSlideOutLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    will-change: transform, opacity;
+}
+
+.tab-slide-in-right {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    animation: tabSlideInRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    will-change: transform, opacity;
+}
+
+.tab-slide-out-right {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    pointer-events: none !important;
+    animation: tabSlideOutRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    will-change: transform, opacity;
+}
+
+.tab-slide-in-left {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    animation: tabSlideInLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    will-change: transform, opacity;
+}
+
+@keyframes tabSlideOutLeft {
+    0% {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate3d(-35%, 0, 0);
+        opacity: 0;
+    }
+}
+
+@keyframes tabSlideInRight {
+    0% {
+        transform: translate3d(40%, 0, 0);
+        opacity: 0;
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes tabSlideOutRight {
+    0% {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate3d(35%, 0, 0);
+        opacity: 0;
+    }
+}
+
+@keyframes tabSlideInLeft {
+    0% {
+        transform: translate3d(-40%, 0, 0);
+        opacity: 0;
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+    }
+}
+
+/* ==============================================================================
+   CARTES INTERACTIVES & RETOUR TACTILE HAUT DE GAMME
+   ============================================================================== */
+.card-interactive {
+    background-color: var(--bg-card);
+    border: 1px solid var(--line);
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    will-change: transform;
+}
+.card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
+    box-shadow: 0 10px 24px -4px rgba(40, 52, 76, 0.12);
+}
+.card-interactive:active {
+    transform: scale(0.982) translateY(0);
+    box-shadow: 0 4px 12px -2px rgba(40, 52, 76, 0.08);
+}
+html.dark .card-interactive:hover {
+    box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45);
+}
+
+/* Micro-interaction bouton Wi-Fi */
+.btn-wifi-copy {
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-wifi-copy:active {
+    transform: scale(0.92);
+}
+.btn-wifi-copied {
+    background-color: #ba9641 !important;
+    color: #ffffff !important;
+    border-color: #ba9641 !important;
+    transform: scale(1.03);
+}
+
+/* ==============================================================================
+   MODALES BOTTOM-SHEET STANDARDISÉES (PLEINE LARGEUR & HAUTEUR OPTIMISÉE)
+   ============================================================================== */
+body.modal-open {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.78);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-end; /* Glissement bottom-sheet élégant depuis le bas */
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.38s;
+    overscroll-behavior: none;
+    touch-action: none;
+}
+
+.modal-overlay.is-active,
+.modal-overlay.open,
+.modal-overlay.is-closing {
+    display: flex !important;
+}
+
+.modal-overlay.is-active {
+    visibility: visible !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.modal-overlay.open {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    background-color: rgba(15, 23, 42, 0.78) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.modal-overlay.is-closing {
+    visibility: visible !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.34s ease !important;
+}
+
+/* Modales Standardisées (PDF & Vidéo prennent toute la largeur) */
+.modal-sheet,
+.modal-sheet-video {
+    width: 100% !important;
+    max-width: 100% !important;
+    /* Hauteur réhaussée standardisée : espace de 28px préservé au sommet */
+    height: calc(100vh - 28px);
+    height: calc(100dvh - 28px);
+    max-height: calc(100vh - 28px);
+    max-height: calc(100dvh - 28px);
+    background-color: var(--bg-card);
+    border-top-left-radius: 26px !important;
+    border-top-right-radius: 26px !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top: 1px solid var(--line) !important;
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45) !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(100%);
+    transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    will-change: transform;
+}
+
+.modal-overlay.open .modal-sheet,
+.modal-overlay.open .modal-sheet-video {
+    transform: translateY(0) !important;
+}
+
+.modal-overlay.is-closing .modal-sheet,
+.modal-overlay.is-closing .modal-sheet-video {
+    transform: translateY(100%) !important;
+    transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* État actif lors du glissement gestuel vers le bas (Swipe-to-dismiss) */
+.modal-sheet.is-dragging {
+    transition: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* En-tête fixe des modales et zone de préhension tactile */
+.modal-header-fixed {
+    flex-shrink: 0;
+    touch-action: none;
+    padding-top: 6px;
+    padding-bottom: 10px;
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--line);
+    cursor: grab;
+    cursor: -webkit-grab;
+}
+
+.modal-sheet.is-dragging .modal-header-fixed,
+.modal-sheet.is-dragging .sheet-drag-handle {
+    cursor: grabbing;
+    cursor: -webkit-grabbing;
+}
+
+/* Zone PDF pleine hauteur adaptée à PDF.js avec Pinch-to-Zoom centré */
+.pdf-full-container {
+    flex: 1 1 0%;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    background-color: #525659;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+html.dark .pdf-full-container {
+    background-color: #1a2333;
+}
+
+#pdf-pages-wrapper {
+    transform-origin: 0 0;
+    will-change: transform;
+    width: 100%;
+}
+
+.pdf-page-canvas {
+    max-width: 100%;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    background-color: #ffffff;
+    border-radius: 6px;
+    margin: 0 auto;
+    display: block;
+}
+
+/* ==============================================================================
+   ZONE DE RÉSERVATION SUPERHOTE PLEINE HAUTEUR (SANS DOUBLE SCROLL)
+   ============================================================================== */
+.booking-full-container {
+    flex: 1 1 0%;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden; /* Supprime le double défilement externe */
+    background-color: #ffffff;
+}
+
+html.dark .booking-full-container {
+    background-color: #1b2333;
+}
+
+.booking-full-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100%;
+    min-height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    display: block;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ==============================================================================
+   ZONE VIDÉO PLEINE HAUTEUR DANS LA MODALE STANDARDISÉE
+   ============================================================================== */
+.video-full-container {
+    flex: 1 1 0%;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: #000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.video-full-container iframe,
+.video-full-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100%;
+    min-height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    object-fit: contain; /* Centre harmonieusement les vidéos verticales 720x1280 */
+    -webkit-overflow-scrolling: touch;
+}
+
+.video-full-container iframe:not(.hidden),
+.video-full-container video:not(.hidden) {
+    display: block !important;
+}
+
+/* Poignée de glissement tactile supérieure (Swipe to dismiss) */
+.sheet-drag-handle {
+    width: 44px;
+    height: 5px;
+    background-color: var(--line);
+    border-radius: 999px;
+    margin: 8px auto 4px auto;
+    flex-shrink: 0;
+    touch-action: none;
+    cursor: grab;
+    cursor: -webkit-grab;
+    transition: background-color 0.2s ease, transform 0.2s ease, width 0.2s ease;
+}
+.sheet-drag-handle:hover,
+.modal-sheet:hover .sheet-drag-handle {
+    background-color: var(--gold);
+}
+.sheet-drag-handle:active,
+.modal-sheet.is-dragging .sheet-drag-handle {
+    background-color: var(--gold);
+    transform: scaleX(1.15);
+}
+
+/* Bouton Fermer (Croix avec micro-animation) */
+.btn-close-modal {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: var(--bg-pill);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-close-modal:hover {
+    background-color: var(--gold);
+    color: #ffffff;
+    border-color: var(--gold);
+    transform: rotate(90deg) scale(1.05);
+}
+.btn-close-modal:active {
+    transform: rotate(90deg) scale(0.92);
+}
+
+/* ==============================================================================
+   BOUTON SWITCH THÈME (LIGHT / DARK)
+   ============================================================================== */
+.theme-switch-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+.theme-switch-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: scale(1.08);
+}
+.theme-switch-btn:active {
+    transform: scale(0.92);
+}
+
+/* ==============================================================================
+   SUITE D'ANIMATIONS FLUIDES & HAUTE PERFORMANCE (60/120 FPS)
+   ============================================================================== */
+/* 1. Apparition douce de contenu (Pure opacité sans saut vertical) */
+.fade-in {
+    animation: tabEnter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tabEnter {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* 2. Apparition progressive pour les cartes (Pure opacité sans décalage vertical) */
+@keyframes cascadeFadeUp {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.cascade-item {
+    animation: cascadeFadeUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 3. Pulsation douce de la marque au chargement */
+@keyframes brandBreathing {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(186, 150, 65, 0));
+    }
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 6px 18px rgba(186, 150, 65, 0.3));
+    }
+}
+
+.brand-pulse {
+    animation: brandBreathing 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 4. Barre de défilement discrète et élégante */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(140, 150, 170, 0.28);
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(140, 150, 170, 0.5);
+}
+
+/* 5. Toasts Flottants (Notification WiFi et Offline) avec rebond physique */
+#copy-toast,
+#offline-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120px) scale(0.92);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.26s ease;
+    z-index: 150;
+    pointer-events: none;
+}
+
+#copy-toast.show,
+#offline-toast.show {
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 6. Bannière Flottante PWA (Ajouter à l'écran d'accueil) */
+.pwa-install-prompt {
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    left: 14px;
+    right: 14px;
+    z-index: 120;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    transform: translateY(140%);
+    opacity: 0;
+}
+
+.pwa-install-prompt.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.pwa-install-prompt.hidden {
+    display: none !important;
+}
+
+.pwa-prompt-card {
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-card);
+    border: 1px solid var(--line);
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+/* ==============================================================================
+   ACCESSIBILITÉ : MODE MOUVEMENT RÉDUIT (PREFERS-REDUCED-MOTION)
+   ============================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

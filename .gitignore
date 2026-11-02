@@ -1,0 +1,34 @@
+# Fichiers d'environnement et secrets
+.env
+.env.*
+!.env.example
+
+# Fichiers temporaires, sauvegardes et désactivés (.off)
+*.off
+*.bak
+*.backup
+*.old
+*.tmp
+*.temp
+
+# Journaux et logs
+*.log
+*.jsonl
+gateway-log.jsonl
+passerelle-*/gateway-log.jsonl
+
+# Fichiers système d'exploitation
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Outils éditeurs et IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# Dossiers d'agents locaux
+.agents/
+.gemini/

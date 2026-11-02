@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+    <meta id="meta-theme-color" name="theme-color" content="#faf9f6">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf9f6">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#243047">
+    <base href="/portail/">
+
+    <title>Portail Voyageurs | Conciergerie Carré d'Hôtes</title>
+    <meta name="description" content="Portail d'accueil, livrets de bienvenue et vidéos des équipements pour les voyageurs de la conciergerie Carré d'Hôtes à Lyon.">
+
+    <!-- Favicon du site Web (basé sur l'image picto-light) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png?v=1">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png?v=1">
+    <link rel="shortcut icon" href="favicon.ico?v=1">
+
+    <!-- Progressive Web App (PWA) Manifest & Meta Tags (conservant les icônes PWA logo.svg) -->
+    <link id="app-manifest-link" rel="manifest" href="manifest.php">
+    <link id="app-canonical-link" rel="canonical" href="/portail/">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Carré d'Hôtes">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?v=3">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?v=3">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/icons/icon-512.png?v=3">
+
+    <!-- Preconnect pour optimiser les performances de chargement CDN -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+    <!-- Moteur de rendu PDF vectoriel universel (Mozilla PDF.js - Standard du Web) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+
+    <!-- Tailwind CSS (CDN avec mode sombre configuré sur la classe dark) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ink: {
+                            DEFAULT: '#28344c',
+                            soft: '#4b566d',
+                            faint: '#6f788a',
+                            light: '#9da7b8'
+                        },
+                        gold: {
+                            DEFAULT: '#ba9641',
+                            hover: '#a38234',
+                            soft: '#fdfbf7',
+                            border: '#e8dcbe'
+                        },
+                        cream: {
+                            DEFAULT: '#f3f3ec',
+                            light: '#faf9f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
+    <link rel="stylesheet" href="assets/css/custom.css?v=5.3">
+
+    <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
+    <script>
+        (function() {
+            // Verrouillage strict anti-zoom du viewport de l'application (iOS Safari & navigateurs mobiles)
+            function preventSafariViewportZoom(e) {
+                if (e.cancelable) e.preventDefault();
+            }
+            // Bloque le zoom d'application natif iOS WebKit sans affecter les touch events
+            document.addEventListener('gesturestart', preventSafariViewportZoom, { passive: false });
+            document.addEventListener('gesturechange', preventSafariViewportZoom, { passive: false });
+            document.addEventListener('gestureend', preventSafariViewportZoom, { passive: false });
+            window.addEventListener('gesturestart', preventSafariViewportZoom, { passive: false });
+            window.addEventListener('gesturechange', preventSafariViewportZoom, { passive: false });
+            window.addEventListener('gestureend', preventSafariViewportZoom, { passive: false });
+
+            // Bloque les gestes multi-touch en dehors du lecteur PDF
+            document.addEventListener('touchmove', function(e) {
+                if (e.touches && e.touches.length > 1) {
+                    if (!e.target || !e.target.closest || !e.target.closest('#pdf-viewport')) {
+                        if (e.cancelable) e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+
+            // Bloque le zoom trackpad/molette (Ctrl+wheel) en dehors du lecteur PDF
+            window.addEventListener('wheel', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    if (!e.target || !e.target.closest || !e.target.closest('#pdf-viewport')) {
+                        if (e.cancelable) e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
+
+            window.addEventListener('pageshow', function() {
+                if ('scrollRestoration' in history) {
+                    history.scrollRestoration = 'manual';
+                }
+                window.scrollTo(0, 0);
+                if (document.documentElement) document.documentElement.scrollTop = 0;
+                if (document.body) document.body.scrollTop = 0;
+            });
+
+            // 1. Détection mode autonome PWA (Ajouté à l'écran d'accueil)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const pathParts = window.location.pathname.replace(/^\/portail\/?/, '').split('/').filter(Boolean);
+            const currentSlug = pathParts[0] || '';
+
+            if (currentSlug && !currentSlug.includes('.')) {
+                // Sauvegarde du logement actif pour les futurs lancements PWA
+                try { localStorage.setItem('cdh_saved_property', currentSlug); } catch(e) {}
+                const manifestEl = document.getElementById('app-manifest-link');
+                if (manifestEl) manifestEl.href = 'manifest.php?slug=' + encodeURIComponent(currentSlug);
+                const canonicalEl = document.getElementById('app-canonical-link');
+                if (canonicalEl) canonicalEl.href = '/portail/' + encodeURIComponent(currentSlug);
+            } else if (isStandalone) {
+                // Si la PWA s'ouvre sur /portail/ sans slug : restauration immédiate du logement enregistré
+                try {
+                    const savedSlug = localStorage.getItem('cdh_saved_property');
+                    if (savedSlug && !savedSlug.includes('.')) {
+                        window.location.replace('/portail/' + encodeURIComponent(savedSlug));
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            const savedTheme = localStorage.getItem('ch_theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const metaTheme = document.getElementById('meta-theme-color');
+            const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.documentElement.style.backgroundColor = '#1b2333';
+                if (metaTheme) metaTheme.setAttribute('content', '#243047');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.documentElement.style.backgroundColor = '#f3f3ec';
+                if (metaTheme) metaTheme.setAttribute('content', '#faf9f6');
+            }
+        })();
+    </script>
+
+    <!-- Styles prioritaires synchrones PWA & Modales (échantillonnage immédiat WebKit / iOS) -->
+    <style>
+        :root {
+            --topbar-height: calc(55px + env(safe-area-inset-top, 0px));
+        }
+        html {
+            height: 100%;
+            background-color: #f3f3ec;
+            touch-action: pan-x pan-y;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        html.dark {
+            background-color: #1b2333;
+        }
+        body {
+            min-height: 100%;
+            min-height: 100vh;
+            min-height: 100svh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3ec !important;
+            touch-action: pan-x pan-y;
+        }
+        html.dark body {
+            background-color: #1b2333 !important;
+        }
+        #main-app,
+        main {
+            flex: 1 0 auto;
+            width: 100%;
+            min-height: 100%;
+            min-height: 100vh;
+            min-height: 100svh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .hidden {
+            display: none !important;
+        }
+        footer {
+            margin-top: auto;
+        }
+        html.no-scroll,
+        body.no-scroll {
+            overflow-y: hidden !important;
+            overscroll-behavior-y: none !important;
+        }
+
+        /* Bannière flottante d'installation PWA */
+        .pwa-install-prompt {
+            position: fixed !important;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+            left: 14px !important;
+            right: 14px !important;
+            z-index: 9999 !important;
+            pointer-events: none !important;
+            display: flex !important;
+            justify-content: center !important;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
+            transform: translateY(140%) !important;
+            opacity: 0 !important;
+        }
+        .pwa-install-prompt.show {
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .pwa-install-prompt.hidden {
+            display: none !important;
+        }
+        .pwa-prompt-card {
+            width: 100% !important;
+            max-width: 440px !important;
+            box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+            background-color: #ffffff !important;
+            border: 1px solid #e2e4e6 !important;
+            border-radius: 1.25rem !important;
+            transition: background-color 0.25s ease, border-color 0.25s ease !important;
+        }
+        html.dark .pwa-prompt-card {
+            background-color: #243047 !important;
+            border-color: #38455d !important;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(140, 150, 170, 0.35) transparent;
+        }
+
+        /* Voile d'ancrage absolu pour la barre d'état iOS */
+        .ios-statusbar-guard {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: env(safe-area-inset-top, 0px) !important;
+            background-color: #faf9f6 !important;
+            z-index: 99 !important;
+            pointer-events: none !important;
+        }
+        html.dark .ios-statusbar-guard {
+            background-color: #243047 !important;
+        }
+
+        /* Barre supérieure PWA rigoureusement ancrée sous la Safe Area */
+        .app-topbar {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 50 !important;
+            background-color: #faf9f6 !important;
+            border-bottom: 1px solid #e2e4e6 !important;
+            padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+            padding-bottom: 10px !important;
+            padding-left: calc(1.25rem + env(safe-area-inset-left, 0px)) !important;
+            padding-right: calc(1.25rem + env(safe-area-inset-right, 0px)) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            box-sizing: border-box !important;
+        }
+        html.dark .app-topbar {
+            background-color: #243047 !important;
+            border-bottom-color: #38455d !important;
+        }
+
+        /* Onglets Guides / Vidéos collants sous la navbar lors du scroll */
+        .property-tabs-sticky {
+            position: sticky !important;
+            top: var(--topbar-height, calc(55px + env(safe-area-inset-top, 0px))) !important;
+            z-index: 40 !important;
+            background-color: #ffffff !important;
+            border-bottom: 1px solid #e2e4e6 !important;
+        }
+        html.dark .property-tabs-sticky {
+            background-color: #28344c !important;
+            border-bottom-color: #38455d !important;
+        }
+
+        .modal-overlay {
+            justify-content: flex-end !important;
+        }
+        .modal-overlay:not(.open):not(.is-closing):not(.is-active) {
+            display: none !important;
+            visibility: hidden !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .modal-overlay.is-active,
+        .modal-overlay.open,
+        .modal-overlay.is-closing {
+            display: flex !important;
+        }
+        .modal-overlay.is-active {
+            visibility: visible !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .modal-overlay.open {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            background-color: rgba(15, 23, 42, 0.78) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .modal-overlay.is-closing {
+            visibility: visible !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.34s ease !important;
+        }
+        .modal-overlay.open .modal-sheet,
+        .modal-overlay.open .modal-sheet-video {
+            transform: translateY(0) !important;
+        }
+        .modal-overlay.is-closing .modal-sheet,
+        .modal-overlay.is-closing .modal-sheet-video {
+            transform: translateY(100%) !important;
+            transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1) !important;
+        }
+        .modal-sheet,
+        .modal-sheet-video {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: calc(100vh - 28px) !important;
+            height: calc(100dvh - 28px) !important;
+            max-height: calc(100vh - 28px) !important;
+            max-height: calc(100dvh - 28px) !important;
+            border-top-left-radius: 26px !important;
+            border-top-right-radius: 26px !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            border-top: 1px solid var(--line) !important;
+            box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45) !important;
+            margin-bottom: 0 !important;
+        }
+        .modal-sheet.is-dragging {
+            transition: none !important;
+        }
+        .sheet-drag-handle {
+            display: block !important;
+        }
+
+        /* Animations de glissement d'écran gauche/droite (Navigation entre onglets) */
+        #tab-panels-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .tab-slide-out-left {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            pointer-events: none !important;
+            animation: tabSlideOutLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+            will-change: transform, opacity;
+        }
+        .tab-slide-in-right {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            animation: tabSlideInRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+            will-change: transform, opacity;
+        }
+        .tab-slide-out-right {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            pointer-events: none !important;
+            animation: tabSlideOutRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+            will-change: transform, opacity;
+        }
+        .tab-slide-in-left {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            animation: tabSlideInLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+            will-change: transform, opacity;
+        }
+        @keyframes tabSlideOutLeft {
+            0% { transform: translate3d(0, 0, 0); opacity: 1; }
+            100% { transform: translate3d(-35%, 0, 0); opacity: 0; }
+        }
+        @keyframes tabSlideInRight {
+            0% { transform: translate3d(40%, 0, 0); opacity: 0; }
+            100% { transform: translate3d(0, 0, 0); opacity: 1; }
+        }
+        @keyframes tabSlideOutRight {
+            0% { transform: translate3d(0, 0, 0); opacity: 1; }
+            100% { transform: translate3d(35%, 0, 0); opacity: 0; }
+        }
+        @keyframes tabSlideInLeft {
+            0% { transform: translate3d(-40%, 0, 0); opacity: 0; }
+            100% { transform: translate3d(0, 0, 0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-full flex flex-col items-center bg-[#f3f3ec] dark:bg-[#1b2333] text-[#28344c] dark:text-[#f3f3ec] antialiased transition-colors duration-200">
+
+    <!-- Voile opaque de protection pour la barre d'état iOS (empêche tout flou système) -->
+    <div id="ios-statusbar-guard" class="ios-statusbar-guard"></div>
+
+    <!-- Conteneur Responsive Adaptatif (Smartphone, Tablette & Ordinateur) -->
+    <main id="main-app" class="w-full max-w-6xl flex-1 flex flex-col bg-white dark:bg-[#28344c] shadow-2xl relative border-x border-[#e2e4e6] dark:border-[#38455d] transition-colors duration-200">
+
+        <!-- =============================================================== -->
+        <!-- BARRE SUPÉRIEURE : LOGO + TITRE CARRÉ D'HÔTES + THEME           -->
+        <!-- =============================================================== -->
+        <header id="main-topbar" class="app-topbar px-5 sm:px-8 flex items-center justify-between border-b border-[#e2e4e6] dark:border-[#38455d] bg-[#faf9f6] dark:bg-[#243047] transition-colors duration-200" style="padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-bottom: 10px;">
+            <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2.5 group" title="Visiter carredhotes.fr">
+                <img id="brand-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-7 w-7 object-contain transition-transform group-hover:scale-105">
+                <span class="text-xs sm:text-sm font-bold tracking-wider uppercase text-gold group-hover:text-gold-hover transition">Carré d'Hôtes</span>
+            </a>
+            <button id="theme-toggle-btn" onclick="toggleTheme()" class="theme-switch-btn" title="Basculer le mode sombre / clair" aria-label="Basculer le mode sombre / clair">
+                <!-- Icône Soleil (visible en mode dark pour passer en light) -->
+                <svg id="icon-sun" class="w-4 h-4 hidden text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="5" stroke-width="2"/>
+                    <path stroke-linecap="round" stroke-width="2" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+                <!-- Icône Lune (visible en mode light pour passer en dark) -->
+                <svg id="icon-moon" class="w-4 h-4 text-ink-soft" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- =============================================================== -->
+        <!-- ÉCRAN DE CHARGEMENT INITIAL (SKELETON)                          -->
+        <!-- =============================================================== -->
+        <div id="view-loading" class="flex-1 min-h-[50vh] flex flex-col items-center justify-center p-8 text-center">
+            <img id="loading-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-16 w-16 object-contain brand-pulse mb-4">
+            <p class="text-xs font-semibold text-gold uppercase tracking-widest">Chargement de votre portail...</p>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- VUE 1 : PORTAIL DU LOGEMENT                                     -->
+        <!-- =============================================================== -->
+        <div id="view-property" class="hidden flex-1 flex flex-col">
+            
+            <!-- En-tête compact du logement -->
+            <header class="px-5 sm:px-8 py-2.5 sm:py-3.5 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
+                <h1 id="prop-name" class="text-xl sm:text-2xl md:text-3xl font-bold text-ink dark:text-white tracking-tight mb-0.5 font-serif-brand">
+                    <!-- Nom du logement injecté en JS -->
+                </h1>
+                <p id="prop-subtitle" class="text-[10px] sm:text-xs font-semibold text-gold uppercase tracking-widest">
+                    Conciergerie Carré d'Hôtes
+                </p>
+
+                <!-- Bloc WiFi (visible seulement si configuré dans MySQL) -->
+                <div id="prop-wifi-card" class="hidden mt-2.5 max-w-lg mx-auto p-2.5 sm:p-3 bg-[#f3f3ec] dark:bg-[#1e2739] border border-[#e8dcbe] dark:border-[#3d4a63] rounded-xl flex items-center justify-between text-left">
+                    <div class="flex items-center space-x-2.5">
+                        <span class="text-lg sm:text-xl">📶</span>
+                        <div>
+                            <p id="wifi-ssid" class="text-xs sm:text-sm font-bold text-ink dark:text-white"></p>
+                            <p id="wifi-password" class="text-[11px] sm:text-xs text-ink-soft dark:text-gray-300 font-mono"></p>
+                        </div>
+                    </div>
+                    <button id="wifi-copy-btn" onclick="copyWifiPassword()" class="btn-wifi-copy px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium bg-white dark:bg-[#28344c] text-ink dark:text-white border border-[#e2e4e6] dark:border-[#38455d] rounded-lg hover:text-gold transition shadow-xs">
+                        Copier
+                    </button>
+                </div>
+            </header>
+
+            <!-- CONTRÔLEUR D'ONGLETS SEGMENTÉS (« Guides » vs « Vidéos ») STICKY -->
+            <div id="property-tabs-container" class="property-tabs-sticky px-5 sm:px-8 py-2 bg-white dark:bg-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
+                <div class="segmented-nav max-w-md mx-auto sm:max-w-lg" role="tablist">
+                    <button id="btn-tab-guides" onclick="navigateToTab('guides')" role="tab" aria-selected="true" class="segmented-btn active">
+                        <span class="tab-icon text-base">📚</span>
+                        <span>Guides</span>
+                    </button>
+                    <button id="btn-tab-videos" onclick="navigateToTab('videos')" role="tab" aria-selected="false" class="segmented-btn">
+                        <span class="tab-icon text-base">🎥</span>
+                        <span>Vidéos</span>
+                        <span id="videos-badge-count" class="text-[10px] bg-gold/15 text-gold font-bold px-1.5 py-0.5 rounded-full ml-0.5">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteneur déroulant du contenu -->
+            <div id="scroll-container" class="flex-1 px-4 sm:px-8 py-3.5 sm:py-5 overflow-x-hidden">
+                <div id="tab-panels-wrapper" class="relative w-full">
+
+                <!-- ----------------------------------------------------------- -->
+                <!-- ----------------------------------------------------------- -->
+                <!-- SECTION 1 : GUIDES & LIVRETS D'ACCUEIL                      -->
+                <!-- ----------------------------------------------------------- -->
+                <section id="content-guides" class="space-y-3 sm:space-y-4">
+                    <div class="text-center mb-2.5 sm:mb-4">
+                        <h2 id="prop-welcome-title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Livrets d'accueil</h2>
+                        <p id="prop-welcome-subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Choisissez votre langue / Choose your language</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-3.5">
+                        <!-- Carte Guide Français (Ouvre la modale PDF) -->
+                        <div id="card-guide-fr" onclick="openPdfModal('fr')" 
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🇫🇷</span>
+                                <div class="min-w-0">
+                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Français</span>
+                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate">Lire le livret d'accueil en direct</p>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Carte Guide Anglais (Ouvre la modale PDF) -->
+                        <div id="card-guide-en" onclick="openPdfModal('en')" 
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="text-3xl mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0">🇬🇧</span>
+                                <div class="min-w-0">
+                                    <span class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">English</span>
+                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate">Read complete welcome booklet</p>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Carte Réserver votre prochaine destination (Ouvre la modale de réservation) -->
+                        <div onclick="openBookingModal()" 
+                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="text-2xl mr-3.5 drop-shadow-xs flex-shrink-0">✨</span>
+                                <div class="min-w-0">
+                                    <span class="text-xs sm:text-sm font-semibold text-ink dark:text-white group-hover:text-gold transition block leading-tight">Réserver votre prochaine destination</span>
+                                    <p class="text-[11px] text-ink-soft dark:text-gray-300 mt-0.5 truncate">Book your next destination</p>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 ml-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact & Assistance Conciergerie (optionnel si configuré) -->
+                    <div id="prop-contact-block" class="hidden mt-4 pt-3 sm:mt-6 sm:pt-4 border-t border-[#e2e4e6] dark:border-[#38455d] text-center max-w-md mx-auto">
+                        <p class="text-[11px] sm:text-xs font-semibold text-ink-faint dark:text-gray-400 uppercase tracking-wider mb-2 sm:mb-3">Besoin d'aide ?</p>
+                        <a id="prop-contact-phone-link" href="#" class="inline-flex items-center justify-center gap-2 py-2 px-3.5 sm:py-2.5 sm:px-4 bg-[#f3f3ec] dark:bg-[#1e2739] rounded-xl text-xs font-semibold text-ink dark:text-white hover:text-gold transition">
+                            <span>📞</span>
+                            <span id="prop-contact-phone-label">Appeler la conciergerie</span>
+                        </a>
+                    </div>
+                </section>
+
+                <!-- ----------------------------------------------------------- -->
+                <!-- SECTION 2 : VIDÉOS & MODES D'EMPLOI                         -->
+                <!-- ----------------------------------------------------------- -->
+                <section id="content-videos" class="hidden space-y-4">
+                    <div class="text-center mb-3 sm:mb-4">
+                        <h2 class="text-lg sm:text-xl font-bold text-ink dark:text-white">Modes d'emploi</h2>
+                        <p class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-1">Fonctionnement des équipements en vidéo</p>
+                    </div>
+
+                    <!-- Filtre de recherche rapide -->
+                    <div class="relative mb-4 max-w-md mx-auto">
+                        <input type="text" id="video-search" oninput="filterVideos()" 
+                               placeholder="Rechercher un équipement (ex: café, lave-linge...)" 
+                               class="w-full pl-9 pr-4 py-2.5 bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] rounded-xl text-xs sm:text-sm text-ink dark:text-white placeholder-ink-light focus:outline-none focus:border-gold transition shadow-2xs">
+                        <span class="absolute left-3 top-2.5 text-xs text-ink-faint">🔍</span>
+                    </div>
+
+                    <!-- Grille des vidéos -->
+                    <div id="videos-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+
+                    <p id="no-video-found" class="hidden text-center text-xs text-ink-faint py-6">
+                        Aucun équipement trouvé pour cette recherche.
+                    </p>
+                </section>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- VUE 2 : LISTE DE TOUS LES LOGEMENTS (PAGE D'ACCUEIL /PORTAIL)  -->
+        <!-- =============================================================== -->
+        <div id="view-list" class="hidden flex-1 flex flex-col">
+            <header class="px-6 sm:px-10 py-3 sm:py-4 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
+                <h1 class="text-2xl sm:text-3xl font-bold text-ink dark:text-white tracking-tight mb-0.5 font-serif-brand">
+                    Portail Voyageurs
+                </h1>
+                <p class="text-xs sm:text-sm font-semibold text-gold uppercase tracking-wider">
+                    Conciergerie Carré d'Hôtes
+                </p>
+            </header>
+
+            <div id="list-scroll-container" class="flex-1 p-5 sm:p-8">
+                <div class="text-center mb-6">
+                    <h2 class="text-base sm:text-lg font-bold text-ink dark:text-white">Bienvenue</h2>
+                    <p class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5">Sélectionnez votre hébergement pour consulter vos guides et vidéos.</p>
+                </div>
+
+                <div id="properties-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    <!-- Cartes des logements injectées en JS -->
+                </div>
+
+                <!-- Invitation réservation sur page d'accueil -->
+                <div class="mt-8 pt-6 border-t border-[#e2e4e6] dark:border-[#38455d] max-w-lg mx-auto">
+                    <div class="rounded-2xl p-5 bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] text-center">
+                        <p class="text-xs font-semibold text-ink dark:text-white mb-1">Vous n'avez pas encore réservé ?</p>
+                        <p class="text-[11px] text-ink-faint dark:text-gray-400 mb-3">Découvrez tous nos hébergements et réservez votre séjour en direct.</p>
+                        <button type="button" onclick="openBookingModal()" 
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-ink dark:bg-gold text-white dark:text-ink text-xs font-semibold rounded-xl hover:opacity-90 transition cursor-pointer">
+                            <span>Réserver votre prochaine destination</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- VUE 3 : ERREUR 404 (LOGEMENT INTROUVABLE)                       -->
+        <!-- =============================================================== -->
+        <div id="view-not-found" class="hidden flex-1 min-h-[50vh] flex flex-col justify-center items-center p-6 text-center">
+            <img id="notfound-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-12 w-12 object-contain mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/30 text-rose-500 flex items-center justify-center text-3xl mb-4 border border-rose-100 dark:border-rose-800">
+                🔍
+            </div>
+            <h2 class="text-lg font-bold text-ink dark:text-white mb-1">Logement introuvable</h2>
+            <p id="not-found-msg" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
+                Aucun hébergement actif ne correspond à cette adresse.
+            </p>
+            <button onclick="navigateToUrl('/portail/')" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-semibold hover:opacity-90 transition shadow-sm">
+                Voir tous les logements
+            </button>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- VUE 4 : ERREUR DE BASE DE DONNÉES                               -->
+        <!-- =============================================================== -->
+        <div id="view-error" class="hidden flex-1 min-h-[50vh] flex flex-col justify-center items-center p-6 text-center">
+            <img id="error-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-12 w-12 object-contain mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center text-3xl mb-4 border border-amber-200 dark:border-amber-800">
+                ⚙️
+            </div>
+            <h2 class="text-lg font-bold text-ink dark:text-white mb-2">Configuration requise</h2>
+            <p id="error-details" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
+                Impossible de se connecter à la base MySQL. Veuillez vérifier le fichier <code>.env</code>.
+            </p>
+            <a href="test-db.php" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-medium hover:opacity-90 transition shadow-sm">
+                Lancer le test de connexion
+            </a>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- PIED DE PAGE EN FLUX NORMAL (SOUS LE CONTENU)                   -->
+        <!-- =============================================================== -->
+        <footer class="mt-auto py-3 sm:py-3.5 text-center text-xs bg-[#faf9f6] dark:bg-[#243047] border-t border-[#e2e4e6] dark:border-[#38455d] px-4 transition-colors duration-200" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));">
+            <p class="font-medium text-ink-soft dark:text-gray-300">Nous vous souhaitons un excellent séjour !</p>
+            <p class="text-[11px] text-ink-faint dark:text-gray-400 mt-0.5">Have a wonderful stay in Lyon!</p>
+
+            <div class="mt-2 text-[10px] text-ink-faint dark:text-gray-400">
+                <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition font-medium">
+                    Carré d'Hôtes &mdash; Conciergerie à Lyon
+                </a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET 1 : LECTEUR PDF INTÉGRÉ                         -->
+    <!-- =================================================================== -->
+    <div id="modal-pdf" class="modal-overlay" onclick="onModalBackdropClick(event, 'pdf')">
+        <div class="modal-sheet flex flex-col" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle flex-shrink-0"></div>
+            
+            <!-- Barre supérieure de la modale PDF -->
+            <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2 truncate pr-2">
+                    <span id="pdf-modal-flag" class="text-xl">🇫🇷</span>
+                    <div>
+                        <h3 id="pdf-modal-title" class="text-sm font-bold text-ink dark:text-white truncate">Livret d'accueil</h3>
+                        <p class="text-[10px] text-ink-faint dark:text-gray-400">Lecture directe</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <a id="pdf-modal-external-link" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                    <button onclick="closePdfModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteneur PDF vectoriel réactif avec Pinch-to-Zoom centré entre les doigts -->
+            <div id="pdf-viewport" class="pdf-full-container flex-1 min-h-0 w-full relative bg-[#475569] dark:bg-[#0f172a] overflow-hidden select-none" style="touch-action: none;">
+                <!-- Indicateur de chargement -->
+                <div id="pdf-loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-[#1e2739]/95 z-20 transition-opacity p-4 text-center">
+                    <div class="w-8 h-8 border-3 border-gold border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <span id="pdf-loading-status" class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du guide de bienvenue...</span>
+                </div>
+
+                <!-- Zone de pages PDF manipulée par transform scale & translate centré -->
+                <div id="pdf-pages-wrapper" class="w-full flex flex-col items-center py-4 px-2 space-y-4" style="transform-origin: 0 0; will-change: transform;">
+                    <!-- Les pages <canvas> sont générées ici dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET 2 : LECTEUR VIDÉO PLEINE HAUTEUR               -->
+    <!-- =================================================================== -->
+    <div id="modal-video" class="modal-overlay" onclick="onModalBackdropClick(event, 'video')">
+        <div class="modal-sheet modal-sheet-video" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle"></div>
+
+            <!-- Barre supérieure de la modale Vidéo -->
+            <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-3 truncate pr-2">
+                    <div id="video-modal-icon-badge" class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-blue-50 text-blue-500">
+                        <span id="video-modal-icon">🫧</span>
+                    </div>
+                    <div class="truncate">
+                        <h3 id="video-modal-title" class="text-sm font-bold text-ink dark:text-white truncate">Vidéo explicative</h3>
+                        <p id="video-modal-subtitle" class="text-[11px] text-ink-faint dark:text-gray-400 truncate"></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <a id="video-external-btn" href="#" target="_blank" rel="noopener noreferrer" 
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                    <button onclick="closeVideoModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zone de lecture vidéo PLEINE HAUTEUR (prend 100% de la hauteur de la modale) -->
+            <div class="video-full-container flex-1 min-h-0 w-full relative bg-black overflow-hidden">
+                <!-- CAS A : Lecteur Iframe pour vidéos Google Drive (Plein écran / Pleine hauteur) -->
+                <iframe id="video-iframe" src="" class="absolute inset-0 w-full h-full border-0 hidden" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" 
+                        allowfullscreen></iframe>
+
+                <!-- CAS B : Lecteur Vidéo Personnalisé HTML5 pour Cloudflare R2 / MP4 (Plein écran / Pleine hauteur) -->
+                <video id="custom-video-player" class="absolute inset-0 w-full h-full object-contain bg-black hidden" controls playsinline webkit-playsinline preload="metadata">
+                    <source id="custom-video-source" src="" type="video/mp4">
+                    Votre navigateur ne prend pas en charge la lecture vidéo.
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET 3 : MOTEUR DE RÉSERVATION SUPERHOTE             -->
+    <!-- =================================================================== -->
+    <div id="modal-booking" class="modal-overlay" onclick="onModalBackdropClick(event, 'booking')">
+        <div class="modal-sheet flex flex-col" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle"></div>
+
+            <!-- Barre supérieure de la modale Réservation -->
+            <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2.5 truncate pr-2">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-amber-50 dark:bg-amber-900/30 text-gold">
+                        <span>✨</span>
+                    </div>
+                    <div class="truncate">
+                        <h3 class="text-sm font-bold text-ink dark:text-white truncate">Réserver votre prochaine destination</h3>
+                        <p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Conciergerie Carré d'Hôtes &middot; Réservation directe</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <a href="https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search" target="_blank" rel="noopener noreferrer" 
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                    <button onclick="closeBookingModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteneur Iframe Réservation (Hauteur égale à la modale, aucun double scroll) -->
+            <div class="booking-full-container flex-1 min-h-0 w-full relative bg-white dark:bg-[#1b2333] overflow-hidden">
+                <div id="booking-loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-[#28344c]/90 z-10 transition-opacity">
+                    <div class="w-8 h-8 border-3 border-gold border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <span class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du moteur de recherche...</span>
+                </div>
+                <iframe src="https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search" 
+                        width="100%" 
+                        height="100%" 
+                        id="booking-search-engine-rentals"
+                        class="absolute inset-0 w-full h-full border-0 block"
+                        onload="onBookingLoaded()"
+                        allow="payment"
+                        loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification flottante "Mot de passe copié" -->
+    <div id="copy-toast" class="bg-ink text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
+        <span>✓</span>
+        <span>Mot de passe WiFi copié !</span>
+    </div>
+
+    <!-- Notification flottante "Mode hors-ligne" PWA -->
+    <div id="offline-toast" class="bg-amber-600 text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium flex items-center gap-2">
+        <span>📶</span>
+        <span>Mode hors-ligne actif (guides consultés disponibles)</span>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- BANNIÈRE FLOTTANTE / POPUP : INSTALLATION PWA (ÉCRAN D'ACCUEIL)     -->
+    <!-- =================================================================== -->
+    <div id="pwa-install-banner" class="pwa-install-prompt hidden" role="dialog" aria-modal="false" aria-label="Installer l'application">
+        <div class="pwa-prompt-card p-4 sm:p-5 rounded-2xl shadow-2xl relative max-w-md mx-auto">
+            
+            <!-- Bouton fermeture croix -->
+            <button type="button" onclick="PwaManager.dismissPrompt()" class="absolute top-3 right-3 text-ink-faint hover:text-ink dark:text-gray-400 dark:hover:text-white p-1 rounded-lg transition" aria-label="Fermer la suggestion">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <!-- En-tête : Icône PWA + Titre & Sous-titre -->
+            <div class="flex items-start space-x-3 pr-6">
+                <img src="assets/icons/apple-touch-icon.png" alt="Carré d'Hôtes" class="w-12 h-12 rounded-xl object-cover shadow-xs flex-shrink-0 border border-[#e2e4e6] dark:border-[#38455d]">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h4 id="pwa-prompt-title" class="text-sm font-bold text-ink dark:text-white truncate">Installer l'application</h4>
+                        <span class="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">PWA</span>
+                    </div>
+                    <p id="pwa-prompt-desc" class="text-xs text-ink-soft dark:text-gray-300 mt-0.5 line-clamp-2">
+                        Accédez à vos guides et vidéos en un clic depuis votre écran d'accueil, même hors ligne.
+                    </p>
+                </div>
+            </div>
+
+            <!-- CONTENU A : Mode Android / Chrome / Navigateurs avec prompt natif -->
+            <div id="pwa-prompt-native" class="mt-3.5 flex items-center justify-end space-x-2">
+                <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3 py-2 text-xs font-semibold text-ink-faint dark:text-gray-400 hover:text-ink dark:hover:text-white transition rounded-xl cursor-pointer">
+                    Plus tard
+                </button>
+                <button type="button" onclick="PwaManager.installApp()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-gold to-gold-hover text-white text-xs font-bold rounded-xl shadow-xs hover:opacity-95 transition transform active:scale-95 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Ajouter à l'écran d'accueil</span>
+                </button>
+            </div>
+
+            <!-- CONTENU B : Mode iOS Safari (Instructions pas-à-pas avec pictogramme de partage) -->
+            <div id="pwa-prompt-ios" class="hidden mt-3 pt-3 border-t border-[#e2e4e6] dark:border-[#38455d] space-y-2">
+                <div class="flex items-center gap-2.5 text-xs text-ink-soft dark:text-gray-300">
+                    <div class="w-6 h-6 rounded-lg bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink dark:text-white flex-shrink-0 shadow-2xs font-bold text-[11px]">1</div>
+                    <p>Appuyez sur <span class="font-semibold text-ink dark:text-white">Partager</span> <svg class="inline-block w-4 h-4 text-blue-500 align-sub mx-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 3v13m0-13l-4 4m4-4l4 4"/></svg> (en bas de votre écran)</p>
+                </div>
+                <div class="flex items-center gap-2.5 text-xs text-ink-soft dark:text-gray-300">
+                    <div class="w-6 h-6 rounded-lg bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink dark:text-white flex-shrink-0 shadow-2xs font-bold text-[11px]">2</div>
+                    <p>Faites défiler et choisissez <span class="font-semibold text-ink dark:text-white">« Sur l'écran d'accueil »</span> ➕</p>
+                </div>
+                <div class="pt-1 text-right">
+                    <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3.5 py-1.5 text-xs font-bold text-gold hover:text-gold-hover transition cursor-pointer">
+                        J'ai compris
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
+    <!-- =================================================================== -->
+    <script src="assets/js/app.js?v=5.3" defer></script>
+</body>
+</html>
