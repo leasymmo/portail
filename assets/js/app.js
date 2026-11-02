@@ -50,7 +50,7 @@ const I18n = {
             wifi_copied_toast: "Mot de passe Wi-Fi copié !",
             copy_network_title: "Copier le nom du réseau",
             copy_pwd_title: "Copier le mot de passe",
-            tab_infos: "Infos",
+            tab_infos: "Informations",
             tab_videos: "Vidéos",
             welcome_title: "Guide de bienvenue",
             welcome_subtitle: "Toutes les informations pratiques pour votre séjour",
@@ -118,7 +118,7 @@ const I18n = {
             wifi_copied_toast: "Wi-Fi password copied!",
             copy_network_title: "Copy network name",
             copy_pwd_title: "Copy password",
-            tab_infos: "Info",
+            tab_infos: "Information",
             tab_videos: "Videos",
             welcome_title: "Welcome Guide",
             welcome_subtitle: "Practical information and tips for a wonderful stay",
@@ -2145,7 +2145,7 @@ const ListRenderer = {
                 const count = parseInt(p.videos_count || p.tutorials_count || 0, 10);
                 const isEn = I18n.currentLang === 'en';
                 const subtitleText = count > 0 
-                    ? (isEn ? `Info & ${count} videos` : `Infos & ${count} vidéos`) 
+                    ? (isEn ? `Information & ${count} videos` : `Informations & ${count} vidéos`) 
                     : (isEn ? `Welcome Guide (FR / EN)` : `Guide de bienvenue (FR / EN)`);
 
                 card.innerHTML = `
