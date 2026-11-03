@@ -951,7 +951,7 @@ const ModalManager = {
 
     getBookingUrl(lang = null) {
         const activeLang = lang || I18n.currentLang;
-        const baseUrl = "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals";
+        const baseUrl = "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search";
         return activeLang === 'en' ? `${baseUrl}?lang=en` : baseUrl;
     },
 
