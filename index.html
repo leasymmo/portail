@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=7.5">
+    <link rel="stylesheet" href="assets/css/custom.css?v=7.6">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -921,7 +921,7 @@
     <!-- MODALE BOTTOM-SHEET 4 : INFORMATIONS DE CONNEXION WI-FI COMPACTE    -->
     <!-- =================================================================== -->
     <div id="modal-wifi" class="modal-overlay" onclick="onModalBackdropClick(event, 'wifi')">
-        <div class="modal-sheet-compact flex flex-col">
+        <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
             <div class="sheet-drag-handle flex-shrink-0"></div>
 
             <!-- Barre supérieure de la modale Wi-Fi -->
@@ -994,7 +994,7 @@
     <!-- MODALE BOTTOM-SHEET 5 : AVIS GOOGLE MY BUSINESS COMPACTE            -->
     <!-- =================================================================== -->
     <div id="modal-review" class="modal-overlay" onclick="onModalBackdropClick(event, 'review')">
-        <div class="modal-sheet-compact flex flex-col">
+        <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
             <div class="sheet-drag-handle flex-shrink-0"></div>
 
             <!-- Barre supérieure de la modale Avis Google -->
@@ -1060,7 +1060,7 @@
     <!-- MODALE BOTTOM-SHEET 6 : CONTACT CONCIERGE ANTHONY & AUTO-DÉPANNAGE  -->
     <!-- =================================================================== -->
     <div id="modal-contact-anthony" class="modal-overlay" onclick="onModalBackdropClick(event, 'contact')">
-        <div class="modal-sheet-compact flex flex-col">
+        <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
             <div class="sheet-drag-handle flex-shrink-0"></div>
 
             <!-- Barre supérieure de la modale Contact -->
@@ -1238,6 +1238,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=7.5" defer></script>
+    <script src="assets/js/app.js?v=7.6" defer></script>
 </body>
 </html>

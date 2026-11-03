@@ -641,6 +641,7 @@ body.modal-open {
     position: relative;
     -webkit-overflow-scrolling: touch;
     touch-action: manipulation !important;
+    pointer-events: auto !important;
     will-change: transform;
     margin-bottom: 0 !important;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));

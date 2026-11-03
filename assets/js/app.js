@@ -2204,6 +2204,16 @@ const PropertyRenderer = {
         if (AppState.currentVideos && AppState.currentVideos.length > 0) {
             this.renderVideos(AppState.currentVideos);
         }
+
+        // Configuration anticipée du lien direct WhatsApp
+        const btnWhatsApp = document.getElementById('btn-whatsapp-anthony');
+        if (btnWhatsApp) {
+            const propName = (prop && prop.name) ? prop.name : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
+            const msg = I18n.currentLang === 'en'
+                ? `Hello Anthony, I am currently staying at "${propName}" and I have a question regarding my stay: `
+                : `Bonjour Anthony, je séjourne actuellement au logement "${propName}" et j'ai une question concernant mon séjour : `;
+            btnWhatsApp.href = `https://wa.me/33675883791?text=${encodeURIComponent(msg)}`;
+        }
     },
 
     openCurrentGuide() {
@@ -2902,43 +2912,6 @@ const App = {
             }
         }, { passive: false });
 
-        // Liaison directe fiabilisée des cartes de la page d'accueil
-        const cardReview = document.getElementById('card-review-active');
-        if (cardReview) {
-            cardReview.addEventListener('click', () => ModalManager.openReview());
-        }
-        const cardContact = document.getElementById('card-contact-active');
-        if (cardContact) {
-            cardContact.addEventListener('click', () => ModalManager.openContact());
-        }
-
-        // Liaison directe des boutons de la modale Avis
-        const btnGoogleReview = document.getElementById('btn-google-review');
-        if (btnGoogleReview) {
-            btnGoogleReview.addEventListener('click', (e) => openGoogleReview(e));
-        }
-        const btnReviewToContact = document.getElementById('btn-review-contact-switch');
-        if (btnReviewToContact) {
-            btnReviewToContact.addEventListener('click', (e) => ModalManager.switchFromReviewToContact(e));
-        }
-
-        // Liaison directe des boutons de la modale Contact
-        const btnWhatsApp = document.getElementById('btn-whatsapp-anthony');
-        if (btnWhatsApp) {
-            btnWhatsApp.addEventListener('click', (e) => openWhatsAppAnthony(e));
-        }
-        const btnTriageVideos = document.getElementById('contact-triage-videos');
-        if (btnTriageVideos) {
-            btnTriageVideos.addEventListener('click', (e) => ModalManager.switchToVideosFromContact(e));
-        }
-        const btnTriageWifi = document.getElementById('contact-triage-wifi');
-        if (btnTriageWifi) {
-            btnTriageWifi.addEventListener('click', (e) => ModalManager.switchToWifiFromContact(e));
-        }
-        const btnTriageGuide = document.getElementById('contact-triage-guide');
-        if (btnTriageGuide) {
-            btnTriageGuide.addEventListener('click', (e) => ModalManager.switchToGuideFromContact(e));
-        }
     }
 };
 
@@ -2962,31 +2935,47 @@ function openWhatsAppAnthony(e) {
     const btn = document.getElementById('btn-whatsapp-anthony');
     if (btn) btn.href = url;
 
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (isStandalone) {
-        window.open(url, '_blank', 'noopener,noreferrer');
+    // Détection universelle smartphone / tablette / PWA standalone
+    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isMobile) {
+        if (e && e.preventDefault) e.preventDefault();
+        window.location.href = url;
     }
+    // Sur desktop, on laisse l'action native du lien <a href="..." target="_blank"> ouvrir WhatsApp Web dans un nouvel onglet
 }
 
 function openGoogleReview(e) {
     if (e && e.stopPropagation) e.stopPropagation();
     const url = "https://g.page/r/CZ8_-ySB8FV2ECE/review";
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (isStandalone) {
+        if (e && e.preventDefault) e.preventDefault();
+        window.open(url, '_blank');
+    }
+    // En mode web normal (mobile Safari/Chrome et desktop), le lien natif <a href="..." target="_blank" rel="noopener noreferrer">
+    // gère l'ouverture sans risquer le blocage pop-up du navigateur.
 }
 
 function goToVideosFromContact(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
     ModalManager.switchToVideosFromContact(e);
 }
 
 function goToWifiFromContact(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
     ModalManager.switchToWifiFromContact(e);
 }
 
 function goToGuideFromContact(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
     ModalManager.switchToGuideFromContact(e);
 }
 
 function switchFromReviewToContact(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
     ModalManager.switchFromReviewToContact(e);
 }
 
