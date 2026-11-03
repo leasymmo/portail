@@ -273,6 +273,7 @@ const I18n = {
         } else if (AppState.allProperties && AppState.allProperties.length > 0) {
             ListRenderer.render(AppState.allProperties);
         }
+        ModalManager.updateBookingLanguage();
         Utils.announceA11y(this.t('a11y_lang_changed'));
     },
 
@@ -948,33 +949,72 @@ const ModalManager = {
     isBookingLoaded: Boolean(window.__bookingLoaded),
     _bookingSpinnerTimer: null,
 
+    getBookingUrl(lang = null) {
+        const activeLang = lang || I18n.currentLang;
+        const baseUrl = "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals";
+        return activeLang === 'en' ? `${baseUrl}?lang=en` : baseUrl;
+    },
+
+    updateBookingLanguage() {
+        const targetUrl = this.getBookingUrl();
+        const iframe = document.getElementById('booking-search-engine-rentals');
+        const link = document.getElementById('booking-modal-external-link');
+
+        if (link) {
+            link.href = targetUrl;
+        }
+
+        if (iframe) {
+            iframe.setAttribute('data-src', targetUrl);
+            if (iframe.src && iframe.src.includes('superhote.com') && iframe.src !== targetUrl) {
+                const spinner = document.getElementById('booking-loading-spinner');
+                if (spinner) {
+                    spinner.classList.remove('hidden');
+                    spinner.style.opacity = '1';
+                }
+                this.isBookingLoaded = false;
+                window.__bookingLoaded = false;
+                clearTimeout(this._bookingSpinnerTimer);
+                this._bookingSpinnerTimer = setTimeout(() => {
+                    this.onBookingLoaded();
+                }, 1500);
+                iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
+                iframe.src = targetUrl;
+            }
+        }
+    },
+
     openBooking(updateUrl = true) {
         const modal = document.getElementById('modal-booking');
         const spinner = document.getElementById('booking-loading-spinner');
         const iframe = document.getElementById('booking-search-engine-rentals');
         if (!modal) return;
 
-        if (this.isBookingLoaded || window.__bookingLoaded) {
-            this.isBookingLoaded = true;
-            if (spinner) spinner.classList.add('hidden');
-        } else {
-            if (spinner) {
-                spinner.classList.remove('hidden');
-                spinner.style.opacity = '1';
-            }
-            // Sécurité anti-blocage : si le site tiers tarde ou ne déclenche pas l'événement onload,
-            // on masque automatiquement le spinner après 1.5s pour ne jamais bloquer l'accès au moteur
-            clearTimeout(this._bookingSpinnerTimer);
-            this._bookingSpinnerTimer = setTimeout(() => {
-                this.onBookingLoaded();
-            }, 1500);
+        const targetUrl = this.getBookingUrl();
+        const link = document.getElementById('booking-modal-external-link');
+        if (link) {
+            link.href = targetUrl;
         }
 
         if (iframe) {
-            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search";
-            if (!iframe.src || !iframe.src.includes('superhote.com')) {
+            iframe.setAttribute('data-src', targetUrl);
+            const needsLoad = !iframe.src || !iframe.src.includes('superhote.com') || iframe.src !== targetUrl;
+
+            if (needsLoad) {
+                if (spinner) {
+                    spinner.classList.remove('hidden');
+                    spinner.style.opacity = '1';
+                }
+                this.isBookingLoaded = false;
+                window.__bookingLoaded = false;
+                clearTimeout(this._bookingSpinnerTimer);
+                this._bookingSpinnerTimer = setTimeout(() => {
+                    this.onBookingLoaded();
+                }, 1500);
                 iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
-                iframe.src = targetSrc;
+                iframe.src = targetUrl;
+            } else if (this.isBookingLoaded || window.__bookingLoaded) {
+                if (spinner) spinner.classList.add('hidden');
             }
         }
 
@@ -1044,12 +1084,18 @@ const ModalManager = {
     },
 
     preloadBooking() {
+        const targetUrl = this.getBookingUrl();
+        const link = document.getElementById('booking-modal-external-link');
+        if (link) {
+            link.href = targetUrl;
+        }
+
         const iframe = document.getElementById('booking-search-engine-rentals');
         if (iframe) {
-            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search";
+            iframe.setAttribute('data-src', targetUrl);
             if (!iframe.src || !iframe.src.includes('superhote.com')) {
                 iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
-                iframe.src = targetSrc;
+                iframe.src = targetUrl;
             }
         }
     },
@@ -2573,6 +2619,9 @@ const PropertyRenderer = {
                 : `Bonjour Anthony, je séjourne actuellement au logement "${propName}" et j'ai une question concernant mon séjour : `;
             btnWhatsApp.href = `https://wa.me/33675883791?text=${encodeURIComponent(msg)}`;
         }
+
+        // Actualise la langue de l'iframe de réservation directe Superhote (?lang=en)
+        ModalManager.updateBookingLanguage();
     },
 
     openCurrentGuide() {

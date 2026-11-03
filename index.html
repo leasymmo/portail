@@ -66,7 +66,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=9.1">
+    <link rel="stylesheet" href="assets/css/custom.css?v=9.2">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -955,7 +955,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 flex-shrink-0">
-                    <a href="https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search" target="_blank" rel="noopener noreferrer" 
+                    <a id="booking-modal-external-link" href="https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals" target="_blank" rel="noopener noreferrer" 
                        class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" aria-label="Ouvrir le moteur de réservation dans un nouvel onglet" data-i18n-title="pdf_open_drive">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
@@ -971,7 +971,7 @@
                     <div class="w-8 h-8 border-3 border-gold border-t-transparent rounded-full animate-spin mb-2"></div>
                     <span data-i18n="booking_spinner" class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du moteur de recherche...</span>
                 </div>
-                <iframe data-src="https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search" 
+                <iframe data-src="https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals" 
                         width="100%" 
                         height="100%" 
                         id="booking-search-engine-rentals"
@@ -1302,6 +1302,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=9.1" defer></script>
+    <script src="assets/js/app.js?v=9.2" defer></script>
 </body>
 </html>
