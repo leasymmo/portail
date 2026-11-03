@@ -7,6 +7,7 @@
 
 import { AppState } from './state.js';
 import { BASE_PATH } from './router.js';
+import { I18n } from './i18n.js';
 
 export const PdfViewer = {
     pdfDoc: null,
@@ -15,6 +16,9 @@ export const PdfViewer = {
     _cachedBuffer: null,
     _isPreloading: false,
     _preloadPromise: null,
+    _preloadSeq: 0,
+    _targetPreloadSlug: null,
+    _targetPreloadLang: null,
     currentRenderTasks: [],
 
     // État de transformation vectorielle
@@ -352,12 +356,27 @@ export const PdfViewer = {
     async preload(slug, lang) {
         if (!slug) return;
         const targetLang = lang || 'fr';
-        if (this.loadedSlug === slug && this.loadedLang === targetLang && this.pdfDoc) {
+
+        const wrapper = document.getElementById('pdf-pages-wrapper');
+        const renderedCount = wrapper ? wrapper.querySelectorAll('canvas').length : 0;
+
+        // Si le document est déjà totalement chargé et pré-rendu dans la langue cible, aucun travail nécessaire
+        if (this.loadedSlug === slug && this.loadedLang === targetLang && this.pdfDoc && renderedCount >= this.pdfDoc.numPages) {
             return;
         }
-        if (this._isPreloading && this._preloadPromise) {
+
+        // Si un préchargement identique est déjà en cours d'exécution, on renvoie sa promesse
+        if (this._isPreloading && this._preloadPromise && this._targetPreloadSlug === slug && this._targetPreloadLang === targetLang) {
             return this._preloadPromise;
         }
+
+        // Annule les rendus de pages précédents en cours
+        this.cancelCurrentRenders();
+
+        this._targetPreloadSlug = slug;
+        this._targetPreloadLang = targetLang;
+        this._preloadSeq = (this._preloadSeq || 0) + 1;
+        const currentSeq = this._preloadSeq;
 
         this._isPreloading = true;
         this._preloadPromise = (async () => {
@@ -365,6 +384,7 @@ export const PdfViewer = {
                 if (!window.pdfjsLib) {
                     await this.waitForPdfJs();
                 }
+                if (this._preloadSeq !== currentSeq) return;
 
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -375,6 +395,7 @@ export const PdfViewer = {
                 const resp = await fetch(proxyUrl);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const buffer = await resp.arrayBuffer();
+                if (this._preloadSeq !== currentSeq) return;
 
                 this._cachedBuffer = buffer;
                 this.loadedSlug = slug;
@@ -387,18 +408,31 @@ export const PdfViewer = {
                     standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
                 });
 
-                this.pdfDoc = await loadingTask.promise;
+                const doc = await loadingTask.promise;
+                if (this._preloadSeq !== currentSeq) return;
+                this.pdfDoc = doc;
 
                 // Pré-rendu immédiat dans le DOM pour un affichage instantané (0ms) dès l'ouverture
-                const wrapper = document.getElementById('pdf-pages-wrapper');
-                if (wrapper && wrapper.children.length === 0) {
+                const currentWrapper = document.getElementById('pdf-pages-wrapper');
+                if (currentWrapper) {
+                    if (AppState.isPdfModalOpen) {
+                        const spinner = document.getElementById('pdf-loading-spinner');
+                        if (spinner) spinner.classList.remove('hidden');
+                    }
                     await this.renderAllPages();
+                    if (AppState.isPdfModalOpen) {
+                        const spinner = document.getElementById('pdf-loading-spinner');
+                        if (spinner) spinner.classList.add('hidden');
+                        this.resetZoom();
+                    }
                 }
             } catch (err) {
                 console.warn('[PdfViewer] Préchargement en arrière-plan :', err.message);
             } finally {
-                this._isPreloading = false;
-                this._preloadPromise = null;
+                if (this._preloadSeq === currentSeq) {
+                    this._isPreloading = false;
+                    this._preloadPromise = null;
+                }
             }
         })();
 
@@ -434,10 +468,11 @@ export const PdfViewer = {
         // Cas 2 : Préchargement en cours en arrière-plan -> on attend sa résolution
         if (this._isPreloading && this._preloadPromise) {
             if (spinner) spinner.classList.remove('hidden');
-            if (statusEl) statusEl.textContent = "Chargement du guide de bienvenue...";
+            if (statusEl) statusEl.textContent = (typeof I18n !== 'undefined' && I18n.t) ? I18n.t('pdf_loading') : "Chargement du guide de bienvenue...";
             await this._preloadPromise;
-            if (this.pdfDoc) {
-                if (!wrapper || wrapper.querySelectorAll('canvas').length === 0) {
+            if (this.pdfDoc && this.loadedSlug === slug && this.loadedLang === targetLang) {
+                const renderedCount = wrapper ? wrapper.querySelectorAll('canvas').length : 0;
+                if (!wrapper || renderedCount < this.pdfDoc.numPages) {
                     await this.renderAllPages();
                 }
                 if (spinner) spinner.classList.add('hidden');
@@ -452,7 +487,7 @@ export const PdfViewer = {
         this.y = 0;
 
         if (spinner) spinner.classList.remove('hidden');
-        if (statusEl) statusEl.textContent = "Chargement du guide de bienvenue...";
+        if (statusEl) statusEl.textContent = (typeof I18n !== 'undefined' && I18n.t) ? I18n.t('pdf_loading') : "Chargement du guide de bienvenue...";
         if (wrapper) {
             wrapper.style.transform = 'translate3d(0, 0, 0) scale(1)';
             wrapper.innerHTML = '';
@@ -628,6 +663,9 @@ export const PdfViewer = {
             cancelAnimationFrame(this._animId);
             this._animId = null;
         }
+        this._preloadSeq = (this._preloadSeq || 0) + 1;
+        this._targetPreloadSlug = null;
+        this._targetPreloadLang = null;
         this.pdfDoc = null;
         this.loadedSlug = null;
         this.loadedLang = null;

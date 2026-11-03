@@ -62,10 +62,10 @@ export const ModalManager = {
         if (container) container.scrollTop = 0;
 
         // Rendu vectoriel via PDF.js (fit-to-width parfait & zoom de contenu)
-        PdfViewer.load(AppState.currentSlug, lang, pdfUrl);
+        PdfViewer.load(AppState.currentSlug, activeLang, pdfUrl);
 
         if (updateUrl) {
-            Router.setUrl(AppState.currentSlug, 'guides', `pdf-${lang}`);
+            Router.setUrl(AppState.currentSlug, 'guides', `pdf-${activeLang}`);
         }
     },
 
@@ -239,32 +239,7 @@ export const ModalManager = {
     },
 
     updateBookingLanguage() {
-        const targetUrl = this.getBookingUrl();
-        const iframe = document.getElementById('booking-search-engine-rentals');
-        const link = document.getElementById('booking-modal-external-link');
-
-        if (link) {
-            link.href = targetUrl;
-        }
-
-        if (iframe) {
-            iframe.setAttribute('data-src', targetUrl);
-            if (iframe.src && iframe.src.includes('superhote.com') && iframe.src !== targetUrl) {
-                const spinner = document.getElementById('booking-loading-spinner');
-                if (spinner) {
-                    spinner.classList.remove('hidden');
-                    spinner.style.opacity = '1';
-                }
-                this.isBookingLoaded = false;
-                window.__bookingLoaded = false;
-                clearTimeout(this._bookingSpinnerTimer);
-                this._bookingSpinnerTimer = setTimeout(() => {
-                    this.onBookingLoaded();
-                }, 1500);
-                iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
-                iframe.src = targetUrl;
-            }
-        }
+        this.preloadBooking();
     },
 
     openBooking(updateUrl = true) {
@@ -376,7 +351,20 @@ export const ModalManager = {
         const iframe = document.getElementById('booking-search-engine-rentals');
         if (iframe) {
             iframe.setAttribute('data-src', targetUrl);
-            if (!iframe.src || !iframe.src.includes('superhote.com')) {
+            const isDifferent = !iframe.src || !iframe.src.includes('superhote.com') || iframe.src !== targetUrl;
+            if (isDifferent) {
+                this.isBookingLoaded = false;
+                window.__bookingLoaded = false;
+                const spinner = document.getElementById('booking-loading-spinner');
+                // N'affiche le spinner que si la modale de réservation est actuellement ouverte
+                if (spinner && AppState.isBookingModalOpen) {
+                    spinner.classList.remove('hidden');
+                    spinner.style.opacity = '1';
+                }
+                clearTimeout(this._bookingSpinnerTimer);
+                this._bookingSpinnerTimer = setTimeout(() => {
+                    this.onBookingLoaded();
+                }, 2000);
                 iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
                 iframe.src = targetUrl;
             }

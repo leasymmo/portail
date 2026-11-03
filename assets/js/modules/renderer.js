@@ -11,6 +11,7 @@ import { I18n } from './i18n.js';
 import { ScrollManager } from './scroll.js';
 import { Router, BASE_PATH } from './router.js';
 import { ModalManager } from './modals.js';
+import { PdfViewer } from './pdf-viewer.js';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -230,6 +231,31 @@ export const PropertyRenderer = {
 
         // Actualise la langue de l'iframe de réservation directe Superhote (?lang=en)
         ModalManager.updateBookingLanguage();
+
+        // 4. Préchargement réactif du livret de bienvenue dans la nouvelle langue pour affichage 0ms
+        let targetLang = isEn ? 'en' : 'fr';
+        if (isEn && !prop.guide_en_url && prop.guide_fr_url) {
+            targetLang = 'fr';
+        } else if (!isEn && !prop.guide_fr_url && prop.guide_en_url) {
+            targetLang = 'en';
+        }
+        PdfViewer.preload(prop.slug, targetLang);
+
+        // 5. Si la modale PDF est actuellement ouverte, synchronise ses libellés, liens et URL de route
+        if (AppState.isPdfModalOpen) {
+            const pdfLink = document.getElementById('pdf-modal-external-link');
+            if (pdfLink) {
+                const pdfUrl = (targetLang === 'en')
+                    ? (prop.guide_en_url || prop.guide_fr_url)
+                    : (prop.guide_fr_url || prop.guide_en_url);
+                if (pdfUrl) pdfLink.href = Utils.safeUrl(pdfUrl);
+            }
+            const pdfTitle = document.getElementById('pdf-modal-title');
+            if (pdfTitle) pdfTitle.textContent = I18n.t('booklet_title');
+            const pdfDesc = document.getElementById('pdf-modal-status-label');
+            if (pdfDesc) pdfDesc.textContent = I18n.t('booklet_desc');
+            Router.setUrl(prop.slug, 'guides', `pdf-${targetLang}`);
+        }
     },
 
     openCurrentGuide() {
