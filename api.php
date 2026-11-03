@@ -47,7 +47,14 @@ try {
         if (isset($_GET['pdf']) && $_GET['pdf'] === '1') {
             $lang = ($_GET['lang'] ?? 'fr') === 'en' ? 'en' : 'fr';
             $targetPdfUrl = ($lang === 'en') ? ($property['guide_en_url'] ?? '') : ($property['guide_fr_url'] ?? '');
-            if (!empty($targetPdfUrl) && filter_var($targetPdfUrl, FILTER_VALIDATE_URL)) {
+            
+            $scheme = strtolower((string)parse_url($targetPdfUrl, PHP_URL_SCHEME));
+            $host = strtolower((string)parse_url($targetPdfUrl, PHP_URL_HOST));
+            $isAllowedScheme = in_array($scheme, ['https', 'http'], true);
+            $isBlockedHost = in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0', '169.254.169.254'], true)
+                || preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/', $host);
+
+            if (!empty($targetPdfUrl) && filter_var($targetPdfUrl, FILTER_VALIDATE_URL) && $isAllowedScheme && !$isBlockedHost) {
                 header_remove('Content-Type');
                 header_remove('X-Frame-Options');
                 header('Content-Type: application/pdf');

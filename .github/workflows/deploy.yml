@@ -41,3 +41,5 @@ jobs:
             README.md
             *.md
             **/gateway-log*.jsonl
+            **/tools/**
+            **/database/**

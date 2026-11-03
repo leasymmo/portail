@@ -66,7 +66,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=9.3">
+    <link rel="stylesheet" href="assets/css/custom.css?v=10.0">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -170,273 +170,6 @@
             }
         })();
     </script>
-
-    <!-- Styles prioritaires synchrones PWA & Modales (échantillonnage immédiat WebKit / iOS) -->
-    <style>
-        :root {
-            --topbar-height: calc(55px + env(safe-area-inset-top, 0px));
-        }
-        html {
-            height: 100%;
-            background-color: #f3f3ec;
-            touch-action: pan-x pan-y;
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
-        html.dark {
-            background-color: #1b2333;
-        }
-        body {
-            min-height: 100%;
-            min-height: 100vh;
-            min-height: 100svh;
-            min-height: -webkit-fill-available;
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            padding: 0;
-            background-color: #f3f3ec !important;
-            touch-action: pan-x pan-y;
-        }
-        html.dark body {
-            background-color: #1b2333 !important;
-        }
-        #main-app,
-        main {
-            flex: 1 0 auto;
-            width: 100%;
-            min-height: 100%;
-            min-height: 100vh;
-            min-height: 100svh;
-            min-height: -webkit-fill-available;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-        }
-        .hidden {
-            display: none !important;
-        }
-        footer {
-            margin-top: auto;
-        }
-        html.no-scroll,
-        body.no-scroll {
-            overflow-y: hidden !important;
-            overscroll-behavior-y: none !important;
-        }
-
-        /* Bannière flottante d'installation PWA */
-        .pwa-install-prompt {
-            position: fixed !important;
-            bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-            left: 14px !important;
-            right: 14px !important;
-            z-index: 9999 !important;
-            pointer-events: none !important;
-            display: flex !important;
-            justify-content: center !important;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
-            transform: translateY(140%) !important;
-            opacity: 0 !important;
-        }
-        .pwa-install-prompt.show {
-            transform: translateY(0) !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-        .pwa-install-prompt.hidden {
-            display: none !important;
-        }
-        .pwa-prompt-card {
-            width: 100% !important;
-            max-width: 440px !important;
-            box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
-            background-color: #ffffff !important;
-            border: 1px solid #e2e4e6 !important;
-            border-radius: 1.25rem !important;
-            transition: background-color 0.25s ease, border-color 0.25s ease !important;
-        }
-        html.dark .pwa-prompt-card {
-            background-color: #243047 !important;
-            border-color: #38455d !important;
-        }
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(140, 150, 170, 0.35) transparent;
-        }
-
-        /* Voile d'ancrage absolu pour la barre d'état iOS */
-        .ios-statusbar-guard {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            height: env(safe-area-inset-top, 0px) !important;
-            background-color: #faf9f6 !important;
-            z-index: 99 !important;
-            pointer-events: none !important;
-        }
-        html.dark .ios-statusbar-guard {
-            background-color: #243047 !important;
-        }
-
-        /* Barre supérieure PWA rigoureusement ancrée sous la Safe Area */
-        .app-topbar {
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 50 !important;
-            background-color: #faf9f6 !important;
-            border-bottom: 1px solid #e2e4e6 !important;
-            padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
-            padding-bottom: 10px !important;
-            padding-left: calc(1.25rem + env(safe-area-inset-left, 0px)) !important;
-            padding-right: calc(1.25rem + env(safe-area-inset-right, 0px)) !important;
-            -webkit-backdrop-filter: none !important;
-            backdrop-filter: none !important;
-            box-sizing: border-box !important;
-        }
-        html.dark .app-topbar {
-            background-color: #243047 !important;
-            border-bottom-color: #38455d !important;
-        }
-
-        /* Onglets Guides / Vidéos collants sous la navbar lors du scroll */
-        .property-tabs-sticky {
-            position: sticky !important;
-            top: var(--topbar-height, calc(55px + env(safe-area-inset-top, 0px))) !important;
-            z-index: 40 !important;
-            background-color: #ffffff !important;
-            border-bottom: 1px solid #e2e4e6 !important;
-        }
-        html.dark .property-tabs-sticky {
-            background-color: #28344c !important;
-            border-bottom-color: #38455d !important;
-        }
-
-        .modal-overlay {
-            justify-content: flex-end !important;
-        }
-        .modal-overlay:not(.open):not(.is-closing):not(.is-active) {
-            display: none !important;
-            visibility: hidden !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        .modal-overlay.is-active,
-        .modal-overlay.open,
-        .modal-overlay.is-closing {
-            display: flex !important;
-        }
-        .modal-overlay.is-active {
-            visibility: visible !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        .modal-overlay.open {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            background-color: rgba(15, 23, 42, 0.78) !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-        }
-        .modal-overlay.is-closing {
-            visibility: visible !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transition: opacity 0.34s ease !important;
-        }
-        .modal-overlay.open .modal-sheet,
-        .modal-overlay.open .modal-sheet-video {
-            transform: translateY(0) !important;
-        }
-        .modal-overlay.is-closing .modal-sheet,
-        .modal-overlay.is-closing .modal-sheet-video {
-            transform: translateY(100%) !important;
-            transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1) !important;
-        }
-        .modal-sheet,
-        .modal-sheet-video {
-            width: 100% !important;
-            max-width: 100% !important;
-            height: calc(100vh - 28px) !important;
-            height: calc(100dvh - 28px) !important;
-            max-height: calc(100vh - 28px) !important;
-            max-height: calc(100dvh - 28px) !important;
-            border-top-left-radius: 26px !important;
-            border-top-right-radius: 26px !important;
-            border-bottom-left-radius: 0 !important;
-            border-bottom-right-radius: 0 !important;
-            border-top: 1px solid var(--line) !important;
-            box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45) !important;
-            margin-bottom: 0 !important;
-        }
-        .modal-sheet.is-dragging {
-            transition: none !important;
-        }
-        .sheet-drag-handle {
-            display: block !important;
-        }
-
-        /* Animations de glissement d'écran gauche/droite (Navigation entre onglets) */
-        #tab-panels-wrapper {
-            position: relative;
-            width: 100%;
-        }
-        .tab-slide-out-left {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            pointer-events: none !important;
-            animation: tabSlideOutLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-            will-change: transform, opacity;
-        }
-        .tab-slide-in-right {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            animation: tabSlideInRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-            will-change: transform, opacity;
-        }
-        .tab-slide-out-right {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            pointer-events: none !important;
-            animation: tabSlideOutRight 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-            will-change: transform, opacity;
-        }
-        .tab-slide-in-left {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            animation: tabSlideInLeft 0.32s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
-            will-change: transform, opacity;
-        }
-        @keyframes tabSlideOutLeft {
-            0% { transform: translate3d(0, 0, 0); opacity: 1; }
-            100% { transform: translate3d(-35%, 0, 0); opacity: 0; }
-        }
-        @keyframes tabSlideInRight {
-            0% { transform: translate3d(40%, 0, 0); opacity: 0; }
-            100% { transform: translate3d(0, 0, 0); opacity: 1; }
-        }
-        @keyframes tabSlideOutRight {
-            0% { transform: translate3d(0, 0, 0); opacity: 1; }
-            100% { transform: translate3d(35%, 0, 0); opacity: 0; }
-        }
-        @keyframes tabSlideInLeft {
-            0% { transform: translate3d(-40%, 0, 0); opacity: 0; }
-            100% { transform: translate3d(0, 0, 0); opacity: 1; }
-        }
-    </style>
 </head>
 <body class="min-h-full flex flex-col items-center bg-[#f3f3ec] dark:bg-[#1b2333] text-[#28344c] dark:text-[#f3f3ec] antialiased transition-colors duration-200">
 
@@ -524,7 +257,7 @@
                 <div class="segmented-nav max-w-md mx-auto sm:max-w-lg" role="tablist">
                     <button id="btn-tab-guides" onclick="navigateToTab('guides')" role="tab" aria-selected="true" class="segmented-btn active group">
                         <span class="tab-icon-wrapper flex items-center justify-center">
-                            <svg class="tab-svg-icon tab-icon-bell w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <svg aria-hidden="true" class="tab-svg-icon tab-icon-bell w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                 <!-- Ondes sonores latérales émises au tintement -->
                                 <path d="M2.5 10a6 6 0 0 0 0 6" class="bell-wave bell-wave-left"/>
                                 <path d="M21.5 10a6 6 0 0 1 0 6" class="bell-wave bell-wave-right"/>
@@ -544,7 +277,7 @@
                     </button>
                     <button id="btn-tab-videos" onclick="navigateToTab('videos')" role="tab" aria-selected="false" class="segmented-btn group">
                         <span class="tab-icon-wrapper flex items-center justify-center">
-                            <svg class="tab-svg-icon tab-icon-camera w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <svg aria-hidden="true" class="tab-svg-icon tab-icon-camera w-4 h-4 sm:w-[18px] sm:h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                 <!-- Rayons lumineux de projection -->
                                 <path d="M21 7.5l1.8-1.2" class="cam-ray cam-ray-top"/>
                                 <path d="M21 16.5l1.8 1.2" class="cam-ray cam-ray-bottom"/>
@@ -586,7 +319,7 @@
                              class="card-interactive card-hero-guide cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#ba9641]/40 dark:border-[#ba9641]/40">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span id="guide-active-flag" class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
-                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg aria-hidden="true" class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                                     </svg>
@@ -600,7 +333,7 @@
                                 </div>
                             </div>
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </div>
                         </div>
 
@@ -611,7 +344,7 @@
                              class="hidden card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
-                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg aria-hidden="true" class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
                                         <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
                                         <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
@@ -631,7 +364,7 @@
                                     <span class="wifi-card-copy-label" data-i18n="wifi_quick_copy">Copier</span>
                                 </button>
                                 <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
@@ -646,7 +379,7 @@
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
-                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg aria-hidden="true" class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                                         <path d="M5 3v4"/>
                                         <path d="M19 17v4"/>
@@ -663,7 +396,7 @@
                                 </div>
                             </div>
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
 
@@ -674,7 +407,7 @@
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
                                 <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
-                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg aria-hidden="true" class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                                     </svg>
                                 </span>
@@ -687,7 +420,7 @@
                                 </div>
                             </div>
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
 
@@ -712,7 +445,7 @@
                                 </div>
                             </div>
                             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
                     </div>
@@ -817,9 +550,9 @@
             <p id="error-details" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
                 Impossible de se connecter à la base MySQL. Veuillez vérifier le fichier <code>.env</code>.
             </p>
-            <a href="test-db.php" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-medium hover:opacity-90 transition shadow-sm">
-                Lancer le test de connexion
-            </a>
+            <button onclick="window.location.reload()" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-medium hover:opacity-90 transition shadow-sm cursor-pointer" data-i18n="error_retry">
+                Réessayer
+            </button>
         </div>
 
         <!-- =============================================================== -->
@@ -848,7 +581,7 @@
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                         </svg>
@@ -941,7 +674,7 @@
             <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                             <path d="M5 3v4"/>
                             <path d="M19 17v4"/>
@@ -992,7 +725,7 @@
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
                             <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
                             <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
@@ -1020,10 +753,10 @@
                     <button id="wifi-copy-ssid-btn" onclick="copyNetworkName(event)" type="button" 
                             class="btn-copy-icon flex-shrink-0"
                             title="Copier le nom du réseau" data-i18n-title="copy_network_title" aria-label="Copier le nom du réseau">
-                        <svg class="w-4 h-4 icon-copy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" class="w-4 h-4 icon-copy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
-                        <svg class="w-4 h-4 icon-copied hidden text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" class="w-4 h-4 icon-copied hidden text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                         </svg>
                     </button>
@@ -1038,10 +771,10 @@
                     <button id="wifi-copy-pwd-btn" onclick="copyWifiPassword(event)" type="button" 
                             class="btn-copy-icon flex-shrink-0"
                             title="Copier le mot de passe" data-i18n-title="copy_pwd_title" aria-label="Copier le mot de passe">
-                        <svg class="w-4 h-4 icon-copy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" class="w-4 h-4 icon-copy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                         </svg>
-                        <svg class="w-4 h-4 icon-copied hidden text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" class="w-4 h-4 icon-copied hidden text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                         </svg>
                     </button>
@@ -1065,7 +798,7 @@
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
                     </div>
@@ -1083,11 +816,11 @@
             <div class="p-5 sm:p-6 text-center space-y-4">
                 <!-- 5 étoiles dorées lumineuses -->
                 <div class="flex items-center justify-center gap-1.5 py-1 text-gold">
-                    <svg class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <svg class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <svg class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <svg class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <svg class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg aria-hidden="true" class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg aria-hidden="true" class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg aria-hidden="true" class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg aria-hidden="true" class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <svg aria-hidden="true" class="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-xs" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </div>
 
                 <!-- Message persuasif bienveillant -->
@@ -1102,9 +835,9 @@
                 <div class="pt-2">
                     <a id="btn-google-review" href="https://g.page/r/CZ8_-ySB8FV2ECE/review" target="_blank" rel="noopener noreferrer" onclick="openGoogleReview(event)"
                        class="inline-flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-gold to-gold-hover text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg hover:opacity-95 transition transform active:scale-98 cursor-pointer">
-                        <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <svg aria-hidden="true" class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                         <span data-i18n="review_modal_btn">Laisser mes 5 étoiles sur Google ✨</span>
-                        <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        <svg aria-hidden="true" class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
                 </div>
 
@@ -1156,7 +889,7 @@
                     <button type="button" id="contact-triage-videos" onclick="goToVideosFromContact(event)" class="w-full text-left p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg aria-hidden="true" class="w-4 h-4 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                 </svg>
                             </div>
@@ -1172,7 +905,7 @@
                     <button type="button" id="contact-triage-wifi" onclick="goToWifiFromContact(event)" class="w-full text-left p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg aria-hidden="true" class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
                                     <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
                                     <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
@@ -1191,7 +924,7 @@
                     <button type="button" id="contact-triage-guide" onclick="goToGuideFromContact(event)" class="w-full text-left p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg aria-hidden="true" class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                                     <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                                 </svg>
@@ -1217,7 +950,7 @@
                 <div class="space-y-2">
                     <a id="btn-whatsapp-anthony" href="https://wa.me/33675883791" target="_blank" rel="noopener noreferrer" onclick="openWhatsAppAnthony(event)"
                        class="inline-flex items-center justify-center gap-2.5 w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition transform active:scale-98 cursor-pointer">
-                        <svg class="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" class="w-5 h-5 fill-current flex-shrink-0" viewBox="0 0 24 24">
                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                         </svg>
                         <span data-i18n="contact_whatsapp_btn">Écrire à Anthony sur WhatsApp</span>
@@ -1251,7 +984,7 @@
             
             <!-- Bouton fermeture croix -->
             <button type="button" onclick="PwaManager.dismissPrompt()" class="absolute top-3 right-3 text-ink-faint hover:text-ink dark:text-gray-400 dark:hover:text-white p-1 rounded-lg transition" aria-label="Fermer la suggestion">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
 
             <!-- En-tête : Icône PWA + Titre & Sous-titre -->
@@ -1274,7 +1007,7 @@
                     Plus tard
                 </button>
                 <button type="button" onclick="PwaManager.installApp()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-gold to-gold-hover text-white text-xs font-bold rounded-xl shadow-xs hover:opacity-95 transition transform active:scale-95 cursor-pointer">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <svg aria-hidden="true" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span data-i18n="pwa_add">Ajouter à l'écran d'accueil</span>
                 </button>
             </div>
@@ -1302,6 +1035,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=9.3" defer></script>
+    <script type="module" src="assets/js/app.js?v=10.0"></script>
 </body>
 </html>

@@ -5,8 +5,19 @@
  * SÉCURITÉ : Ce fichier est réservé à l'installation initiale.
  */
 
-define('APP_ROOT', __DIR__);
+define('APP_ROOT', dirname(__DIR__));
 require_once APP_ROOT . '/config/database.php';
+
+// Sécurité : Accès restreint par token d'administration ou environnement local
+$adminKey = env('GATEWAY_API_KEY', '');
+$providedKey = $_GET['key'] ?? ($_SERVER['HTTP_X_API_KEY'] ?? '');
+$isLocal = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']);
+$isDebug = env('APP_DEBUG', false);
+
+if (!$isLocal && !$isDebug && (empty($adminKey) || !hash_equals((string)$adminKey, (string)$providedKey))) {
+    http_response_code(403);
+    exit("Accès restreint : Outil de diagnostic réservé à l'administration technique Carré d'Hôtes.");
+}
 
 $stepResults = [];
 $canAutoInstall = false;

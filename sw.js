@@ -6,20 +6,33 @@
  * - API (api.php) : Network-First avec fallback Cache (consultation hors-ligne des guides)
  */
 
-const CACHE_VERSION = 'cdh-portail-v2.1.3';
+const CACHE_VERSION = 'cdh-portail-v3.0.0';
 const CACHE_NAME_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_NAME_API = `${CACHE_VERSION}-api`;
 
 // Détection dynamique du périmètre (/portail/ ou /portail/dev/)
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/?$/, '/');
 
-// Ressources fondamentales du noyau PWA (App Shell)
+// Ressources fondamentales du noyau PWA (App Shell & Modules)
 // Note : Les manifestes dynamiques (manifest.php) ne sont pas pré-cachés pour préserver le ciblage par logement
 const PRECACHE_ASSETS = [
     SCOPE_PATH,
     SCOPE_PATH + 'index.html',
-    SCOPE_PATH + 'assets/css/custom.css?v=9.3',
-    SCOPE_PATH + 'assets/js/app.js?v=9.3',
+    SCOPE_PATH + 'assets/css/custom.css?v=10.0',
+    SCOPE_PATH + 'assets/js/app.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/state.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/utils.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/i18n.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/theme.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/scroll.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/router.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/api.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/gestures.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/pdf-viewer.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/modals.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/renderer.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/pwa.js?v=10.0',
+    SCOPE_PATH + 'assets/js/modules/app-controller.js?v=10.0',
     SCOPE_PATH + 'assets/images/antho.jpg',
     SCOPE_PATH + 'assets/icons/icon-192.png',
     SCOPE_PATH + 'assets/icons/icon-512.png',
@@ -90,7 +103,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     // Ne pas intercepter les requêtes administratives ou passerelle directe
-    if (url.pathname.includes('/passerelle-cdh-8d3f7a/') || url.pathname.includes('/test-db.php')) {
+    if (url.pathname.includes('/passerelle-cdh-8d3f7a/') || url.pathname.includes('/tools/')) {
         return;
     }
 
@@ -165,7 +178,9 @@ self.addEventListener('fetch', (event) => {
                 return null;
             });
 
-            return cachedResponse || fetchPromise;
+            return cachedResponse || fetchPromise.then((networkRes) => {
+                return networkRes || new Response('', { status: 408, statusText: 'Offline asset unavailable' });
+            });
         })
     );
 });

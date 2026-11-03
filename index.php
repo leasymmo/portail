@@ -23,7 +23,7 @@ $parts = explode('/', trim($pathWithoutPrefix, '/'));
 $slug = strtolower(trim($parts[0] ?? ''));
 
 // Exclusion des fichiers et routes spéciales
-if (in_array($slug, ['', 'index.html', 'index.php', 'reservation', 'api.php', 'sw.js', 'manifest.php', 'test-db.php'])) {
+if (in_array($slug, ['', 'index.html', 'index.php', 'reservation', 'api.php', 'sw.js', 'manifest.php', 'tools'])) {
     $slug = '';
 }
 
