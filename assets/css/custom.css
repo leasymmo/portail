@@ -11,9 +11,10 @@
     --bg-pill: #e9ebe6;
     --ink: #28344c;
     --ink-soft: #4b566d;
-    --ink-faint: #6f788a;
+    --ink-faint: #525c6e; /* Contraste renforcé > 5:1 WCAG AA */
     --gold: #ba9641;
-    --gold-hover: #a38234;
+    --gold-text: #8a671c; /* Contraste texte certifié 4.68:1 WCAG AA sur blanc */
+    --gold-hover: #755615;
     --gold-soft: #fcf9f2;
     --gold-border: #e8dcc0;
     --line: #e2e4e6;
@@ -32,9 +33,10 @@ html.dark {
     --bg-pill: #1e2739;
     --ink: #f3f3ec;
     --ink-soft: #d9dcd7;
-    --ink-faint: #bcc2cb;
+    --ink-faint: #cbd2dc; /* Contraste renforcé > 5:1 */
     --gold: #d4af53;
-    --gold-hover: #e2be67;
+    --gold-text: #e2be67; /* Contraste texte certifié 5.5:1 sur #28344c */
+    --gold-hover: #eecf82;
     --gold-soft: #323d54;
     --gold-border: #4d5b77;
     --line: #38455d;
@@ -479,21 +481,50 @@ html.dark .segmented-btn.active {
 .card-interactive {
     background-color: var(--bg-card);
     border: 1px solid var(--line);
-    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease, border-color 0.22s ease;
     -webkit-tap-highlight-color: transparent;
-    will-change: transform;
+    will-change: transform, box-shadow;
+    position: relative;
 }
 .card-interactive:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2.5px);
     border-color: var(--gold);
-    box-shadow: 0 10px 24px -4px rgba(40, 52, 76, 0.12);
+    box-shadow: 0 12px 28px -4px rgba(40, 52, 76, 0.12);
 }
 .card-interactive:active {
-    transform: scale(0.982) translateY(0);
+    transform: scale(0.978) translateY(0);
     box-shadow: 0 4px 12px -2px rgba(40, 52, 76, 0.08);
 }
 html.dark .card-interactive:hover {
-    box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45);
+    border-color: var(--gold-border);
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.45);
+}
+
+/* Carte Maîtresse Guide de bienvenue (Hero Card) */
+.card-hero-guide {
+    border-color: rgba(186, 150, 65, 0.42) !important;
+    box-shadow: 0 4px 20px rgba(186, 150, 65, 0.08) !important;
+}
+html.dark .card-hero-guide {
+    border-color: rgba(212, 175, 83, 0.38) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Entrée en cascade séquencée haute couture (60 FPS GPU-accelerated) */
+@keyframes cascadeCardReveal {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, 16px, 0) scale(0.985);
+    }
+    100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+.cascade-item {
+    animation: cascadeCardReveal 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+    will-change: transform, opacity;
 }
 
 /* Micro-interaction bouton Wi-Fi */
@@ -509,6 +540,53 @@ html.dark .card-interactive:hover {
     color: #ffffff !important;
     border-color: #ba9641 !important;
     transform: scale(1.03);
+}
+
+/* Bouton Copie Express Wi-Fi direct sur la carte */
+.btn-wifi-card-quick {
+    transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-wifi-card-quick:active {
+    transform: scale(0.92);
+}
+.btn-wifi-card-quick.copied {
+    background-color: #ba9641 !important;
+    color: #ffffff !important;
+    border-color: #ba9641 !important;
+    transform: scale(1.04);
+}
+
+/* Accessibilité & Utilitaires A11y */
+.text-gold-text {
+    color: var(--gold-text) !important;
+}
+
+:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(186, 150, 65, 0.45), 0 0 0 1px #ba9641 !important;
+    border-radius: inherit;
+}
+
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 /* ==============================================================================

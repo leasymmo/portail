@@ -45,12 +45,13 @@
                         ink: {
                             DEFAULT: '#28344c',
                             soft: '#4b566d',
-                            faint: '#6f788a',
-                            light: '#9da7b8'
+                            faint: '#525c6e',
+                            light: '#8894a7'
                         },
                         gold: {
                             DEFAULT: '#ba9641',
-                            hover: '#a38234',
+                            text: '#8a671c',
+                            hover: '#755615',
                             soft: '#fdfbf7',
                             border: '#e8dcbe'
                         },
@@ -65,7 +66,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=8.3">
+    <link rel="stylesheet" href="assets/css/custom.css?v=8.4">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -445,12 +446,15 @@
     <!-- Conteneur Responsive Adaptatif (Smartphone, Tablette & Ordinateur) -->
     <main id="main-app" class="w-full max-w-6xl flex-1 flex flex-col bg-white dark:bg-[#28344c] shadow-2xl relative border-x border-[#e2e4e6] dark:border-[#38455d] transition-colors duration-200">
 
+        <!-- Zone d'annonce vocale dynamique pour lecteurs d'écran (A11y VoiceOver / TalkBack) -->
+        <div id="a11y-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
         <!-- =============================================================== -->
         <!-- BARRE SUPÉRIEURE : LOGO + TITRE CARRÉ D'HÔTES + THEME           -->
         <!-- =============================================================== -->
         <header id="main-topbar" class="app-topbar px-5 sm:px-8 flex items-center justify-between border-b border-[#e2e4e6] dark:border-[#38455d] bg-[#faf9f6] dark:bg-[#243047] transition-colors duration-200" style="padding-top: calc(10px + env(safe-area-inset-top, 0px)); padding-bottom: 10px;">
             <a href="https://carredhotes.fr" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-2.5 group" title="Visiter carredhotes.fr" data-i18n-title="topbar_visit">
-                <img id="brand-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-7 w-7 object-contain transition-transform group-hover:scale-105">
+                <img id="brand-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes - Retour au site officiel" class="h-7 w-7 object-contain transition-transform group-hover:scale-105">
                 <span class="text-xs sm:text-sm font-bold tracking-wider uppercase text-gold group-hover:text-gold-hover transition">Carré d'Hôtes</span>
             </a>
             <div class="flex items-center space-x-2 sm:space-x-2.5">
@@ -462,12 +466,12 @@
                 <!-- Bascule Mode Sombre / Clair -->
                 <button id="theme-toggle-btn" onclick="toggleTheme()" type="button" class="theme-switch-btn" title="Basculer le mode sombre / clair" aria-label="Basculer le mode sombre / clair" data-i18n-title="theme_toggle">
                     <!-- Icône Soleil (visible en mode clair pour indiquer le mode clair actif) -->
-                    <svg id="icon-sun" class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg id="icon-sun" class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <circle cx="12" cy="12" r="5" stroke-width="2"/>
                         <path stroke-linecap="round" stroke-width="2" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                     </svg>
                     <!-- Icône Lune (visible en mode sombre pour indiquer le mode sombre actif) -->
-                    <svg id="icon-moon" class="w-4 h-4 hidden text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg id="icon-moon" class="w-4 h-4 hidden text-amber-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
                     </svg>
                 </button>
@@ -478,7 +482,7 @@
         <!-- ÉCRAN DE CHARGEMENT INITIAL (SKELETON)                          -->
         <!-- =============================================================== -->
         <div id="view-loading" class="flex-1 min-h-[50vh] flex flex-col items-center justify-center p-8 text-center">
-            <img id="loading-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-16 w-16 object-contain brand-pulse mb-4">
+            <img id="loading-logo" src="assets/images/picto-light.png" alt="Logo Carré d'Hôtes - Chargement de votre portail" class="h-16 w-16 object-contain brand-pulse mb-4">
             <p class="text-xs font-semibold text-gold uppercase tracking-widest">Chargement de votre portail...</p>
         </div>
 
@@ -487,14 +491,32 @@
         <!-- =============================================================== -->
         <div id="view-property" class="hidden flex-1 flex flex-col">
             
-            <!-- En-tête compact du logement -->
-            <header class="px-5 sm:px-8 py-2.5 sm:py-3.5 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
-                <h1 id="prop-name" class="text-xl sm:text-2xl md:text-3xl font-bold text-ink dark:text-white tracking-tight mb-0.5 font-serif-brand">
-                    <!-- Nom du logement injecté en JS -->
-                </h1>
-                <p id="prop-subtitle" data-i18n="home_subtitle" class="text-[10px] sm:text-xs font-semibold text-gold uppercase tracking-widest">
-                    Conciergerie Carré d'Hôtes
-                </p>
+            <!-- EN-TÊTE HERO DE PRESTIGE DU LOGEMENT (DESIGN ACCUEIL HÔTELIER) -->
+            <header class="relative px-5 sm:px-8 pt-4 sm:pt-5 pb-3.5 sm:pb-4 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] via-white dark:via-[#263249] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d] overflow-hidden">
+                <!-- Halo doré d'ambiance feutrée -->
+                <div class="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 flex justify-center items-center" aria-hidden="true">
+                    <div class="w-80 h-32 bg-gold/15 rounded-full blur-2xl"></div>
+                </div>
+
+                <div class="relative z-10 max-w-xl mx-auto flex flex-col items-center">
+                    <!-- Sceau / Badge de conciergerie privée haute fidélité -->
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 dark:bg-gold/15 border border-gold/30 dark:border-gold/40 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase text-gold-text dark:text-gold shadow-2xs mb-2 transition-transform hover:scale-105">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" aria-hidden="true"></span>
+                        <span id="prop-subtitle" data-i18n="hero_badge">Conciergerie Privée • Séjour d'Exception</span>
+                    </div>
+
+                    <!-- Nom du logement en majesté (Cormorant Garamond) -->
+                    <h1 id="prop-name" class="text-2xl sm:text-3xl md:text-4xl font-bold text-ink dark:text-white tracking-tight font-serif-brand leading-tight">
+                        <!-- Nom du logement injecté en JS -->
+                    </h1>
+
+                    <!-- Liseré de prestige aux extrémités estompées -->
+                    <div class="flex items-center justify-center gap-2 mt-2.5 w-full" aria-hidden="true">
+                        <span class="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-gold/50"></span>
+                        <span class="w-1.5 h-1.5 rotate-45 bg-gold" aria-hidden="true"></span>
+                        <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-gold/50"></span>
+                    </div>
+                </div>
             </header>
 
             <!-- CONTRÔLEUR D'ONGLETS SEGMENTÉS (« Informations » vs « Vidéos ») STICKY -->
@@ -556,32 +578,38 @@
                         <p id="prop-welcome-subtitle" data-i18n="welcome_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Toutes les informations pratiques pour votre séjour</p>
                     </div>
 
-                    <div id="info-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto">
-                        <!-- Carte 1 : Guide de bienvenue (Affiche directement dans la langue sélectionnée) -->
-                        <div id="card-guide-active" onclick="openCurrentGuide()" 
-                             class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
+                        <!-- Carte 1 : Guide de bienvenue (Carte Maîtresse Hero Card) -->
+                        <div id="card-guide-active" onclick="openCurrentGuide()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCurrentGuide();}"
+                             aria-label="Consulter le guide de bienvenue complet en haute définition"
+                             class="card-interactive card-hero-guide cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#ba9641]/40 dark:border-[#ba9641]/40">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span id="guide-active-flag" class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                <span id="guide-active-flag" class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                                     </svg>
                                 </span>
                                 <div class="min-w-0">
-                                    <span id="guide-active-title" data-i18n="booklet_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Guide de bienvenue</span>
-                                    <p id="guide-active-desc" data-i18n="booklet_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate">Toutes les infos pratiques</p>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span id="guide-active-title" data-i18n="booklet_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Guide de bienvenue</span>
+                                        <span data-i18n="guide_badge" class="inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gold/15 text-gold-text dark:text-gold border border-gold/30">14 pages HD</span>
+                                    </div>
+                                    <p id="guide-active-desc" data-i18n="booklet_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Toutes les infos pratiques pour votre séjour</p>
                                 </div>
                             </div>
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </div>
                         </div>
 
-                        <!-- Carte 2 : Wi-Fi (affichée uniquement si configuré dans MySQL, ouvre la modale Wi-Fi) -->
-                        <div id="prop-wifi-card" onclick="openWifiModal()" 
+                        <!-- Carte 2 : Wi-Fi (avec bouton de Copie Express direct en 1 clic) -->
+                        <div id="prop-wifi-card" onclick="openWifiModal()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openWifiModal();}"
+                             aria-label="Informations et paramètres de connexion Wi-Fi"
                              class="hidden card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
                                         <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
@@ -594,19 +622,29 @@
                                     <p data-i18n="wifi_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Réseau & mot de passe</p>
                                 </div>
                             </div>
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
+                            <div class="flex items-center space-x-1.5 flex-shrink-0">
+                                <button id="btn-wifi-card-quick" type="button" onclick="copyWifiFromCard(event)" 
+                                        class="btn-wifi-card-quick inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gold/15 dark:bg-gold/20 hover:bg-gold text-gold-text dark:text-gold hover:text-white dark:hover:text-ink text-xs font-bold transition shadow-2xs border border-gold/30 cursor-pointer"
+                                        title="Copier le mot de passe Wi-Fi" aria-label="Copier immédiatement le mot de passe Wi-Fi dans le presse-papier" data-i18n-title="wifi_quick_copy_aria">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" stroke-width="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" stroke-width="2"/></svg>
+                                    <span class="wifi-card-copy-label" data-i18n="wifi_quick_copy">Copier</span>
+                                </button>
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Carte 3 : Réservez votre prochain séjour (Ouvre la modale de réservation) -->
-                        <div id="card-booking-active" onclick="openBookingModal()" 
+                        <!-- Carte 3 : Réservez votre prochain séjour (Bénéfice Direct Garanti) -->
+                        <div id="card-booking-active" onclick="openBookingModal()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openBookingModal();}"
+                             aria-label="Réserver votre prochain séjour au meilleur tarif garanti"
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                                         <path d="M5 3v4"/>
@@ -616,49 +654,66 @@
                                     </svg>
                                 </span>
                                 <div class="min-w-0">
-                                    <span data-i18n="booking_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Réservez votre prochain séjour</span>
-                                    <p data-i18n="booking_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Bénéficiez de nos meilleurs tarifs en direct</p>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span data-i18n="booking_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Réservez votre séjour</span>
+                                        <span data-i18n="booking_badge" class="inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">Direct</span>
+                                    </div>
+                                    <p data-i18n="booking_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Meilleurs tarifs garantis en direct</p>
                                 </div>
                             </div>
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
 
-                        <!-- Carte 4 : Avis Google My Business (Ouvre la modale d'ancrage 5 étoiles) -->
+                        <!-- Carte 4 : Avis Google My Business (Ancrage 5 étoiles) -->
                         <div id="card-review-active" onclick="openReviewModal()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openReviewModal();}"
+                             aria-label="Laisser un avis 5 étoiles sur Google pour notre équipe"
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
+                                <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
                                     <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                                     </svg>
                                 </span>
                                 <div class="min-w-0">
-                                    <span data-i18n="review_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Vous appréciez votre séjour ?</span>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span data-i18n="review_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Votre séjour vous plaît ?</span>
+                                        <span data-i18n="review_badge" class="inline-flex items-center text-[9px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">★★★★★</span>
+                                    </div>
                                     <p data-i18n="review_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Soutenez notre équipe avec 5 étoiles</p>
                                 </div>
                             </div>
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
 
-                        <!-- Carte 5 : Contacter Anthony (Ouvre la modale de contact & triage WhatsApp) -->
+                        <!-- Carte 5 : Contacter Anthony (Carte Vivante avec photo & statut en ligne) -->
                         <div id="card-contact-active" onclick="openContactModal()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openContactModal();}"
+                             aria-label="Contacter Anthony votre concierge dédié par WhatsApp ou téléphone"
                              class="card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d] sm:col-span-2">
                             <div class="flex items-center min-w-0 pr-2">
-                                <span class="w-7 h-7 sm:w-8 sm:h-8 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold">
-                                    <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                                    </svg>
-                                </span>
+                                <div class="relative w-11 h-11 mr-3.5 sm:mr-4 flex-shrink-0">
+                                    <img src="assets/images/antho.jpg" alt="Anthony, concierge dédié" class="w-11 h-11 rounded-xl object-cover border border-[#e2e4e6] dark:border-[#38455d] shadow-2xs">
+                                    <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#28344c] flex items-center justify-center shadow-xs" title="En ligne pour votre séjour" aria-hidden="true">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping opacity-75"></span>
+                                    </span>
+                                </div>
                                 <div class="min-w-0">
-                                    <span data-i18n="contact_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition block truncate">Une question ? Contacter Anthony</span>
-                                    <p data-i18n="contact_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Votre concierge référent disponible 7j/7</p>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span data-i18n="contact_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Une question ? Contacter Anthony</span>
+                                        <span class="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">7j/7</span>
+                                    </div>
+                                    <p class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block flex-shrink-0" aria-hidden="true"></span>
+                                        <span data-i18n="anthony_status_online">Disponible pour votre séjour</span>
+                                    </p>
                                 </div>
                             </div>
-                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0">
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                             </div>
                         </div>
@@ -674,13 +729,15 @@
                         <p data-i18n="videos_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-1">Fonctionnement des équipements en vidéo</p>
                     </div>
 
-                    <!-- Filtre de recherche rapide -->
-                    <div class="relative mb-4 max-w-md mx-auto">
-                        <input type="text" id="video-search" oninput="filterVideos()" 
+                    <!-- Filtre de recherche rapide accessible -->
+                    <div role="search" class="relative mb-4 max-w-md mx-auto">
+                        <label for="video-search" class="sr-only" data-i18n="video_search_placeholder">Rechercher un équipement (ex: café, lave-linge...)</label>
+                        <input type="search" id="video-search" oninput="filterVideos()" 
                                placeholder="Rechercher un équipement (ex: café, lave-linge...)" 
                                data-i18n-placeholder="video_search_placeholder"
+                               aria-label="Rechercher un équipement"
                                class="w-full pl-9 pr-4 py-2.5 bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] rounded-xl text-xs sm:text-sm text-ink dark:text-white placeholder-ink-light focus:outline-none focus:border-gold transition shadow-2xs">
-                        <span class="absolute left-3 top-2.5 text-xs text-ink-faint">🔍</span>
+                        <span class="absolute left-3 top-2.5 text-xs text-ink-faint" aria-hidden="true">🔍</span>
                     </div>
 
                     <!-- Grille des vidéos -->
@@ -737,8 +794,8 @@
         <!-- VUE 3 : ERREUR 404 (LOGEMENT INTROUVABLE)                       -->
         <!-- =============================================================== -->
         <div id="view-not-found" class="hidden flex-1 min-h-[50vh] flex flex-col justify-center items-center p-6 text-center">
-            <img id="notfound-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-12 w-12 object-contain mb-6">
-            <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/30 text-rose-500 flex items-center justify-center text-3xl mb-4 border border-rose-100 dark:border-rose-800">
+            <img id="notfound-logo" src="assets/images/picto-light.png" alt="Logo Carré d'Hôtes - Logement introuvable" class="h-12 w-12 object-contain mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-900/30 text-rose-500 flex items-center justify-center text-3xl mb-4 border border-rose-100 dark:border-rose-800" aria-hidden="true">
                 🔍
             </div>
             <h2 data-i18n="not_found_title" class="text-lg font-bold text-ink dark:text-white mb-1">Logement introuvable</h2>
@@ -754,8 +811,8 @@
         <!-- VUE 4 : ERREUR DE BASE DE DONNÉES                               -->
         <!-- =============================================================== -->
         <div id="view-error" class="hidden flex-1 min-h-[50vh] flex flex-col justify-center items-center p-6 text-center">
-            <img id="error-logo" src="assets/images/picto-light.png" alt="Carré d'Hôtes" class="h-12 w-12 object-contain mb-6">
-            <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center text-3xl mb-4 border border-amber-200 dark:border-amber-800">
+            <img id="error-logo" src="assets/images/picto-light.png" alt="Logo Carré d'Hôtes - Erreur technique" class="h-12 w-12 object-contain mb-6">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center text-3xl mb-4 border border-amber-200 dark:border-amber-800" aria-hidden="true">
                 ⚙️
             </div>
             <h2 class="text-lg font-bold text-ink dark:text-white mb-2">Configuration requise</h2>
@@ -785,14 +842,14 @@
     <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 1 : LECTEUR PDF INTÉGRÉ                         -->
     <!-- =================================================================== -->
-    <div id="modal-pdf" class="modal-overlay" onclick="onModalBackdropClick(event, 'pdf')">
+    <div id="modal-pdf" class="modal-overlay" onclick="onModalBackdropClick(event, 'pdf')" role="dialog" aria-modal="true" aria-labelledby="pdf-modal-title">
         <div class="modal-sheet flex flex-col" onclick="event.stopPropagation()">
-            <div class="sheet-drag-handle flex-shrink-0"></div>
+            <div class="sheet-drag-handle flex-shrink-0" aria-hidden="true"></div>
             
             <!-- Barre supérieure de la modale PDF -->
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
@@ -805,10 +862,10 @@
                 </div>
                 <div class="flex items-center space-x-2 flex-shrink-0">
                     <a id="pdf-modal-external-link" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" data-i18n-title="pdf_open_drive">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" aria-label="Ouvrir le guide dans un nouvel onglet" data-i18n-title="pdf_open_drive">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
-                    <button onclick="closePdfModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                    <button onclick="closePdfModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
                         ✕
                     </button>
                 </div>
@@ -833,14 +890,14 @@
     <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 2 : LECTEUR VIDÉO PLEINE HAUTEUR               -->
     <!-- =================================================================== -->
-    <div id="modal-video" class="modal-overlay" onclick="onModalBackdropClick(event, 'video')">
+    <div id="modal-video" class="modal-overlay" onclick="onModalBackdropClick(event, 'video')" role="dialog" aria-modal="true" aria-labelledby="video-modal-title">
         <div class="modal-sheet modal-sheet-video" onclick="event.stopPropagation()">
-            <div class="sheet-drag-handle"></div>
+            <div class="sheet-drag-handle" aria-hidden="true"></div>
 
             <!-- Barre supérieure de la modale Vidéo -->
             <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-3 truncate pr-2">
-                    <div id="video-modal-icon-badge" class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-blue-50 text-blue-500">
+                    <div id="video-modal-icon-badge" class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-blue-50 text-blue-500" aria-hidden="true">
                         <span id="video-modal-icon">🫧</span>
                     </div>
                     <div class="truncate">
@@ -850,10 +907,10 @@
                 </div>
                 <div class="flex items-center space-x-2">
                     <a id="video-external-btn" href="#" target="_blank" rel="noopener noreferrer" 
-                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" data-i18n-title="pdf_open_drive">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" aria-label="Ouvrir la vidéo dans un nouvel onglet" data-i18n-title="pdf_open_drive">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
-                    <button onclick="closeVideoModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                    <button onclick="closeVideoModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
                         ✕
                     </button>
                 </div>
@@ -878,14 +935,14 @@
     <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 3 : MOTEUR DE RÉSERVATION SUPERHOTE             -->
     <!-- =================================================================== -->
-    <div id="modal-booking" class="modal-overlay" onclick="onModalBackdropClick(event, 'booking')">
+    <div id="modal-booking" class="modal-overlay" onclick="onModalBackdropClick(event, 'booking')" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
         <div class="modal-sheet flex flex-col" onclick="event.stopPropagation()">
-            <div class="sheet-drag-handle"></div>
+            <div class="sheet-drag-handle" aria-hidden="true"></div>
 
             <!-- Barre supérieure de la modale Réservation -->
             <div class="modal-header-fixed px-5 py-3 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                             <path d="M5 3v4"/>
@@ -895,16 +952,16 @@
                         </svg>
                     </div>
                     <div class="truncate">
-                        <h3 data-i18n="booking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Réservez votre prochain séjour</h3>
+                        <h3 id="booking-modal-title" data-i18n="booking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Réservez votre prochain séjour</h3>
                         <p data-i18n="booking_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Conciergerie Carré d'Hôtes &middot; Réservation directe</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2 flex-shrink-0">
                     <a href="https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search" target="_blank" rel="noopener noreferrer" 
-                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" data-i18n-title="pdf_open_drive">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                       class="p-2 rounded-xl text-ink-faint dark:text-gray-300 hover:text-gold hover:bg-[#f3f3ec] dark:hover:bg-[#1e2739] transition" title="Ouvrir dans un nouvel onglet" aria-label="Ouvrir le moteur de réservation dans un nouvel onglet" data-i18n-title="pdf_open_drive">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
-                    <button onclick="closeBookingModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                    <button onclick="closeBookingModal()" class="btn-close-modal flex-shrink-0 ml-1" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
                         ✕
                     </button>
                 </div>
@@ -929,14 +986,14 @@
     <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 4 : INFORMATIONS DE CONNEXION WI-FI COMPACTE    -->
     <!-- =================================================================== -->
-    <div id="modal-wifi" class="modal-overlay" onclick="onModalBackdropClick(event, 'wifi')">
+    <div id="modal-wifi" class="modal-overlay" onclick="onModalBackdropClick(event, 'wifi')" role="dialog" aria-modal="true" aria-labelledby="wifi-modal-title">
         <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
-            <div class="sheet-drag-handle flex-shrink-0"></div>
+            <div class="sheet-drag-handle flex-shrink-0" aria-hidden="true"></div>
 
             <!-- Barre supérieure de la modale Wi-Fi -->
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
                             <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
@@ -945,11 +1002,11 @@
                         </svg>
                     </div>
                     <div class="truncate">
-                        <h3 data-i18n="wifi_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Connexion Wi-Fi</h3>
+                        <h3 id="wifi-modal-title" data-i18n="wifi_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Connexion Wi-Fi</h3>
                         <p data-i18n="wifi_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Accès Internet du logement</p>
                     </div>
                 </div>
-                <button onclick="closeWifiModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                <button onclick="closeWifiModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
                     ✕
                 </button>
             </div>
@@ -1002,24 +1059,24 @@
     <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 5 : AVIS GOOGLE MY BUSINESS COMPACTE            -->
     <!-- =================================================================== -->
-    <div id="modal-review" class="modal-overlay" onclick="onModalBackdropClick(event, 'review')">
+    <div id="modal-review" class="modal-overlay" onclick="onModalBackdropClick(event, 'review')" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
         <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
-            <div class="sheet-drag-handle flex-shrink-0"></div>
+            <div class="sheet-drag-handle flex-shrink-0" aria-hidden="true"></div>
 
             <!-- Barre supérieure de la modale Avis Google -->
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
                     </div>
                     <div class="truncate">
-                        <h3 data-i18n="review_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Votre avis compte pour nous !</h3>
+                        <h3 id="review-modal-title" data-i18n="review_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Votre avis compte pour nous !</h3>
                         <p data-i18n="review_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Conciergerie Carré d'Hôtes · Avis Google</p>
                     </div>
                 </div>
-                <button onclick="closeReviewModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                <button onclick="closeReviewModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
                     ✕
                 </button>
             </div>
@@ -1068,20 +1125,20 @@
     <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 6 : CONTACT CONCIERGE ANTHONY & AUTO-DÉPANNAGE  -->
     <!-- =================================================================== -->
-    <div id="modal-contact-anthony" class="modal-overlay" onclick="onModalBackdropClick(event, 'contact')">
+    <div id="modal-contact-anthony" class="modal-overlay" onclick="onModalBackdropClick(event, 'contact')" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
         <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
-            <div class="sheet-drag-handle flex-shrink-0"></div>
+            <div class="sheet-drag-handle flex-shrink-0" aria-hidden="true"></div>
 
             <!-- Barre supérieure de la modale Contact -->
             <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2.5 truncate pr-2">
-                    <img src="assets/images/antho.jpg" alt="Anthony" class="w-9 h-9 rounded-xl object-cover flex-shrink-0 border border-[#e2e4e6] dark:border-[#38455d] shadow-2xs">
+                    <img src="assets/images/antho.jpg" alt="Photo d'Anthony, votre concierge dédié Carré d'Hôtes" class="w-9 h-9 rounded-xl object-cover flex-shrink-0 border border-[#e2e4e6] dark:border-[#38455d] shadow-2xs">
                     <div class="truncate">
-                        <h3 data-i18n="contact_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Contacter votre référent</h3>
+                        <h3 id="contact-modal-title" data-i18n="contact_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Contacter votre référent</h3>
                         <p data-i18n="contact_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Anthony · Conciergerie Carré d'Hôtes</p>
                     </div>
                 </div>
-                <button onclick="closeContactModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer" data-i18n-title="pdf_close">
+                <button onclick="closeContactModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
                     ✕
                 </button>
             </div>
@@ -1201,7 +1258,7 @@
 
             <!-- En-tête : Icône PWA + Titre & Sous-titre -->
             <div class="flex items-start space-x-3 pr-6">
-                <img src="assets/icons/apple-touch-icon.png" alt="Carré d'Hôtes" class="w-12 h-12 rounded-xl object-cover shadow-xs flex-shrink-0 border border-[#e2e4e6] dark:border-[#38455d]">
+                <img src="assets/icons/apple-touch-icon.png" alt="Icône de l'application Carré d'Hôtes" class="w-12 h-12 rounded-xl object-cover shadow-xs flex-shrink-0 border border-[#e2e4e6] dark:border-[#38455d]">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-1.5 flex-wrap">
                         <h4 id="pwa-prompt-title" data-i18n="pwa_title" class="text-sm font-bold text-ink dark:text-white truncate">Installer l'application</h4>
@@ -1247,6 +1304,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=8.3" defer></script>
+    <script src="assets/js/app.js?v=8.4" defer></script>
 </body>
 </html>

@@ -124,7 +124,20 @@ const I18n = {
             pwa_add: "Ajouter à l'écran d'accueil",
             pwa_ios_step1: "Appuyez sur Partager (en bas de votre écran)",
             pwa_ios_step2: "Faites défiler et choisissez « Sur l'écran d'accueil »",
-            pwa_ios_gotit: "J'ai compris"
+            pwa_ios_gotit: "J'ai compris",
+            hero_badge: "Conciergerie Privée • Séjour d'Exception",
+            wifi_quick_copy: "Copier",
+            wifi_quick_copied: "Copié !",
+            wifi_quick_copy_aria: "Copier immédiatement le mot de passe Wi-Fi dans le presse-papier",
+            guide_badge: "14 pages HD",
+            anthony_status_online: "Disponible pour votre séjour",
+            booking_badge: "Direct",
+            review_badge: "★★★★★",
+            a11y_wifi_copied: "Mot de passe Wi-Fi copié dans le presse-papier.",
+            a11y_lang_changed: "Langue modifiée en Français.",
+            a11y_theme_dark: "Mode sombre activé.",
+            a11y_theme_light: "Mode clair activé.",
+            a11y_search_results: "{count} équipements trouvés."
         },
         en: {
             app_loading: "Loading your portal...",
@@ -218,7 +231,20 @@ const I18n = {
             pwa_add: "Add to home screen",
             pwa_ios_step1: "Tap Share (at the bottom of your screen)",
             pwa_ios_step2: "Scroll down and choose 'Add to Home Screen'",
-            pwa_ios_gotit: "Got it"
+            pwa_ios_gotit: "Got it",
+            hero_badge: "Private Concierge • Exceptional Stay",
+            wifi_quick_copy: "Copy",
+            wifi_quick_copied: "Copied!",
+            wifi_quick_copy_aria: "Copy Wi-Fi password immediately to clipboard",
+            guide_badge: "14 HD pages",
+            anthony_status_online: "Available for your stay",
+            booking_badge: "Direct",
+            review_badge: "★★★★★",
+            a11y_wifi_copied: "Wi-Fi password copied to clipboard.",
+            a11y_lang_changed: "Language switched to English.",
+            a11y_theme_dark: "Dark mode activated.",
+            a11y_theme_light: "Light mode activated.",
+            a11y_search_results: "{count} equipment items found."
         }
     },
 
@@ -247,6 +273,7 @@ const I18n = {
         } else if (AppState.allProperties && AppState.allProperties.length > 0) {
             ListRenderer.render(AppState.allProperties);
         }
+        Utils.announceA11y(this.t('a11y_lang_changed'));
     },
 
     t(key) {
@@ -294,6 +321,19 @@ const I18n = {
 // 2. UTILITAIRES & SÉCURITÉ (XSS & URLS)
 // -----------------------------------------------------------------------------
 const Utils = {
+    /**
+     * Annonce un message vocal pour les lecteurs d'écran (VoiceOver / TalkBack)
+     */
+    announceA11y(message) {
+        if (!message) return;
+        const el = document.getElementById('a11y-status');
+        if (!el) return;
+        el.textContent = '';
+        setTimeout(() => {
+            el.textContent = message;
+        }, 50);
+    },
+
     /**
      * Échappe les caractères HTML dangereux pour éviter toute injection XSS
      */
@@ -537,6 +577,7 @@ const ThemeManager = {
             localStorage.setItem('ch_theme', theme);
         }
         this.updateUI(isDark);
+        Utils.announceA11y(I18n.t(isDark ? 'a11y_theme_dark' : 'a11y_theme_light'));
     },
 
     updateUI(isDark) {
@@ -2254,9 +2295,19 @@ const PropertyRenderer = {
         const propSub = document.getElementById('prop-subtitle');
         if (propSub) propSub.textContent = I18n.t('home_subtitle');
 
-        // Bloc Wi-Fi
+        // Bloc Wi-Fi & Animation en cascade décalée des cartes principales
+        const guideCard = document.getElementById('card-guide-active');
         const wifiCard = document.getElementById('prop-wifi-card');
+        const bookingCard = document.getElementById('card-booking-active');
+        const reviewCard = document.getElementById('card-review-active');
+        const contactCard = document.getElementById('card-contact-active');
         const infoGrid = document.getElementById('info-cards-grid');
+
+        if (guideCard) {
+            guideCard.classList.add('cascade-item');
+            guideCard.style.animationDelay = '0.04s';
+        }
+
         if (prop.wifi_ssid) {
             const modalSsid = document.getElementById('wifi-modal-ssid');
             const modalPwd = document.getElementById('wifi-modal-password');
@@ -2268,16 +2319,27 @@ const PropertyRenderer = {
                 wifiCard.classList.add('cascade-item');
                 wifiCard.style.animationDelay = '0.08s';
             }
-            if (infoGrid) {
-                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto';
-            }
         } else {
             if (wifiCard) {
                 wifiCard.classList.add('hidden');
             }
-            if (infoGrid) {
-                infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto';
-            }
+        }
+
+        if (bookingCard) {
+            bookingCard.classList.add('cascade-item');
+            bookingCard.style.animationDelay = prop.wifi_ssid ? '0.12s' : '0.08s';
+        }
+        if (reviewCard) {
+            reviewCard.classList.add('cascade-item');
+            reviewCard.style.animationDelay = prop.wifi_ssid ? '0.16s' : '0.12s';
+        }
+        if (contactCard) {
+            contactCard.classList.add('cascade-item');
+            contactCard.style.animationDelay = prop.wifi_ssid ? '0.20s' : '0.16s';
+        }
+
+        if (infoGrid) {
+            infoGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto';
         }
 
         // Mise à jour de la carte du livret et des éléments dépendant de la langue
@@ -2688,6 +2750,8 @@ const ListRenderer = {
 // 9. RECHERCHE RAPIDE DE VIDÉOS
 // -----------------------------------------------------------------------------
 const VideoSearch = {
+    _debounceTimer: null,
+
     filter() {
         const query = document.getElementById('video-search').value.toLowerCase().trim();
         const cards = document.querySelectorAll('.video-card');
@@ -2705,6 +2769,14 @@ const VideoSearch = {
 
         document.getElementById('no-video-found').classList.toggle('hidden', visibleCount > 0);
         ScrollManager.updatePageScrollState();
+
+        if (this._debounceTimer) clearTimeout(this._debounceTimer);
+        this._debounceTimer = setTimeout(() => {
+            if (query.length > 0) {
+                const template = I18n.t('a11y_search_results');
+                Utils.announceA11y(template.replace('{count}', visibleCount));
+            }
+        }, 400);
     }
 };
 
@@ -2992,6 +3064,7 @@ const App = {
                 }, 2000);
             }
             this.showToast(toastMsg || I18n.t('wifi_copied_toast'));
+            Utils.announceA11y(toastMsg || I18n.t('a11y_wifi_copied'));
         };
 
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -3017,6 +3090,23 @@ const App = {
         if (!AppState.currentProperty || !AppState.currentProperty.wifi_password) return;
         const btn = document.getElementById('wifi-copy-pwd-btn');
         this.copyText(AppState.currentProperty.wifi_password, btn, I18n.t('wifi_copied_toast'));
+    },
+
+    copyWifiFromCard(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (!AppState.currentProperty || !AppState.currentProperty.wifi_password) return;
+        const btn = document.getElementById('btn-wifi-card-quick');
+        const label = btn ? btn.querySelector('.wifi-card-copy-label') : null;
+        const originalText = label ? label.textContent : '';
+
+        this.copyText(AppState.currentProperty.wifi_password, btn, I18n.t('wifi_copied_toast'));
+
+        if (label) {
+            label.textContent = I18n.t('wifi_quick_copied');
+            setTimeout(() => {
+                label.textContent = originalText || I18n.t('wifi_quick_copy');
+            }, 2000);
+        }
     },
 
     fallbackCopyText(text) {
@@ -3153,6 +3243,7 @@ window.goToWifiFromContact = (e) => ModalManager.switchToWifiFromContact(e);
 window.goToGuideFromContact = (e) => ModalManager.switchToGuideFromContact(e);
 window.copyNetworkName = (e) => App.copyNetwork(e);
 window.copyWifiPassword = (e) => App.copyWifi(e);
+window.copyWifiFromCard = (e) => App.copyWifiFromCard(e);
 window.filterVideos = () => VideoSearch.filter();
 window.navigateToUrl = (url) => Router.navigate(url);
 window.loadApp = () => App.load();
