@@ -500,6 +500,16 @@ html.dark .card-interactive:hover {
     box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.45);
 }
 
+/* Hauteur strictement uniforme et équilibrée pour toutes les cartes de la grille */
+#info-cards-grid > div {
+    min-height: 74px;
+}
+@media (min-width: 640px) {
+    #info-cards-grid > div {
+        min-height: 80px;
+    }
+}
+
 /* Carte Maîtresse Guide de bienvenue (Hero Card) */
 .card-hero-guide {
     border-color: rgba(186, 150, 65, 0.42) !important;
