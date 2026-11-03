@@ -65,10 +65,21 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=7.9">
+    <link rel="stylesheet" href="assets/css/custom.css?v=8.0">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
+        // Suivi précoce du chargement de l'iframe de réservation SuperHote (évite tout spinner bloquant)
+        window.__bookingLoaded = false;
+        window.onBookingLoaded = function() {
+            window.__bookingLoaded = true;
+            var spinner = document.getElementById('booking-loading-spinner');
+            if (spinner) spinner.classList.add('hidden');
+            if (window.ModalManager && window.ModalManager.onBookingLoaded) {
+                window.ModalManager.onBookingLoaded();
+            }
+        };
+
         (function() {
             // Verrouillage strict anti-zoom du viewport de l'application (iOS Safari & navigateurs mobiles)
             function preventSafariViewportZoom(e) {
@@ -901,7 +912,7 @@
 
             <!-- Conteneur Iframe Réservation (Hauteur égale à la modale, aucun double scroll) -->
             <div class="booking-full-container flex-1 min-h-0 w-full relative bg-white dark:bg-[#1b2333] overflow-hidden">
-                <div id="booking-loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-[#28344c]/90 z-10 transition-opacity">
+                <div id="booking-loading-spinner" onclick="onBookingLoaded()" class="absolute inset-0 flex flex-col items-center justify-center bg-white/90 dark:bg-[#28344c]/90 z-10 transition-opacity cursor-pointer">
                     <div class="w-8 h-8 border-3 border-gold border-t-transparent rounded-full animate-spin mb-2"></div>
                     <span data-i18n="booking_spinner" class="text-xs text-ink-soft dark:text-gray-300 font-medium">Chargement du moteur de recherche...</span>
                 </div>
@@ -1238,6 +1249,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=7.9" defer></script>
+    <script src="assets/js/app.js?v=8.0" defer></script>
 </body>
 </html>

@@ -904,19 +904,36 @@ const ModalManager = {
     },
 
     // --- MODALE RÉSERVATION SUPERHOTE (RECHERCHE HÉBERGEMENTS) ---
+    isBookingLoaded: Boolean(window.__bookingLoaded),
+    _bookingSpinnerTimer: null,
+
     openBooking(updateUrl = true) {
         const modal = document.getElementById('modal-booking');
         const spinner = document.getElementById('booking-loading-spinner');
         const iframe = document.getElementById('booking-search-engine-rentals');
         if (!modal) return;
 
-        if (spinner) {
-            spinner.classList.remove('hidden');
-            spinner.style.opacity = '1';
+        if (this.isBookingLoaded || window.__bookingLoaded) {
+            this.isBookingLoaded = true;
+            if (spinner) spinner.classList.add('hidden');
+        } else {
+            if (spinner) {
+                spinner.classList.remove('hidden');
+                spinner.style.opacity = '1';
+            }
+            // Sécurité anti-blocage : si le site tiers tarde ou ne déclenche pas l'événement onload,
+            // on masque automatiquement le spinner après 1.5s pour ne jamais bloquer l'accès au moteur
+            clearTimeout(this._bookingSpinnerTimer);
+            this._bookingSpinnerTimer = setTimeout(() => {
+                this.onBookingLoaded();
+            }, 1500);
         }
 
-        if (iframe && (!iframe.src || iframe.src === '' || iframe.src === 'about:blank')) {
-            iframe.src = "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+        if (iframe) {
+            iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
+            if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
+                iframe.src = "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+            }
         }
 
         // Réinitialise tout style restant
@@ -974,6 +991,12 @@ const ModalManager = {
     },
 
     onBookingLoaded() {
+        this.isBookingLoaded = true;
+        window.__bookingLoaded = true;
+        if (this._bookingSpinnerTimer) {
+            clearTimeout(this._bookingSpinnerTimer);
+            this._bookingSpinnerTimer = null;
+        }
         const spinner = document.getElementById('booking-loading-spinner');
         if (spinner) spinner.classList.add('hidden');
     },
