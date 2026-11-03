@@ -657,7 +657,8 @@ const Router = {
 // -----------------------------------------------------------------------------
 const ApiService = {
     async fetchRouteData(slug) {
-        const apiUrl = slug ? `api.php?slug=${encodeURIComponent(slug)}` : 'api.php';
+        const base = document.baseURI || (window.location.origin + BASE_PATH);
+        const apiUrl = new URL(slug ? `api.php?slug=${encodeURIComponent(slug)}` : 'api.php', base).href;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000);
 
@@ -1902,8 +1903,12 @@ const PdfViewer = {
             wrapper.innerHTML = '';
         }
 
-        // Source de données même origine pour éviter tout blocage CORS
-        const proxyUrl = `api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(lang)}`;
+        // Source de données même origine pour éviter tout blocage CORS.
+        // Utilisation d'une URL absolue résolue contre document.baseURI ou BASE_PATH pour garantir
+        // que PDF.js (y compris dans son web worker) charge toujours le proxy à la racine du portail,
+        // même lors d'un accès direct ou d'un rechargement sur une URL profonde (ex: /bataille/guides/pdf-fr).
+        const base = document.baseURI || (window.location.origin + BASE_PATH);
+        const proxyUrl = new URL(`api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(lang)}`, base).href;
         const sourceUrl = slug ? proxyUrl : directUrl;
 
         try {
@@ -1916,7 +1921,8 @@ const PdfViewer = {
             const loadingTask = pdfjsLib.getDocument({
                 url: sourceUrl,
                 cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-                cMapPacked: true
+                cMapPacked: true,
+                standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
             });
 
             this.pdfDoc = await loadingTask.promise;
@@ -1928,7 +1934,8 @@ const PdfViewer = {
                     const fallbackTask = pdfjsLib.getDocument({
                         url: directUrl,
                         cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-                        cMapPacked: true
+                        cMapPacked: true,
+                        standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
                     });
                     this.pdfDoc = await fallbackTask.promise;
                     await this.renderAllPages();
@@ -2090,7 +2097,7 @@ const PropertyRenderer = {
         // Mise à jour dynamique du manifeste PWA & des métadonnées pour ce logement spécifique
         const manifestLink = document.getElementById('app-manifest-link');
         if (manifestLink && prop.slug) {
-            manifestLink.href = `manifest.php?slug=${encodeURIComponent(prop.slug)}`;
+            manifestLink.href = `${BASE_PATH}manifest.php?slug=${encodeURIComponent(prop.slug)}`;
         }
         const appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
         if (appleTitleMeta && prop.name) {
@@ -2465,7 +2472,7 @@ const ListRenderer = {
         // Réinitialisation du manifeste PWA sur le portail d'accueil
         const manifestLink = document.getElementById('app-manifest-link');
         if (manifestLink) {
-            manifestLink.href = 'manifest.php';
+            manifestLink.href = `${BASE_PATH}manifest.php`;
         }
         const appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
         if (appleTitleMeta) {
@@ -2582,10 +2589,11 @@ const PwaManager = {
                         console.warn('[PWA] Échec enregistrement Service Worker :', err.message);
                     });
 
-                // Rechargement transparent dès l'activation effective d'un nouveau Service Worker
+                // Rechargement transparent dès l'activation effective d'un nouveau Service Worker (uniquement si la page était déjà contrôlée)
                 let refreshing = false;
+                const hadController = Boolean(navigator.serviceWorker.controller);
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
+                    if (!refreshing && hadController) {
                         refreshing = true;
                         window.location.reload();
                     }

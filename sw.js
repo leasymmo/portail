@@ -6,7 +6,7 @@
  * - API (api.php) : Network-First avec fallback Cache (consultation hors-ligne des guides)
  */
 
-const CACHE_VERSION = 'cdh-portail-v1.9.7';
+const CACHE_VERSION = 'cdh-portail-v1.9.8';
 const CACHE_NAME_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_NAME_API = `${CACHE_VERSION}-api`;
 
@@ -18,8 +18,8 @@ const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/?$/, '/'
 const PRECACHE_ASSETS = [
     SCOPE_PATH,
     SCOPE_PATH + 'index.html',
-    SCOPE_PATH + 'assets/css/custom.css?v=7.7',
-    SCOPE_PATH + 'assets/js/app.js?v=7.7',
+    SCOPE_PATH + 'assets/css/custom.css?v=7.8',
+    SCOPE_PATH + 'assets/js/app.js?v=7.8',
     SCOPE_PATH + 'assets/images/antho.jpg',
     SCOPE_PATH + 'assets/icons/icon-192.png',
     SCOPE_PATH + 'assets/icons/icon-512.png',
@@ -100,10 +100,13 @@ self.addEventListener('fetch', (event) => {
             fetch(request)
                 .then((networkResponse) => {
                     if (networkResponse && networkResponse.status === 200) {
-                        const responseClone = networkResponse.clone();
-                        caches.open(CACHE_NAME_API).then((cache) => {
-                            cache.put(request, responseClone);
-                        });
+                        const contentType = networkResponse.headers.get('content-type') || '';
+                        if (contentType.includes('application/json') || contentType.includes('application/pdf')) {
+                            const responseClone = networkResponse.clone();
+                            caches.open(CACHE_NAME_API).then((cache) => {
+                                cache.put(request, responseClone);
+                            });
+                        }
                     }
                     return networkResponse;
                 })
