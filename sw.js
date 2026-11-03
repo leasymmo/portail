@@ -6,7 +6,7 @@
  * - API (api.php) : Network-First avec fallback Cache (consultation hors-ligne des guides)
  */
 
-const CACHE_VERSION = 'cdh-portail-v2.0.6';
+const CACHE_VERSION = 'cdh-portail-v2.0.7';
 const CACHE_NAME_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_NAME_API = `${CACHE_VERSION}-api`;
 
@@ -18,8 +18,8 @@ const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/?$/, '/'
 const PRECACHE_ASSETS = [
     SCOPE_PATH,
     SCOPE_PATH + 'index.html',
-    SCOPE_PATH + 'assets/css/custom.css?v=8.6',
-    SCOPE_PATH + 'assets/js/app.js?v=8.6',
+    SCOPE_PATH + 'assets/css/custom.css?v=8.7',
+    SCOPE_PATH + 'assets/js/app.js?v=8.7',
     SCOPE_PATH + 'assets/images/antho.jpg',
     SCOPE_PATH + 'assets/icons/icon-192.png',
     SCOPE_PATH + 'assets/icons/icon-512.png',

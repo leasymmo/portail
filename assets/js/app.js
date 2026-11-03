@@ -1357,22 +1357,25 @@ const ModalManager = {
 };
 
 // -----------------------------------------------------------------------------
-// GESTIONNAIRE DE GESTES TACTILES : GLISSEMENT VERS LE BAS (SWIPE TO DISMISS)
+// -----------------------------------------------------------------------------
+// GESTIONNAIRE DE GESTES TACTILES & SOURIS : GLISSEMENT & ACCOMPAGNEMENT (SWIPE TO DISMISS)
 // -----------------------------------------------------------------------------
 const SheetGestureController = {
     init() {
-        // Uniquement pour les grandes modales défilables (PDF, Vidéo, Réservation)
-        // Les modales compactes (Wi-Fi, Avis, Contact) sont légères et se ferment via le fond ou la croix
+        // Couvre l'ensemble des 6 modales de l'application (grandes et compactes)
         const modals = [
             { id: 'modal-pdf', close: (immediate) => ModalManager.closePdf(immediate) },
             { id: 'modal-video', close: (immediate) => ModalManager.closeVideo(immediate) },
-            { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) }
+            { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) },
+            { id: 'modal-wifi', close: (immediate) => ModalManager.closeWifi(immediate) },
+            { id: 'modal-review', close: (immediate) => ModalManager.closeReview(immediate) },
+            { id: 'modal-contact-anthony', close: (immediate) => ModalManager.closeContact(immediate) }
         ];
 
         modals.forEach(({ id, close }) => {
             const overlay = document.getElementById(id);
             if (!overlay) return;
-            const sheet = overlay.querySelector('.modal-sheet');
+            const sheet = overlay.querySelector('.modal-sheet, .modal-sheet-compact, .modal-sheet-video') || overlay.firstElementChild;
             if (!sheet) return;
 
             this.attachGesture(overlay, sheet, close);
@@ -1386,98 +1389,135 @@ const SheetGestureController = {
         let startTime = 0;
         let isDragging = false;
         let isTracking = false;
+        let activePointerId = null;
+        let animFrameId = null;
 
         const isHandleOrHeader = (target) => {
             return target.closest('.sheet-drag-handle') || 
                    target.closest('.modal-header-fixed');
         };
 
-        const onTouchStart = (e) => {
-            if (!overlay.classList.contains('open')) return;
+        const onStart = (clientX, clientY, target, pointerId = null) => {
+            if (!overlay.classList.contains('open')) return false;
 
-            const touch = e.touches ? e.touches[0] : e;
-            const target = e.target;
-
-            // Détection : clic/toucher sur la poignée, l'en-tête fixe ou les 60px du haut
+            // Détection : clic/toucher sur la poignée, l'en-tête fixe ou la zone supérieure (65px)
             const rect = sheet.getBoundingClientRect();
-            const touchInTopZone = (touch.clientY - rect.top) <= 60;
+            const inTopZone = (clientY - rect.top) <= 65;
 
-            if (!isHandleOrHeader(target) && !touchInTopZone) {
-                return;
+            if (!isHandleOrHeader(target) && !inTopZone) {
+                return false;
             }
 
-            // Ignorer l'appui sur les boutons interactifs (fermeture, lien externe, triage, etc.)
-            if (target.closest('button, a, [role="button"], input, select, textarea, .cursor-pointer')) {
-                return;
+            // Ignorer l'appui sur les boutons interactifs (croix de fermeture, liens, etc.)
+            if (target.closest('button, a, [role="button"], input, select, textarea, .btn-close-modal, .cursor-pointer')) {
+                return false;
             }
 
             isTracking = true;
             isDragging = false;
-            startY = touch.clientY;
-            startX = touch.clientX;
+            activePointerId = pointerId;
+            startY = clientY;
+            startX = clientX;
             currentY = startY;
             startTime = Date.now();
+
+            try {
+                if (pointerId !== null && target.setPointerCapture) {
+                    target.setPointerCapture(pointerId);
+                }
+            } catch (err) {}
+
+            return true;
         };
 
-        const onTouchMove = (e) => {
+        const onMove = (clientX, clientY, e = null) => {
             if (!isTracking || !overlay.classList.contains('open')) return;
 
-            const touch = e.touches ? e.touches[0] : e;
-            const deltaY = touch.clientY - startY;
-            const deltaX = touch.clientX - startX;
+            const deltaY = clientY - startY;
+            const deltaX = clientX - startX;
 
-            // Si mouvement majoritairement horizontal, annuler le geste
+            // Si mouvement horizontal dominant, annuler le geste
             if (!isDragging && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
                 isTracking = false;
                 return;
             }
 
-            // Enclenchement dès un léger glissement vers le bas (> 5px)
-            if (!isDragging && deltaY > 5) {
+            // Enclenchement dès un léger mouvement vertical (> 4px)
+            if (!isDragging && (deltaY > 4 || deltaY < -4)) {
                 isDragging = true;
                 sheet.classList.add('is-dragging');
+                document.body.classList.add('is-modal-dragging');
+                sheet.style.transition = 'none';
+                overlay.style.transition = 'none';
             }
 
             if (!isDragging) return;
 
-            if (e.cancelable) {
+            if (e && e.cancelable) {
                 e.preventDefault();
             }
 
-            if (deltaY > 0) {
-                // Suit physiquement le doigt vers le bas
-                sheet.style.transform = `translateY(${deltaY}px)`;
-                const progress = Math.min(deltaY / 350, 1);
-                overlay.style.backgroundColor = `rgba(15, 23, 42, ${(0.72 * (1 - progress * 0.7)).toFixed(3)})`;
-            } else {
-                // Résistance élastique si l'utilisateur tire vers le haut
-                const rubberBand = deltaY * 0.18;
-                sheet.style.transform = `translateY(${rubberBand}px)`;
-            }
+            currentY = clientY;
 
-            currentY = touch.clientY;
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+            animFrameId = requestAnimationFrame(() => {
+                const sheetHeight = sheet.offsetHeight || window.innerHeight * 0.8;
+                if (deltaY > 0) {
+                    // Accompagnement fluide 1:1 vers le bas
+                    sheet.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+                    const progress = Math.min(deltaY / sheetHeight, 1);
+                    overlay.style.backgroundColor = `rgba(15, 23, 42, ${(0.72 * (1 - progress * 0.75)).toFixed(3)})`;
+                } else {
+                    // Résistance élastique (rubber-banding) vers le haut
+                    const rubberBand = deltaY * 0.18;
+                    sheet.style.transform = `translate3d(0, ${rubberBand}px, 0)`;
+                }
+            });
         };
 
-        const onTouchEnd = () => {
+        const onEnd = (target = null) => {
             if (!isTracking && !isDragging) return;
 
+            try {
+                if (target && target.releasePointerCapture && activePointerId !== null) {
+                    target.releasePointerCapture(activePointerId);
+                }
+            } catch (err) {}
+
             isTracking = false;
+            activePointerId = null;
+
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
 
             if (!isDragging) return;
             isDragging = false;
             sheet.classList.remove('is-dragging');
+            document.body.classList.remove('is-modal-dragging');
 
             const deltaY = currentY - startY;
             const timeElapsed = Date.now() - startTime;
-            const velocityY = deltaY / Math.max(timeElapsed, 1);
+            const velocityY = deltaY / Math.max(timeElapsed, 1); // px / ms
+            const sheetHeight = sheet.offsetHeight || window.innerHeight * 0.8;
+            const distanceRatio = deltaY / sheetHeight;
 
-            // Seuil de fermeture : glissement > 100px OU impulsion rapide vers le bas (flick v > 0.42)
-            const shouldDismiss = (deltaY > 100) || (deltaY > 35 && velocityY > 0.42);
+            // RÈGLE PHYSIQUE STRICTEMENT CONFORME AUX DIRECTIVES :
+            // 1. Relâchement au-delà de la moitié du parcours (>= 50%) -> Fermeture
+            // 2. Geste rapide vers le bas (flick vif : vélocité >= 0.50 px/ms avec déplacement > 25px) -> Fermeture rapide
+            // 3. Relâchement avant la moitié (< 50%) sans geste vif -> Réouverture fluide à la position d'origine
+            const isPastHalfway = distanceRatio >= 0.50;
+            const isQuickFlickDown = velocityY >= 0.50 && deltaY > 25;
+            const shouldDismiss = isPastHalfway || isQuickFlickDown;
 
             if (shouldDismiss) {
-                sheet.style.transition = 'transform 0.26s cubic-bezier(0.32, 0.72, 0, 1)';
-                sheet.style.transform = 'translateY(100%)';
-                overlay.style.transition = 'opacity 0.26s ease';
+                const remainingDistance = Math.max(sheetHeight - deltaY, 0);
+                const animDuration = Math.min(Math.max(remainingDistance / (velocityY > 0 ? velocityY * 1000 : 900), 0.18), 0.30);
+
+                sheet.style.transition = `transform ${animDuration.toFixed(2)}s cubic-bezier(0.32, 0.72, 0, 1)`;
+                sheet.style.transform = 'translate3d(0, 100%, 0)';
+                overlay.style.transition = `opacity ${animDuration.toFixed(2)}s ease`;
                 overlay.style.opacity = '0';
 
                 setTimeout(() => {
@@ -1487,34 +1527,63 @@ const SheetGestureController = {
                     overlay.style.backgroundColor = '';
                     overlay.style.opacity = '';
                     overlay.style.transition = '';
-                }, 260);
+                }, Math.round(animDuration * 1000));
             } else {
                 // Rebond fluide élastique à l'état initial
-                sheet.style.transition = 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1)';
-                sheet.style.transform = 'translateY(0)';
-                overlay.style.transition = 'background-color 0.26s ease';
+                sheet.style.transition = 'transform 0.34s cubic-bezier(0.16, 1, 0.3, 1)';
+                sheet.style.transform = 'translate3d(0, 0, 0)';
+                overlay.style.transition = 'background-color 0.34s ease';
                 overlay.style.backgroundColor = '';
 
                 setTimeout(() => {
                     sheet.style.transform = '';
                     sheet.style.transition = '';
                     overlay.style.transition = '';
-                }, 260);
+                }, 340);
             }
         };
 
-        // Enregistrement des événements : évite la redondance Touch/Pointer sur mobile
-        if ('ontouchstart' in window) {
-            sheet.addEventListener('touchstart', onTouchStart, { passive: true });
-            window.addEventListener('touchmove', onTouchMove, { passive: false });
-            window.addEventListener('touchend', onTouchEnd, { passive: true });
-            window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-        } else {
-            sheet.addEventListener('pointerdown', onTouchStart);
-            window.addEventListener('pointermove', onTouchMove);
-            window.addEventListener('pointerup', onTouchEnd);
-            window.addEventListener('pointercancel', onTouchEnd);
-        }
+        // Pointer Events (Souris, Tactile, Stylet - Prise en charge universelle)
+        sheet.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            onStart(e.clientX, e.clientY, e.target, e.pointerId);
+        }, { passive: false });
+
+        window.addEventListener('pointermove', (e) => {
+            if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+            onMove(e.clientX, e.clientY, e);
+        }, { passive: false });
+
+        window.addEventListener('pointerup', (e) => {
+            if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+            onEnd(e.target);
+        }, { passive: true });
+
+        window.addEventListener('pointercancel', (e) => {
+            if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+            onEnd(e.target);
+        }, { passive: true });
+
+        // Touch events fallback pour anciens navigateurs mobiles
+        sheet.addEventListener('touchstart', (e) => {
+            if (e.touches && e.touches.length === 1) {
+                const t = e.touches[0];
+                onStart(t.clientX, t.clientY, e.target, null);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches && e.touches.length === 1) {
+                const t = e.touches[0];
+                onMove(t.clientX, t.clientY, e);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            if (isTracking || isDragging) {
+                onEnd(e.target);
+            }
+        }, { passive: true });
     }
 };
 

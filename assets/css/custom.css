@@ -781,12 +781,27 @@ body.modal-open {
     border-bottom: 1px solid var(--line);
     cursor: grab;
     cursor: -webkit-grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.modal-header-fixed button,
+.modal-header-fixed a {
+    cursor: pointer !important;
 }
 
 .modal-sheet.is-dragging .modal-header-fixed,
-.modal-sheet.is-dragging .sheet-drag-handle {
-    cursor: grabbing;
-    cursor: -webkit-grabbing;
+.modal-sheet.is-dragging .sheet-drag-handle,
+.modal-sheet-compact.is-dragging .modal-header-fixed,
+.modal-sheet-compact.is-dragging .sheet-drag-handle,
+.modal-sheet-video.is-dragging .modal-header-fixed,
+.modal-sheet-video.is-dragging .sheet-drag-handle,
+body.is-modal-dragging,
+body.is-modal-dragging * {
+    cursor: grabbing !important;
+    cursor: -webkit-grabbing !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 /* Zone PDF pleine hauteur adaptée à PDF.js avec Pinch-to-Zoom centré */
