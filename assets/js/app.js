@@ -1429,6 +1429,8 @@ const SheetGestureController = {
             lastTime = startTime;
             recentVelocityY = 0;
 
+            console.log('[GESTURE START]', overlay.id, { clientX, clientY, target: target ? target.tagName : null, inTopZone });
+
             try {
                 if (pointerId !== null && target && target.setPointerCapture) {
                     target.setPointerCapture(pointerId);
@@ -1533,6 +1535,8 @@ const SheetGestureController = {
             const isPastHalfway = distanceRatio >= 0.50;
             const isQuickFlickDown = (finalVelocity >= 0.20 && deltaY >= 35) || (finalVelocity >= 0.35 && deltaY >= 20);
             const shouldDismiss = isPastHalfway || isQuickFlickDown;
+
+            console.log('[GESTURE END]', overlay.id, { deltaY, sheetHeight, distanceRatio, finalVelocity, isPastHalfway, isQuickFlickDown, shouldDismiss });
 
             if (shouldDismiss) {
                 const remainingDistance = Math.max(sheetHeight - deltaY, 0);
