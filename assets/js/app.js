@@ -971,7 +971,7 @@ const ModalManager = {
         }
 
         if (iframe) {
-            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search";
             if (!iframe.src || !iframe.src.includes('superhote.com')) {
                 iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
                 iframe.src = targetSrc;
@@ -1046,7 +1046,7 @@ const ModalManager = {
     preloadBooking() {
         const iframe = document.getElementById('booking-search-engine-rentals');
         if (iframe) {
-            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/4ecc4a3f-2e6d-4fc8-a03a-48f501f85694/rentals-search";
             if (!iframe.src || !iframe.src.includes('superhote.com')) {
                 iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
                 iframe.src = targetSrc;
