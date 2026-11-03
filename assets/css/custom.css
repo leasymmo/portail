@@ -1127,19 +1127,36 @@ html.dark .booking-full-container {
     pointer-events: auto;
 }
 
-/* 6. Bannière Flottante PWA (Ajouter à l'écran d'accueil) */
+/* 6. Modale / Bannière d'Installation PWA (Écran d'accueil) avec arrière-plan assombri */
 .pwa-install-prompt {
     position: fixed;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    left: 14px;
-    right: 14px;
-    z-index: 80;
-    pointer-events: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    inset: 0;
+    z-index: 950;
+    background-color: rgba(15, 23, 42, 0);
     display: flex;
+    align-items: flex-end;
     justify-content: center;
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-    transform: translateY(140%);
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
     opacity: 0;
+    visibility: hidden;
+    transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.35s;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+    .pwa-install-prompt {
+        align-items: center;
+        padding-bottom: 16px;
+    }
 }
 
 body.modal-open .pwa-install-prompt {
@@ -1147,9 +1164,10 @@ body.modal-open .pwa-install-prompt {
 }
 
 .pwa-install-prompt.show {
-    transform: translateY(0);
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
+    background-color: rgba(15, 23, 42, 0.68);
 }
 
 .pwa-install-prompt.hidden {
@@ -1159,10 +1177,24 @@ body.modal-open .pwa-install-prompt {
 .pwa-prompt-card {
     width: 100%;
     max-width: 440px;
-    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
     background-color: var(--bg-card);
     border: 1px solid var(--line);
-    transition: background-color 0.25s ease, border-color 0.25s ease;
+    transform: translateY(40px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.25s ease,
+                border-color 0.25s ease;
+}
+
+.pwa-install-prompt.show .pwa-prompt-card {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.dark .pwa-prompt-card {
+    box-shadow: 0 24px 52px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 /* ==============================================================================

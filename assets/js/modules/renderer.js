@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.3';
-import { Utils } from './utils.js?v=10.3';
-import { I18n } from './i18n.js?v=10.3';
-import { ScrollManager } from './scroll.js?v=10.3';
-import { Router, BASE_PATH } from './router.js?v=10.3';
-import { ModalManager } from './modals.js?v=10.3';
-import { PdfViewer } from './pdf-viewer.js?v=10.3';
+import { AppState } from './state.js?v=10.4';
+import { Utils } from './utils.js?v=10.4';
+import { I18n } from './i18n.js?v=10.4';
+import { ScrollManager } from './scroll.js?v=10.4';
+import { Router, BASE_PATH } from './router.js?v=10.4';
+import { ModalManager } from './modals.js?v=10.4';
+import { PdfViewer } from './pdf-viewer.js?v=10.4';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
