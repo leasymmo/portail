@@ -1225,6 +1225,48 @@ const ModalManager = {
         }, 80);
     },
 
+    openWhatsAppAnthony(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+
+        const prop = AppState.currentProperty;
+        const propName = (prop && prop.name)
+            ? prop.name
+            : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
+
+        const msg = I18n.currentLang === 'en'
+            ? `Hello Anthony, I am currently staying at "${propName}" and I have a question regarding my stay: `
+            : `Bonjour Anthony, je séjourne actuellement au logement "${propName}" et j'ai une question concernant mon séjour : `;
+
+        const phone = '33675883791';
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+
+        const btn = document.getElementById('btn-whatsapp-anthony');
+        if (btn) btn.href = url;
+
+        // Détection universelle smartphone / tablette / PWA standalone
+        const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isMobile) {
+            if (e && e.preventDefault) e.preventDefault();
+            window.location.href = url;
+        }
+        // Sur desktop, le lien natif <a href="..." target="_blank"> ouvre WhatsApp Web dans un nouvel onglet
+    },
+
+    openGoogleReview(e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const url = "https://g.page/r/CZ8_-ySB8FV2ECE/review";
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if (isStandalone) {
+            if (e && e.preventDefault) e.preventDefault();
+            window.open(url, '_blank');
+        }
+        // En mode web normal (mobile et desktop), le lien natif <a href="..." target="_blank" rel="noopener noreferrer">
+        // gère l'ouverture sans risquer le blocage pop-up du navigateur.
+    },
+
     onBackdropClick(event, type) {
         if (!event || !event.target || event.target.classList.contains('modal-overlay')) {
             if (type === 'pdf') this.closePdf();
@@ -2916,70 +2958,6 @@ const App = {
 };
 
 // -----------------------------------------------------------------------------
-// 11b. ACTIONS & FONCTIONS D'ASSISTANCE WHATSAPP & CONTACT ANTHONY
-// -----------------------------------------------------------------------------
-function openWhatsAppAnthony(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-
-    const propName = (AppState.currentProperty && AppState.currentProperty.name)
-        ? AppState.currentProperty.name
-        : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
-
-    const msg = I18n.currentLang === 'en'
-        ? `Hello Anthony, I am currently staying at "${propName}" and I have a question regarding my stay: `
-        : `Bonjour Anthony, je séjourne actuellement au logement "${propName}" et j'ai une question concernant mon séjour : `;
-
-    const phone = '33675883791';
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-
-    const btn = document.getElementById('btn-whatsapp-anthony');
-    if (btn) btn.href = url;
-
-    // Détection universelle smartphone / tablette / PWA standalone
-    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()) || 
-                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-    if (isMobile) {
-        if (e && e.preventDefault) e.preventDefault();
-        window.location.href = url;
-    }
-    // Sur desktop, on laisse l'action native du lien <a href="..." target="_blank"> ouvrir WhatsApp Web dans un nouvel onglet
-}
-
-function openGoogleReview(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    const url = "https://g.page/r/CZ8_-ySB8FV2ECE/review";
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-    if (isStandalone) {
-        if (e && e.preventDefault) e.preventDefault();
-        window.open(url, '_blank');
-    }
-    // En mode web normal (mobile Safari/Chrome et desktop), le lien natif <a href="..." target="_blank" rel="noopener noreferrer">
-    // gère l'ouverture sans risquer le blocage pop-up du navigateur.
-}
-
-function goToVideosFromContact(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    ModalManager.switchToVideosFromContact(e);
-}
-
-function goToWifiFromContact(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    ModalManager.switchToWifiFromContact(e);
-}
-
-function goToGuideFromContact(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    ModalManager.switchToGuideFromContact(e);
-}
-
-function switchFromReviewToContact(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
-    ModalManager.switchFromReviewToContact(e);
-}
-
-// -----------------------------------------------------------------------------
 // 12. PONT DE COMPATIBILITÉ GLOBALE (POUR LES GESTIONNAIRES ONCLICK EN HTML)
 // -----------------------------------------------------------------------------
 window.setLanguage = (lang) => I18n.setLanguage(lang);
@@ -3000,14 +2978,14 @@ window.openWifiModal = () => ModalManager.openWifi();
 window.closeWifiModal = () => ModalManager.closeWifi();
 window.openReviewModal = () => ModalManager.openReview();
 window.closeReviewModal = () => ModalManager.closeReview();
-window.openGoogleReview = (e) => openGoogleReview(e);
-window.switchFromReviewToContact = (e) => switchFromReviewToContact(e);
+window.openGoogleReview = (e) => ModalManager.openGoogleReview(e);
+window.switchFromReviewToContact = (e) => ModalManager.switchFromReviewToContact(e);
 window.openContactModal = () => ModalManager.openContact();
 window.closeContactModal = () => ModalManager.closeContact();
-window.openWhatsAppAnthony = (e) => openWhatsAppAnthony(e);
-window.goToVideosFromContact = (e) => goToVideosFromContact(e);
-window.goToWifiFromContact = (e) => goToWifiFromContact(e);
-window.goToGuideFromContact = (e) => goToGuideFromContact(e);
+window.openWhatsAppAnthony = (e) => ModalManager.openWhatsAppAnthony(e);
+window.goToVideosFromContact = (e) => ModalManager.switchToVideosFromContact(e);
+window.goToWifiFromContact = (e) => ModalManager.switchToWifiFromContact(e);
+window.goToGuideFromContact = (e) => ModalManager.switchToGuideFromContact(e);
 window.copyNetworkName = (e) => App.copyNetwork(e);
 window.copyWifiPassword = (e) => App.copyWifi(e);
 window.filterVideos = () => VideoSearch.filter();
