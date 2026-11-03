@@ -2256,6 +2256,47 @@ const PropertyRenderer = {
     },
 
     _tabAnimTimeout: null,
+    _motionTimer: null,
+
+    triggerTabMotion(tabId) {
+        const btnGuides = document.getElementById('btn-tab-guides');
+        const btnVideos = document.getElementById('btn-tab-videos');
+        if (!btnGuides || !btnVideos) return;
+
+        // 1. Annuler tout timer précédent
+        if (this._motionTimer) {
+            clearTimeout(this._motionTimer);
+            this._motionTimer = null;
+        }
+
+        // 2. Nettoyer immédiatement la classe d'animation sur TOUTES les icônes d'onglets
+        const allIcons = document.querySelectorAll('.segmented-nav .tab-svg-icon');
+        allIcons.forEach(icon => {
+            icon.classList.remove('is-animating');
+        });
+
+        // 3. Identifier le bouton HTML et l'icône SVG à animer
+        const targetBtn = tabId === 'guides' ? btnGuides : btnVideos;
+        const targetIcon = targetBtn ? targetBtn.querySelector('.tab-svg-icon') : null;
+        if (!targetBtn || !targetIcon) return;
+
+        // 4. Forcer un vrai reflow du moteur de rendu sur les éléments HTML parents (HTMLElement.offsetWidth)
+        // Indispensable car SVGElement.offsetWidth est undefined en spécification SVG standard
+        void targetBtn.offsetWidth;
+        const iconWrapper = targetBtn.querySelector('.tab-icon-wrapper');
+        if (iconWrapper) void iconWrapper.offsetWidth;
+
+        // 5. Réenclencher l'animation au frame suivant pour garantir le redémarrage à 0ms
+        requestAnimationFrame(() => {
+            targetIcon.classList.add('is-animating');
+
+            // 6. Nettoyer automatiquement après la fin de l'animation (480ms) pour préparer le prochain clic
+            this._motionTimer = setTimeout(() => {
+                targetIcon.classList.remove('is-animating');
+                this._motionTimer = null;
+            }, 480);
+        });
+    },
 
     switchTab(tabId, animate = false) {
         const prevTab = AppState.currentActiveTab;
@@ -2283,15 +2324,7 @@ const PropertyRenderer = {
         }
 
         // Déclenchement du motion design exclusif sur l'icône SVG de l'onglet sélectionné
-        const activeBtn = isGuides ? btnGuides : btnVideos;
-        if (activeBtn) {
-            const iconSvg = activeBtn.querySelector('.tab-svg-icon');
-            if (iconSvg) {
-                iconSvg.classList.remove('is-animating');
-                void iconSvg.offsetWidth; // Force reflow pour réarmer la transition
-                iconSvg.classList.add('is-animating');
-            }
-        }
+        this.triggerTabMotion(tabId);
 
         // Si pas d'animation demandée ou premier chargement
         if (!animate || !prevTab || prevTab === tabId) {
@@ -2365,16 +2398,8 @@ const PropertyRenderer = {
         const isSwitching = AppState.currentActiveTab && AppState.currentActiveTab !== tabId;
         this.switchTab(tabId, isSwitching);
         if (!isSwitching) {
-            // Rejouer l'animation de micro-interaction au clic même sur l'onglet déjà actif
-            const btn = tabId === 'guides' ? document.getElementById('btn-tab-guides') : document.getElementById('btn-tab-videos');
-            if (btn) {
-                const iconSvg = btn.querySelector('.tab-svg-icon');
-                if (iconSvg) {
-                    iconSvg.classList.remove('is-animating');
-                    void iconSvg.offsetWidth;
-                    iconSvg.classList.add('is-animating');
-                }
-            }
+            // Rejouer l'animation de micro-interaction même au clic sur l'onglet déjà actif
+            this.triggerTabMotion(tabId);
         }
         Router.setUrl(AppState.currentSlug, tabId);
     }
