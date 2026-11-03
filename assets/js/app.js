@@ -1122,6 +1122,16 @@ const ModalManager = {
             triageVideos.classList.toggle('hidden', !(AppState.currentVideos && AppState.currentVideos.length > 0));
         }
 
+        // Pré-configuration native du lien direct WhatsApp vers Anthony
+        const btnWhatsApp = document.getElementById('btn-whatsapp-anthony');
+        if (btnWhatsApp) {
+            const propName = (prop && prop.name) ? prop.name : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
+            const msg = I18n.currentLang === 'en'
+                ? `Hello Anthony, I am currently staying at "${propName}" and I have a question regarding my stay: `
+                : `Bonjour Anthony, je séjourne actuellement au logement "${propName}" et j'ai une question concernant mon séjour : `;
+            btnWhatsApp.href = `https://wa.me/33675883791?text=${encodeURIComponent(msg)}`;
+        }
+
         // Réinitialise tout style restant
         modal.classList.remove('is-closing');
         const sheet = modal.querySelector('.modal-sheet-compact');
@@ -1184,47 +1194,35 @@ const ModalManager = {
 
     // --- TRANSITIONS ENTRE MODALES SANS CONFLIT NI BLOCAGE DU RENDU MOBILE ---
     switchFromReviewToContact(e) {
-        if (e) {
-            if (e.preventDefault) e.preventDefault();
-            if (e.stopPropagation) e.stopPropagation();
-        }
+        if (e && e.stopPropagation) e.stopPropagation();
         this.closeReview(true);
         setTimeout(() => {
             this.openContact();
-        }, 60);
+        }, 80);
     },
 
     switchToWifiFromContact(e) {
-        if (e) {
-            if (e.preventDefault) e.preventDefault();
-            if (e.stopPropagation) e.stopPropagation();
-        }
+        if (e && e.stopPropagation) e.stopPropagation();
         this.closeContact(true);
         setTimeout(() => {
             this.openWifi();
-        }, 60);
+        }, 80);
     },
 
     switchToVideosFromContact(e) {
-        if (e) {
-            if (e.preventDefault) e.preventDefault();
-            if (e.stopPropagation) e.stopPropagation();
-        }
+        if (e && e.stopPropagation) e.stopPropagation();
         this.closeContact(true);
         setTimeout(() => {
             PropertyRenderer.navigateTab('videos');
-        }, 60);
+        }, 80);
     },
 
     switchToGuideFromContact(e) {
-        if (e) {
-            if (e.preventDefault) e.preventDefault();
-            if (e.stopPropagation) e.stopPropagation();
-        }
+        if (e && e.stopPropagation) e.stopPropagation();
         this.closeContact(true);
         setTimeout(() => {
             PropertyRenderer.openCurrentGuide();
-        }, 60);
+        }, 80);
     },
 
     onBackdropClick(event, type) {
@@ -1244,19 +1242,18 @@ const ModalManager = {
 // -----------------------------------------------------------------------------
 const SheetGestureController = {
     init() {
+        // Uniquement pour les grandes modales défilables (PDF, Vidéo, Réservation)
+        // Les modales compactes (Wi-Fi, Avis, Contact) sont légères et se ferment via le fond ou la croix
         const modals = [
             { id: 'modal-pdf', close: (immediate) => ModalManager.closePdf(immediate) },
             { id: 'modal-video', close: (immediate) => ModalManager.closeVideo(immediate) },
-            { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) },
-            { id: 'modal-wifi', close: (immediate) => ModalManager.closeWifi(immediate) },
-            { id: 'modal-review', close: (immediate) => ModalManager.closeReview(immediate) },
-            { id: 'modal-contact-anthony', close: (immediate) => ModalManager.closeContact(immediate) }
+            { id: 'modal-booking', close: (immediate) => ModalManager.closeBooking(immediate) }
         ];
 
         modals.forEach(({ id, close }) => {
             const overlay = document.getElementById(id);
             if (!overlay) return;
-            const sheet = overlay.querySelector('.modal-sheet, .modal-sheet-compact');
+            const sheet = overlay.querySelector('.modal-sheet');
             if (!sheet) return;
 
             this.attachGesture(overlay, sheet, close);
@@ -1419,7 +1416,8 @@ const TabGestureController = {
 
         const onTouchStart = (e) => {
             // Uniquement si sur le portail d'un logement, sans modale ouverte et avec vidéos disponibles
-            if (AppState.isPdfModalOpen || AppState.isVideoModalOpen || AppState.isBookingModalOpen) return;
+            if (AppState.isPdfModalOpen || AppState.isVideoModalOpen || AppState.isBookingModalOpen ||
+                AppState.isWifiModalOpen || AppState.isReviewModalOpen || AppState.isContactModalOpen) return;
             if (!AppState.currentProperty || AppState.currentVideos.length === 0) return;
             if (!e.touches || e.touches.length !== 1) return;
 
@@ -2483,6 +2481,15 @@ const PwaManager = {
                     .catch((err) => {
                         console.warn('[PWA] Échec enregistrement Service Worker :', err.message);
                     });
+
+                // Rechargement transparent dès l'activation effective d'un nouveau Service Worker
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
             });
         }
     },
@@ -2846,6 +2853,44 @@ const App = {
                 }
             }
         }, { passive: false });
+
+        // Liaison directe fiabilisée des cartes de la page d'accueil
+        const cardReview = document.getElementById('card-review-active');
+        if (cardReview) {
+            cardReview.addEventListener('click', () => ModalManager.openReview());
+        }
+        const cardContact = document.getElementById('card-contact-active');
+        if (cardContact) {
+            cardContact.addEventListener('click', () => ModalManager.openContact());
+        }
+
+        // Liaison directe des boutons de la modale Avis
+        const btnGoogleReview = document.getElementById('btn-google-review');
+        if (btnGoogleReview) {
+            btnGoogleReview.addEventListener('click', (e) => openGoogleReview(e));
+        }
+        const btnReviewToContact = document.getElementById('btn-review-contact-switch');
+        if (btnReviewToContact) {
+            btnReviewToContact.addEventListener('click', (e) => ModalManager.switchFromReviewToContact(e));
+        }
+
+        // Liaison directe des boutons de la modale Contact
+        const btnWhatsApp = document.getElementById('btn-whatsapp-anthony');
+        if (btnWhatsApp) {
+            btnWhatsApp.addEventListener('click', (e) => openWhatsAppAnthony(e));
+        }
+        const btnTriageVideos = document.getElementById('contact-triage-videos');
+        if (btnTriageVideos) {
+            btnTriageVideos.addEventListener('click', (e) => ModalManager.switchToVideosFromContact(e));
+        }
+        const btnTriageWifi = document.getElementById('contact-triage-wifi');
+        if (btnTriageWifi) {
+            btnTriageWifi.addEventListener('click', (e) => ModalManager.switchToWifiFromContact(e));
+        }
+        const btnTriageGuide = document.getElementById('contact-triage-guide');
+        if (btnTriageGuide) {
+            btnTriageGuide.addEventListener('click', (e) => ModalManager.switchToGuideFromContact(e));
+        }
     }
 };
 
@@ -2853,10 +2898,8 @@ const App = {
 // 11b. ACTIONS & FONCTIONS D'ASSISTANCE WHATSAPP & CONTACT ANTHONY
 // -----------------------------------------------------------------------------
 function openWhatsAppAnthony(e) {
-    if (e) {
-        if (e.preventDefault) e.preventDefault();
-        if (e.stopPropagation) e.stopPropagation();
-    }
+    if (e && e.stopPropagation) e.stopPropagation();
+
     const propName = (AppState.currentProperty && AppState.currentProperty.name)
         ? AppState.currentProperty.name
         : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
@@ -2868,14 +2911,19 @@ function openWhatsAppAnthony(e) {
     const phone = '33675883791';
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 
-    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()) || 
-                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (isMobile) {
-        ModalManager.closeContact(true);
-        window.location.href = url;
-    } else {
+    const btn = document.getElementById('btn-whatsapp-anthony');
+    if (btn) btn.href = url;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
         window.open(url, '_blank', 'noopener,noreferrer');
     }
+}
+
+function openGoogleReview(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    const url = "https://g.page/r/CZ8_-ySB8FV2ECE/review";
+    window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 function goToVideosFromContact(e) {
@@ -2915,6 +2963,7 @@ window.openWifiModal = () => ModalManager.openWifi();
 window.closeWifiModal = () => ModalManager.closeWifi();
 window.openReviewModal = () => ModalManager.openReview();
 window.closeReviewModal = () => ModalManager.closeReview();
+window.openGoogleReview = (e) => openGoogleReview(e);
 window.switchFromReviewToContact = (e) => switchFromReviewToContact(e);
 window.openContactModal = () => ModalManager.openContact();
 window.closeContactModal = () => ModalManager.closeContact();

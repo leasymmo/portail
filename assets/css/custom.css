@@ -383,7 +383,7 @@ body.modal-open {
     pointer-events: none;
     transition: opacity 0.38s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.38s;
     overscroll-behavior: none;
-    touch-action: none;
+    touch-action: manipulation;
 }
 
 .modal-overlay.is-active,
@@ -438,6 +438,7 @@ body.modal-open {
     transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     -webkit-overflow-scrolling: touch;
+    touch-action: manipulation !important;
     will-change: transform;
 }
 
@@ -483,6 +484,7 @@ body.modal-open {
     transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     -webkit-overflow-scrolling: touch;
+    touch-action: manipulation !important;
     will-change: transform;
     margin-bottom: 0 !important;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
