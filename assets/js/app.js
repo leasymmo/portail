@@ -1070,11 +1070,6 @@ const ModalManager = {
     },
 
     closeReview(immediate = false) {
-        if (this._modalSwitchTimer) {
-            clearTimeout(this._modalSwitchTimer);
-            this._modalSwitchTimer = null;
-        }
-
         const modal = document.getElementById('modal-review');
         if (!modal) return;
 
@@ -1084,6 +1079,12 @@ const ModalManager = {
         if (immediate || !modal.classList.contains('open')) {
             modal.classList.remove('open', 'is-active', 'is-closing');
             modal.setAttribute('aria-hidden', 'true');
+            const sheet = modal.querySelector('.modal-sheet-compact');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
             return;
         }
 
@@ -1145,11 +1146,6 @@ const ModalManager = {
     },
 
     closeContact(immediate = false) {
-        if (this._modalSwitchTimer) {
-            clearTimeout(this._modalSwitchTimer);
-            this._modalSwitchTimer = null;
-        }
-
         const modal = document.getElementById('modal-contact-anthony');
         if (!modal) return;
 
@@ -1159,6 +1155,12 @@ const ModalManager = {
         if (immediate || !modal.classList.contains('open')) {
             modal.classList.remove('open', 'is-active', 'is-closing');
             modal.setAttribute('aria-hidden', 'true');
+            const sheet = modal.querySelector('.modal-sheet-compact');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
             return;
         }
 
@@ -1180,97 +1182,52 @@ const ModalManager = {
         }, 340);
     },
 
-    // --- TRANSITION FLUIDE FEUILLE-À-FEUILLE SANS CLIGNOTEMENT DU FOND (HANDOFF) ---
-    _modalSwitchTimer: null,
-
+    // --- TRANSITIONS ENTRE MODALES SANS CONFLIT NI BLOCAGE DU RENDU MOBILE ---
     switchFromReviewToContact(e) {
-        if (e && e.stopPropagation) e.stopPropagation();
-        this.switchSheet('modal-review', 'modal-contact-anthony', () => {
-            AppState.isReviewModalOpen = false;
-            AppState.isContactModalOpen = true;
-
-            const prop = AppState.currentProperty;
-            const triageWifi = document.getElementById('contact-triage-wifi');
-            if (triageWifi) {
-                triageWifi.classList.toggle('hidden', !(prop && prop.wifi_ssid));
-            }
-            const triageVideos = document.getElementById('contact-triage-videos');
-            if (triageVideos) {
-                triageVideos.classList.toggle('hidden', !(AppState.currentVideos && AppState.currentVideos.length > 0));
-            }
-        });
+        if (e) {
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+        }
+        this.closeReview(true);
+        setTimeout(() => {
+            this.openContact();
+        }, 60);
     },
 
-    switchSheet(fromId, toId, beforeOpenFn) {
-        const modalFrom = document.getElementById(fromId);
-        const modalTo = document.getElementById(toId);
-        if (!modalFrom || !modalTo) return;
-
-        if (this._modalSwitchTimer) {
-            clearTimeout(this._modalSwitchTimer);
-            this._modalSwitchTimer = null;
+    switchToWifiFromContact(e) {
+        if (e) {
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
         }
+        this.closeContact(true);
+        setTimeout(() => {
+            this.openWifi();
+        }, 60);
+    },
 
-        // 1. Maintien strict du verrouillage de défilement (ScrollManager.lock reste actif)
-        // 2. Descente rapide et soyeuse de la feuille sortante (180ms) SANS toucher au fond sombre
-        const sheetFrom = modalFrom.querySelector('.modal-sheet, .modal-sheet-compact');
-        if (sheetFrom) {
-            sheetFrom.style.transition = 'transform 0.18s cubic-bezier(0.32, 0.72, 0, 1)';
-            sheetFrom.style.transform = 'translateY(100%)';
+    switchToVideosFromContact(e) {
+        if (e) {
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
         }
+        this.closeContact(true);
+        setTimeout(() => {
+            PropertyRenderer.navigateTab('videos');
+        }, 60);
+    },
 
-        // 3. À 180ms, échange instantané des modales dans la même trame visuelle
-        this._modalSwitchTimer = setTimeout(() => {
-            this._modalSwitchTimer = null;
-
-            // Masque la modale sortante immédiatement
-            modalFrom.classList.remove('open', 'is-active', 'is-closing');
-            modalFrom.setAttribute('aria-hidden', 'true');
-            if (sheetFrom) {
-                sheetFrom.style.transform = '';
-                sheetFrom.style.transition = '';
-            }
-
-            // Exécution du callback métier
-            if (typeof beforeOpenFn === 'function') {
-                beforeOpenFn();
-            }
-
-            // Prépare la feuille entrante en position basse
-            const sheetTo = modalTo.querySelector('.modal-sheet, .modal-sheet-compact');
-            if (sheetTo) {
-                sheetTo.style.transition = 'none';
-                sheetTo.style.transform = 'translateY(100%)';
-            }
-
-            // Affiche la modale cible avec son fond noir DÉJÀ opaque (aucun clignotement blanc/noir)
-            modalTo.style.transition = 'none';
-            modalTo.classList.remove('is-closing');
-            modalTo.classList.add('open');
-            modalTo.setAttribute('aria-hidden', 'false');
-            void modalTo.offsetHeight; // Forçage du reflow
-
-            // Déclenche l'ascension soyeuse de la feuille entrante
-            if (sheetTo) {
-                sheetTo.style.transition = 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1)';
-                requestAnimationFrame(() => {
-                    sheetTo.style.transform = 'translateY(0)';
-                });
-            }
-
-            // Rétablit les transitions CSS par défaut
-            setTimeout(() => {
-                modalTo.style.transition = '';
-                if (sheetTo) {
-                    sheetTo.style.transition = '';
-                    sheetTo.style.transform = '';
-                }
-            }, 400);
-        }, 180);
+    switchToGuideFromContact(e) {
+        if (e) {
+            if (e.preventDefault) e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
+        }
+        this.closeContact(true);
+        setTimeout(() => {
+            PropertyRenderer.openCurrentGuide();
+        }, 60);
     },
 
     onBackdropClick(event, type) {
-        if (this._modalSwitchTimer) return;
         if (!event || !event.target || event.target.classList.contains('modal-overlay')) {
             if (type === 'pdf') this.closePdf();
             if (type === 'video') this.closeVideo();
@@ -1320,6 +1277,8 @@ const SheetGestureController = {
         };
 
         const onTouchStart = (e) => {
+            if (!overlay.classList.contains('open')) return;
+
             const touch = e.touches ? e.touches[0] : e;
             const target = e.target;
 
@@ -1331,8 +1290,8 @@ const SheetGestureController = {
                 return;
             }
 
-            // Ignorer l'appui sur les boutons interactifs (fermeture, lien externe, etc.)
-            if (target.closest('button') || target.closest('a')) {
+            // Ignorer l'appui sur les boutons interactifs (fermeture, lien externe, triage, etc.)
+            if (target.closest('button, a, [role="button"], input, select, textarea, .cursor-pointer')) {
                 return;
             }
 
@@ -1345,7 +1304,7 @@ const SheetGestureController = {
         };
 
         const onTouchMove = (e) => {
-            if (!isTracking) return;
+            if (!isTracking || !overlay.classList.contains('open')) return;
 
             const touch = e.touches ? e.touches[0] : e;
             const deltaY = touch.clientY - startY;
@@ -1428,17 +1387,18 @@ const SheetGestureController = {
             }
         };
 
-        // Événements tactiles mobiles & tablettes
-        sheet.addEventListener('touchstart', onTouchStart, { passive: true });
-        window.addEventListener('touchmove', onTouchMove, { passive: false });
-        window.addEventListener('touchend', onTouchEnd, { passive: true });
-        window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-
-        // Événements souris / pointeur pour test sur desktop
-        sheet.addEventListener('pointerdown', onTouchStart);
-        window.addEventListener('pointermove', onTouchMove);
-        window.addEventListener('pointerup', onTouchEnd);
-        window.addEventListener('pointercancel', onTouchEnd);
+        // Enregistrement des événements : évite la redondance Touch/Pointer sur mobile
+        if ('ontouchstart' in window) {
+            sheet.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchmove', onTouchMove, { passive: false });
+            window.addEventListener('touchend', onTouchEnd, { passive: true });
+            window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+        } else {
+            sheet.addEventListener('pointerdown', onTouchStart);
+            window.addEventListener('pointermove', onTouchMove);
+            window.addEventListener('pointerup', onTouchEnd);
+            window.addEventListener('pointercancel', onTouchEnd);
+        }
     }
 };
 
@@ -2893,7 +2853,10 @@ const App = {
 // 11b. ACTIONS & FONCTIONS D'ASSISTANCE WHATSAPP & CONTACT ANTHONY
 // -----------------------------------------------------------------------------
 function openWhatsAppAnthony(e) {
-    if (e && e.stopPropagation) e.stopPropagation();
+    if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+    }
     const propName = (AppState.currentProperty && AppState.currentProperty.name)
         ? AppState.currentProperty.name
         : (I18n.currentLang === 'en' ? 'my accommodation' : 'mon hébergement');
@@ -2904,24 +2867,27 @@ function openWhatsAppAnthony(e) {
 
     const phone = '33675883791';
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+
+    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent.toLowerCase()) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isMobile) {
+        ModalManager.closeContact(true);
+        window.location.href = url;
+    } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+    }
 }
 
-function goToVideosFromContact() {
-    ModalManager.closeContact(true);
-    PropertyRenderer.navigateTab('videos');
+function goToVideosFromContact(e) {
+    ModalManager.switchToVideosFromContact(e);
 }
 
-function goToWifiFromContact() {
-    ModalManager.switchSheet('modal-contact-anthony', 'modal-wifi', () => {
-        AppState.isContactModalOpen = false;
-        AppState.isWifiModalOpen = true;
-    });
+function goToWifiFromContact(e) {
+    ModalManager.switchToWifiFromContact(e);
 }
 
-function goToGuideFromContact() {
-    ModalManager.closeContact(true);
-    PropertyRenderer.openCurrentGuide();
+function goToGuideFromContact(e) {
+    ModalManager.switchToGuideFromContact(e);
 }
 
 function switchFromReviewToContact(e) {
@@ -2953,9 +2919,9 @@ window.switchFromReviewToContact = (e) => switchFromReviewToContact(e);
 window.openContactModal = () => ModalManager.openContact();
 window.closeContactModal = () => ModalManager.closeContact();
 window.openWhatsAppAnthony = (e) => openWhatsAppAnthony(e);
-window.goToVideosFromContact = () => goToVideosFromContact();
-window.goToWifiFromContact = () => goToWifiFromContact();
-window.goToGuideFromContact = () => goToGuideFromContact();
+window.goToVideosFromContact = (e) => goToVideosFromContact(e);
+window.goToWifiFromContact = (e) => goToWifiFromContact(e);
+window.goToGuideFromContact = (e) => goToGuideFromContact(e);
 window.copyNetworkName = (e) => App.copyNetwork(e);
 window.copyWifiPassword = (e) => App.copyWifi(e);
 window.filterVideos = () => VideoSearch.filter();

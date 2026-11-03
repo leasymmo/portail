@@ -65,7 +65,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=7.0">
+    <link rel="stylesheet" href="assets/css/custom.css?v=7.1">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -1061,7 +1061,7 @@
                     </div>
 
                     <!-- Raccourci 1 : Vidéos équipements -->
-                    <div id="contact-triage-videos" onclick="goToVideosFromContact()" class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
+                    <button type="button" id="contact-triage-videos" onclick="goToVideosFromContact(event)" class="w-full text-left p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1074,10 +1074,10 @@
                             </div>
                         </div>
                         <span data-i18n="triage_see" class="text-xs font-semibold text-gold flex-shrink-0 group-hover:translate-x-0.5 transition">Voir →</span>
-                    </div>
+                    </button>
 
                     <!-- Raccourci 2 : Wi-Fi -->
-                    <div id="contact-triage-wifi" onclick="goToWifiFromContact()" class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
+                    <button type="button" id="contact-triage-wifi" onclick="goToWifiFromContact(event)" class="w-full text-left p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1093,10 +1093,10 @@
                             </div>
                         </div>
                         <span data-i18n="triage_see" class="text-xs font-semibold text-gold flex-shrink-0 group-hover:translate-x-0.5 transition">Voir →</span>
-                    </div>
+                    </button>
 
                     <!-- Raccourci 3 : Guide de bienvenue (PDF) -->
-                    <div id="contact-triage-guide" onclick="goToGuideFromContact()" class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
+                    <button type="button" id="contact-triage-guide" onclick="goToGuideFromContact(event)" class="w-full text-left p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between cursor-pointer hover:border-gold dark:hover:border-gold transition group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-4 h-4 text-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -1110,7 +1110,7 @@
                             </div>
                         </div>
                         <span data-i18n="triage_see" class="text-xs font-semibold text-gold flex-shrink-0 group-hover:translate-x-0.5 transition">Voir →</span>
-                    </div>
+                    </button>
                 </div>
 
                 <!-- Ligne de séparation élégante -->
@@ -1210,6 +1210,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script src="assets/js/app.js?v=7.0" defer></script>
+    <script src="assets/js/app.js?v=7.1" defer></script>
 </body>
 </html>
