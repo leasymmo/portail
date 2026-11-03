@@ -6,7 +6,7 @@
  * - API (api.php) : Network-First avec fallback Cache (consultation hors-ligne des guides)
  */
 
-const CACHE_VERSION = 'cdh-portail-v3.0.2';
+const CACHE_VERSION = 'cdh-portail-v3.0.3';
 const CACHE_NAME_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_NAME_API = `${CACHE_VERSION}-api`;
 
@@ -19,7 +19,7 @@ const PRECACHE_ASSETS = [
     SCOPE_PATH,
     SCOPE_PATH + 'index.html',
     SCOPE_PATH + 'assets/css/custom.css?v=10.0',
-    SCOPE_PATH + 'assets/js/app.js?v=10.2',
+    SCOPE_PATH + 'assets/js/app.js?v=10.3',
     SCOPE_PATH + 'assets/js/modules/state.js',
     SCOPE_PATH + 'assets/js/modules/utils.js',
     SCOPE_PATH + 'assets/js/modules/i18n.js',

@@ -258,6 +258,17 @@ export const I18n = {
         if (window.ModalManager) {
             window.ModalManager.updateBookingLanguage();
         }
+
+        if (window.PdfViewer && AppState.currentProperty && AppState.currentProperty.slug) {
+            const prop = AppState.currentProperty;
+            let targetLang = lang;
+            if (lang === 'en' && !prop.guide_en_url && prop.guide_fr_url) {
+                targetLang = 'fr';
+            } else if (lang === 'fr' && !prop.guide_fr_url && prop.guide_en_url) {
+                targetLang = 'en';
+            }
+            window.PdfViewer.preload(prop.slug, targetLang);
+        }
         Utils.announceA11y(this.t('a11y_lang_changed'));
     },
 

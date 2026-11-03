@@ -378,6 +378,11 @@ export const PdfViewer = {
         this._preloadSeq = (this._preloadSeq || 0) + 1;
         const currentSeq = this._preloadSeq;
 
+        // Invalide l'état de langue chargée si la langue cible est différente
+        if (this.loadedLang !== targetLang) {
+            this.loadedLang = null;
+        }
+
         this._isPreloading = true;
         this._preloadPromise = (async () => {
             try {
@@ -398,8 +403,6 @@ export const PdfViewer = {
                 if (this._preloadSeq !== currentSeq) return;
 
                 this._cachedBuffer = buffer;
-                this.loadedSlug = slug;
-                this.loadedLang = targetLang;
 
                 const loadingTask = pdfjsLib.getDocument({
                     data: new Uint8Array(buffer),
@@ -419,7 +422,12 @@ export const PdfViewer = {
                         const spinner = document.getElementById('pdf-loading-spinner');
                         if (spinner) spinner.classList.remove('hidden');
                     }
-                    await this.renderAllPages();
+                    await this.renderAllPages(currentSeq);
+                    if (this._preloadSeq !== currentSeq) return;
+
+                    this.loadedSlug = slug;
+                    this.loadedLang = targetLang;
+
                     if (AppState.isPdfModalOpen) {
                         const spinner = document.getElementById('pdf-loading-spinner');
                         if (spinner) spinner.classList.add('hidden');
@@ -565,7 +573,7 @@ export const PdfViewer = {
         });
     },
 
-    async renderAllPages() {
+    async renderAllPages(seq = null) {
         if (!this.pdfDoc) return;
         this.cancelCurrentRenders();
 
@@ -583,6 +591,7 @@ export const PdfViewer = {
 
         // Analyse de la première page pour déterminer le ratio natif exact
         const firstPage = await this.pdfDoc.getPage(1);
+        if (seq && this._preloadSeq !== seq) return;
         const unscaledViewport = firstPage.getViewport({ scale: 1.0 });
         this.baseScale = availableWidth / unscaledViewport.width;
 
@@ -597,17 +606,22 @@ export const PdfViewer = {
 
         // 1. Rendu prioritaire immédiat de la Page 1 (apparition instantanée)
         await this.renderSinglePage(firstPage, 1, this.baseScale, dpr, wrapper);
-        if (spinner) spinner.classList.add('hidden');
+        if (seq && this._preloadSeq !== seq) return;
+        if (spinner && AppState.isPdfModalOpen) spinner.classList.add('hidden');
 
         // 2. Rendu consécutif des pages suivantes en arrière-plan
         for (let i = 2; i <= numPages; i++) {
+            if (seq && this._preloadSeq !== seq) break;
             if (!AppState.isPdfModalOpen && !this._isPreloading) break;
             const page = await this.pdfDoc.getPage(i);
+            if (seq && this._preloadSeq !== seq) break;
             await this.renderSinglePage(page, i, this.baseScale, dpr, wrapper);
         }
 
         // Calage final propre une fois toutes les pages en place
-        this.snapToBounds(false);
+        if (!seq || this._preloadSeq === seq) {
+            this.snapToBounds(false);
+        }
     },
 
     async renderSinglePage(page, pageNum, scale, dpr, container) {
