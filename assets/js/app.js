@@ -754,7 +754,7 @@ const ModalManager = {
         if (immediate || !modal.classList.contains('open')) {
             modal.classList.remove('open', 'is-active', 'is-closing');
             modal.setAttribute('aria-hidden', 'true');
-            PdfViewer.destroy();
+            PdfViewer.resetZoom();
             Router.setUrl(AppState.currentSlug, AppState.currentActiveTab);
             return;
         }
@@ -766,7 +766,7 @@ const ModalManager = {
 
         setTimeout(() => {
             modal.classList.remove('is-closing', 'is-active');
-            PdfViewer.destroy();
+            PdfViewer.resetZoom();
             Router.setUrl(AppState.currentSlug, AppState.currentActiveTab);
         }, 360);
     },
@@ -931,8 +931,9 @@ const ModalManager = {
 
         if (iframe) {
             iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
-            if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank') {
-                iframe.src = "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+            if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank' || iframe.src === window.location.href) {
+                iframe.src = targetSrc;
             }
         }
 
@@ -999,6 +1000,17 @@ const ModalManager = {
         }
         const spinner = document.getElementById('booking-loading-spinner');
         if (spinner) spinner.classList.add('hidden');
+    },
+
+    preloadBooking() {
+        const iframe = document.getElementById('booking-search-engine-rentals');
+        if (iframe) {
+            const targetSrc = iframe.getAttribute('data-src') || "https://connect.superhote.com/integrations/iframes/a3f19f43-5233-4d1a-a327-0c8146c2f4a9/rentals-search";
+            if (!iframe.src || iframe.src === '' || iframe.src === 'about:blank' || iframe.src === window.location.href) {
+                iframe.src = targetSrc;
+            }
+            iframe.addEventListener('load', () => this.onBookingLoaded(), { once: true });
+        }
     },
 
     // --- MODALE WI-FI COMPACTE ---
@@ -1575,6 +1587,11 @@ const TabGestureController = {
 // -----------------------------------------------------------------------------
 const PdfViewer = {
     pdfDoc: null,
+    loadedSlug: null,
+    loadedLang: null,
+    _cachedBuffer: null,
+    _isPreloading: false,
+    _preloadPromise: null,
     currentRenderTasks: [],
 
     // État de transformation vectorielle
@@ -1909,15 +1926,107 @@ const PdfViewer = {
         wrapper.style.transform = `translate3d(${Math.round(this.x * 10) / 10}px, ${Math.round(this.y * 10) / 10}px, 0) scale(${Math.round(this.scale * 1000) / 1000})`;
     },
 
+    async preload(slug, lang) {
+        if (!slug) return;
+        const targetLang = lang || 'fr';
+        if (this.loadedSlug === slug && this.loadedLang === targetLang && this.pdfDoc) {
+            return;
+        }
+        if (this._isPreloading && this._preloadPromise) {
+            return this._preloadPromise;
+        }
+
+        this._isPreloading = true;
+        this._preloadPromise = (async () => {
+            try {
+                if (!window.pdfjsLib) {
+                    await this.waitForPdfJs();
+                }
+
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                const base = document.baseURI || (window.location.origin + BASE_PATH);
+                const proxyUrl = new URL(`api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(targetLang)}`, base).href;
+
+                // Téléchargement sécurisé en ArrayBuffer dans le thread principal (fiabilité universelle Safari/Chrome/iOS)
+                const resp = await fetch(proxyUrl);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const buffer = await resp.arrayBuffer();
+
+                this._cachedBuffer = buffer;
+                this.loadedSlug = slug;
+                this.loadedLang = targetLang;
+
+                const loadingTask = pdfjsLib.getDocument({
+                    data: new Uint8Array(buffer),
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true,
+                    standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
+                });
+
+                this.pdfDoc = await loadingTask.promise;
+
+                // Pré-rendu immédiat dans le DOM pour un affichage instantané (0ms) dès l'ouverture
+                const wrapper = document.getElementById('pdf-pages-wrapper');
+                if (wrapper && wrapper.children.length === 0) {
+                    await this.renderAllPages();
+                }
+            } catch (err) {
+                console.warn('[PdfViewer] Préchargement en arrière-plan :', err.message);
+            } finally {
+                this._isPreloading = false;
+                this._preloadPromise = null;
+            }
+        })();
+
+        return this._preloadPromise;
+    },
+
     async load(slug, lang, directUrl) {
-        this.destroy();
+        const targetLang = lang || 'fr';
+        const wrapper = document.getElementById('pdf-pages-wrapper');
+        const spinner = document.getElementById('pdf-loading-spinner');
+        const statusEl = document.getElementById('pdf-loading-status');
+
+        // Cas 1 : Document déjà préchargé et pages déjà dans le DOM -> affichage immédiat 0ms
+        if (this.pdfDoc && this.loadedSlug === slug && this.loadedLang === targetLang && wrapper) {
+            const renderedCount = wrapper.querySelectorAll('canvas').length;
+            if (renderedCount >= this.pdfDoc.numPages) {
+                if (spinner) spinner.classList.add('hidden');
+                this.resetZoom();
+                return;
+            } else if (renderedCount > 0) {
+                if (spinner) spinner.classList.add('hidden');
+                this.resetZoom();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+                for (let i = renderedCount + 1; i <= this.pdfDoc.numPages; i++) {
+                    if (!AppState.isPdfModalOpen) break;
+                    const page = await this.pdfDoc.getPage(i);
+                    await this.renderSinglePage(page, i, this.baseScale, dpr, wrapper);
+                }
+                return;
+            }
+        }
+
+        // Cas 2 : Préchargement en cours en arrière-plan -> on attend sa résolution
+        if (this._isPreloading && this._preloadPromise) {
+            if (spinner) spinner.classList.remove('hidden');
+            if (statusEl) statusEl.textContent = "Chargement du guide de bienvenue...";
+            await this._preloadPromise;
+            if (this.pdfDoc) {
+                if (!wrapper || wrapper.querySelectorAll('canvas').length === 0) {
+                    await this.renderAllPages();
+                }
+                if (spinner) spinner.classList.add('hidden');
+                this.resetZoom();
+                return;
+            }
+        }
+
+        // Cas 3 : Chargement direct (accès direct par lien profond ou premier chargement)
         this.scale = 1.0;
         this.x = 0;
         this.y = 0;
-
-        const spinner = document.getElementById('pdf-loading-spinner');
-        const statusEl = document.getElementById('pdf-loading-status');
-        const wrapper = document.getElementById('pdf-pages-wrapper');
 
         if (spinner) spinner.classList.remove('hidden');
         if (statusEl) statusEl.textContent = "Chargement du guide de bienvenue...";
@@ -1926,12 +2035,8 @@ const PdfViewer = {
             wrapper.innerHTML = '';
         }
 
-        // Source de données même origine pour éviter tout blocage CORS.
-        // Utilisation d'une URL absolue résolue contre document.baseURI ou BASE_PATH pour garantir
-        // que PDF.js (y compris dans son web worker) charge toujours le proxy à la racine du portail,
-        // même lors d'un accès direct ou d'un rechargement sur une URL profonde (ex: /bataille/guides/pdf-fr).
         const base = document.baseURI || (window.location.origin + BASE_PATH);
-        const proxyUrl = new URL(`api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(lang)}`, base).href;
+        const proxyUrl = new URL(`api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(targetLang)}`, base).href;
         const sourceUrl = slug ? proxyUrl : directUrl;
 
         try {
@@ -1941,18 +2046,29 @@ const PdfViewer = {
 
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+            let arrayBuffer = (this.loadedSlug === slug && this.loadedLang === targetLang) ? this._cachedBuffer : null;
+            if (!arrayBuffer) {
+                const resp = await fetch(sourceUrl);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                arrayBuffer = await resp.arrayBuffer();
+                this._cachedBuffer = arrayBuffer;
+            }
+
             const loadingTask = pdfjsLib.getDocument({
-                url: sourceUrl,
+                data: new Uint8Array(arrayBuffer),
                 cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
                 cMapPacked: true,
                 standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
             });
 
             this.pdfDoc = await loadingTask.promise;
+            this.loadedSlug = slug;
+            this.loadedLang = targetLang;
             await this.renderAllPages();
         } catch (err) {
-            console.warn('[PdfViewer] Essai direct avec URL d\'origine :', err);
-            if (sourceUrl !== directUrl && directUrl) {
+            console.error('[PdfViewer] Erreur de chargement PDF.js :', err);
+            // Fallback direct vers URL d'origine dans PDF.js (sans JAMAIS basculer en iframe natif)
+            if (directUrl && sourceUrl !== directUrl) {
                 try {
                     const fallbackTask = pdfjsLib.getDocument({
                         url: directUrl,
@@ -1961,13 +2077,15 @@ const PdfViewer = {
                         standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
                     });
                     this.pdfDoc = await fallbackTask.promise;
+                    this.loadedSlug = slug;
+                    this.loadedLang = targetLang;
                     await this.renderAllPages();
                     return;
                 } catch (e2) {
-                    console.error('[PdfViewer] Échec rendu PDF.js :', e2);
+                    console.error('[PdfViewer] Échec fallback direct :', e2);
                 }
             }
-            this.fallbackIframe(directUrl || sourceUrl);
+            if (statusEl) statusEl.textContent = "Impossible de charger le livret. Veuillez vérifier votre connexion.";
         } finally {
             if (spinner) spinner.classList.add('hidden');
         }
@@ -2025,7 +2143,7 @@ const PdfViewer = {
 
         // 2. Rendu consécutif des pages suivantes en arrière-plan
         for (let i = 2; i <= numPages; i++) {
-            if (!AppState.isPdfModalOpen) break;
+            if (!AppState.isPdfModalOpen && !this._isPreloading) break;
             const page = await this.pdfDoc.getPage(i);
             await this.renderSinglePage(page, i, this.baseScale, dpr, wrapper);
         }
@@ -2088,6 +2206,11 @@ const PdfViewer = {
             this._animId = null;
         }
         this.pdfDoc = null;
+        this.loadedSlug = null;
+        this.loadedLang = null;
+        this._cachedBuffer = null;
+        this._isPreloading = false;
+        this._preloadPromise = null;
         this.scale = 1.0;
         this.x = 0;
         this.y = 0;
@@ -2096,14 +2219,6 @@ const PdfViewer = {
             wrapper.style.transform = '';
             wrapper.innerHTML = '';
         }
-    },
-
-    fallbackIframe(url) {
-        const wrapper = document.getElementById('pdf-pages-wrapper');
-        const spinner = document.getElementById('pdf-loading-spinner');
-        if (spinner) spinner.classList.add('hidden');
-        if (!wrapper) return;
-        wrapper.innerHTML = `<iframe src="${Utils.safeUrl(url)}" class="w-full h-full min-h-[75vh] border-0 block" type="application/pdf"></iframe>`;
     }
 };
 
@@ -2210,6 +2325,24 @@ const PropertyRenderer = {
             if (foundVideo) {
                 ModalManager.openVideo(foundVideo, false);
             }
+        }
+
+        // Préchargement échelonné en arrière-plan : d'abord le livret PDF dans le DOM, puis le moteur de réservation
+        if (route.subSection !== 'pdf-fr' && route.subSection !== 'pdf-en') {
+            setTimeout(() => {
+                const targetLang = I18n.currentLang || 'fr';
+                PdfViewer.preload(prop.slug, targetLang).then(() => {
+                    setTimeout(() => {
+                        ModalManager.preloadBooking();
+                    }, 400);
+                }).catch(() => {
+                    ModalManager.preloadBooking();
+                });
+            }, 200);
+        } else {
+            setTimeout(() => {
+                ModalManager.preloadBooking();
+            }, 800);
         }
     },
 
@@ -2772,6 +2905,9 @@ const PwaManager = {
 const App = {
     async load() {
         const route = Router.parseRoute();
+        if (AppState.currentSlug && AppState.currentSlug !== route.slug) {
+            PdfViewer.destroy();
+        }
         AppState.currentSlug = route.slug;
 
         // Détection mode autonome PWA : Restauration immédiate du logement enregistré

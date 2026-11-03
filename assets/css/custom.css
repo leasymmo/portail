@@ -530,7 +530,7 @@ body.modal-open {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     z-index: 100;
-    display: none;
+    display: flex;
     flex-direction: column;
     justify-content: flex-end; /* Glissement bottom-sheet élégant depuis le bas */
     align-items: center;
