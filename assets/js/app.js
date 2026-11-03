@@ -11,19 +11,19 @@
 // -----------------------------------------------------------------------------
 // 1. IMPORTATION DES MODULES APPLICATIFS
 // -----------------------------------------------------------------------------
-import { AppState } from './modules/state.js';
-import { Utils } from './modules/utils.js';
-import { I18n } from './modules/i18n.js';
-import { ThemeManager } from './modules/theme.js';
-import { ScrollManager } from './modules/scroll.js';
-import { Router, BASE_PATH } from './modules/router.js';
-import { ApiService } from './modules/api.js';
-import { SheetGestureController, TabGestureController } from './modules/gestures.js';
-import { PdfViewer } from './modules/pdf-viewer.js';
-import { ModalManager } from './modules/modals.js';
-import { PropertyRenderer, ListRenderer, VideoSearch } from './modules/renderer.js';
-import { PwaManager } from './modules/pwa.js';
-import { AppController } from './modules/app-controller.js';
+import { AppState } from './modules/state.js?v=10.3';
+import { Utils } from './modules/utils.js?v=10.3';
+import { I18n } from './modules/i18n.js?v=10.3';
+import { ThemeManager } from './modules/theme.js?v=10.3';
+import { ScrollManager } from './modules/scroll.js?v=10.3';
+import { Router, BASE_PATH } from './modules/router.js?v=10.3';
+import { ApiService } from './modules/api.js?v=10.3';
+import { SheetGestureController, TabGestureController } from './modules/gestures.js?v=10.3';
+import { PdfViewer } from './modules/pdf-viewer.js?v=10.3';
+import { ModalManager } from './modules/modals.js?v=10.3';
+import { PropertyRenderer, ListRenderer, VideoSearch } from './modules/renderer.js?v=10.3';
+import { PwaManager } from './modules/pwa.js?v=10.3';
+import { AppController } from './modules/app-controller.js?v=10.3';
 
 // -----------------------------------------------------------------------------
 // 2. EXPOSITION DES MODULES SUR L'OBJET GLOBAL (POUR DÉBOGAGE & INTEROPÉRABILITÉ)

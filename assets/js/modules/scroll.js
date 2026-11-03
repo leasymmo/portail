@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js';
+import { AppState } from './state.js?v=10.3';
 
 export const ScrollManager = {
     init() {
