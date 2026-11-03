@@ -215,12 +215,168 @@ html.dark .segmented-btn.active {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
-.tab-icon {
-    display: inline-block;
-    transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* ------------------------------------------------------------------------------
+   ICÔNES D'ONGLETS VECTORIELLES & MOTION DESIGN HAUTE COUTURE (ONE-SHOT AU CLIC)
+   ------------------------------------------------------------------------------ */
+.tab-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
 }
-.segmented-btn.active .tab-icon {
-    transform: scale(1.18);
+
+.tab-svg-icon {
+    display: block;
+    transition: color 0.24s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* Teinte des icônes selon l'état actif/inactif */
+.segmented-btn:not(.active) .tab-svg-icon {
+    color: var(--ink-faint);
+}
+.segmented-btn.active .tab-svg-icon {
+    color: var(--gold);
+    transform: scale(1.08);
+}
+.segmented-btn:hover .tab-svg-icon {
+    color: var(--gold);
+}
+
+/* État statique au repos des sous-éléments */
+.bell-pin, .bell-crown {
+    transform-origin: 12px 2px;
+    transition: transform 0.2s ease;
+}
+.bell-body-group {
+    transform-origin: 12px 6px;
+    will-change: transform;
+}
+.bell-wave {
+    opacity: 0;
+    transform-origin: 12px 13px;
+    transition: opacity 0.2s ease;
+}
+
+.cam-body-group {
+    transform-origin: center center;
+    will-change: transform;
+}
+.cam-play {
+    transform-origin: 8.5px 12px;
+    will-change: transform;
+}
+.cam-lens {
+    transform-origin: 15px 12px;
+    will-change: transform;
+}
+.cam-ray {
+    opacity: 0;
+    transform-origin: 19px 12px;
+    transition: opacity 0.2s ease;
+}
+
+/* ==============================================================================
+   ANIMATION ONE-SHOT DE LA CLOCHE (« Informations ») - DURÉE 460ms
+   ============================================================================== */
+.tab-svg-icon.tab-icon-bell.is-animating .bell-pin,
+.tab-svg-icon.tab-icon-bell.is-animating .bell-crown {
+    animation: bellButtonPress 0.46s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.tab-svg-icon.tab-icon-bell.is-animating .bell-body-group {
+    animation: bellRingSwinging 0.46s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+.tab-svg-icon.tab-icon-bell.is-animating .bell-wave-left {
+    animation: bellWaveLeft 0.46s ease-out forwards;
+}
+
+.tab-svg-icon.tab-icon-bell.is-animating .bell-wave-right {
+    animation: bellWaveRight 0.46s ease-out forwards;
+}
+
+@keyframes bellButtonPress {
+    0%   { transform: translateY(0); }
+    18%  { transform: translateY(2px); }
+    40%  { transform: translateY(-0.5px); }
+    65%  { transform: translateY(0.5px); }
+    100% { transform: translateY(0); }
+}
+
+@keyframes bellRingSwinging {
+    0%   { transform: rotate(0deg); }
+    18%  { transform: rotate(-10deg); }
+    38%  { transform: rotate(8.5deg); }
+    58%  { transform: rotate(-5deg); }
+    78%  { transform: rotate(2.5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes bellWaveLeft {
+    0%   { opacity: 0; transform: scale(0.6) translateX(2px); }
+    22%  { opacity: 1; transform: scale(1.05) translateX(0); }
+    55%  { opacity: 0.7; transform: scale(1.2) translateX(-1px); }
+    100% { opacity: 0; transform: scale(1.35) translateX(-2px); }
+}
+
+@keyframes bellWaveRight {
+    0%   { opacity: 0; transform: scale(0.6) translateX(-2px); }
+    22%  { opacity: 1; transform: scale(1.05) translateX(0); }
+    55%  { opacity: 0.7; transform: scale(1.2) translateX(1px); }
+    100% { opacity: 0; transform: scale(1.35) translateX(2px); }
+}
+
+/* ==============================================================================
+   ANIMATION ONE-SHOT DE LA CAMÉRA (« Vidéos ») - DURÉE 460ms
+   ============================================================================== */
+.tab-svg-icon.tab-icon-camera.is-animating {
+    animation: camPop 0.46s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.tab-svg-icon.tab-icon-camera.is-animating .cam-play {
+    animation: camPlayPulse 0.46s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.tab-svg-icon.tab-icon-camera.is-animating .cam-lens {
+    animation: camLensRecoil 0.46s ease-out forwards;
+}
+
+.tab-svg-icon.tab-icon-camera.is-animating .cam-ray {
+    animation: camRayFlash 0.46s ease-out forwards;
+}
+
+@keyframes camPop {
+    0%   { transform: scale(1); }
+    20%  { transform: scale(0.88); }
+    52%  { transform: scale(1.18); }
+    75%  { transform: scale(1.04); }
+    100% { transform: scale(1.08); }
+}
+
+@keyframes camPlayPulse {
+    0%   { transform: scale(1); fill-opacity: 0.8; }
+    30%  { transform: scale(1.45); fill-opacity: 1; }
+    60%  { transform: scale(0.95); fill-opacity: 1; }
+    100% { transform: scale(1); fill-opacity: 1; }
+}
+
+@keyframes camLensRecoil {
+    0%   { transform: translateX(0); }
+    22%  { transform: translateX(-1.5px); }
+    50%  { transform: translateX(1.8px); }
+    78%  { transform: translateX(-0.5px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes camRayFlash {
+    0%   { opacity: 0; transform: scaleX(0.5); }
+    25%  { opacity: 1; transform: scaleX(1.2); }
+    60%  { opacity: 0.6; transform: scaleX(1.4); }
+    100% { opacity: 0; transform: scaleX(1.6); }
 }
 
 /* ==============================================================================

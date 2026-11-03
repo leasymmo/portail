@@ -2282,6 +2282,17 @@ const PropertyRenderer = {
             btnVideos.setAttribute('aria-selected', !isGuides ? 'true' : 'false');
         }
 
+        // Déclenchement du motion design exclusif sur l'icône SVG de l'onglet sélectionné
+        const activeBtn = isGuides ? btnGuides : btnVideos;
+        if (activeBtn) {
+            const iconSvg = activeBtn.querySelector('.tab-svg-icon');
+            if (iconSvg) {
+                iconSvg.classList.remove('is-animating');
+                void iconSvg.offsetWidth; // Force reflow pour réarmer la transition
+                iconSvg.classList.add('is-animating');
+            }
+        }
+
         // Si pas d'animation demandée ou premier chargement
         if (!animate || !prevTab || prevTab === tabId) {
             contentGuides.classList.toggle('hidden', !isGuides);
@@ -2351,8 +2362,20 @@ const PropertyRenderer = {
     },
 
     navigateTab(tabId) {
-        const willAnimate = AppState.currentActiveTab && AppState.currentActiveTab !== tabId;
-        this.switchTab(tabId, willAnimate);
+        const isSwitching = AppState.currentActiveTab && AppState.currentActiveTab !== tabId;
+        this.switchTab(tabId, isSwitching);
+        if (!isSwitching) {
+            // Rejouer l'animation de micro-interaction au clic même sur l'onglet déjà actif
+            const btn = tabId === 'guides' ? document.getElementById('btn-tab-guides') : document.getElementById('btn-tab-videos');
+            if (btn) {
+                const iconSvg = btn.querySelector('.tab-svg-icon');
+                if (iconSvg) {
+                    iconSvg.classList.remove('is-animating');
+                    void iconSvg.offsetWidth;
+                    iconSvg.classList.add('is-animating');
+                }
+            }
+        }
         Router.setUrl(AppState.currentSlug, tabId);
     }
 };
