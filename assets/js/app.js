@@ -1387,14 +1387,19 @@ const SheetGestureController = {
         let startX = 0;
         let currentY = 0;
         let startTime = 0;
+        let lastY = 0;
+        let lastTime = 0;
+        let recentVelocityY = 0;
         let isDragging = false;
         let isTracking = false;
         let activePointerId = null;
         let animFrameId = null;
 
         const isHandleOrHeader = (target) => {
-            return target.closest('.sheet-drag-handle') || 
-                   target.closest('.modal-header-fixed');
+            return target && (
+                target.closest('.sheet-drag-handle') || 
+                target.closest('.modal-header-fixed')
+            );
         };
 
         const onStart = (clientX, clientY, target, pointerId = null) => {
@@ -1409,7 +1414,7 @@ const SheetGestureController = {
             }
 
             // Ignorer l'appui sur les boutons interactifs (croix de fermeture, liens, etc.)
-            if (target.closest('button, a, [role="button"], input, select, textarea, .btn-close-modal, .cursor-pointer')) {
+            if (target && target.closest('button, a, [role="button"], input, select, textarea, .btn-close-modal, .cursor-pointer')) {
                 return false;
             }
 
@@ -1420,9 +1425,12 @@ const SheetGestureController = {
             startX = clientX;
             currentY = startY;
             startTime = Date.now();
+            lastY = startY;
+            lastTime = startTime;
+            recentVelocityY = 0;
 
             try {
-                if (pointerId !== null && target.setPointerCapture) {
+                if (pointerId !== null && target && target.setPointerCapture) {
                     target.setPointerCapture(pointerId);
                 }
             } catch (err) {}
@@ -1457,6 +1465,15 @@ const SheetGestureController = {
                 e.preventDefault();
             }
 
+            const now = Date.now();
+            const dt = now - lastTime;
+            if (dt >= 8) {
+                const instantVelocity = (clientY - lastY) / dt;
+                recentVelocityY = (recentVelocityY * 0.3) + (instantVelocity * 0.7);
+                lastY = clientY;
+                lastTime = now;
+            }
+
             currentY = clientY;
 
             if (animFrameId) cancelAnimationFrame(animFrameId);
@@ -1475,8 +1492,12 @@ const SheetGestureController = {
             });
         };
 
-        const onEnd = (target = null) => {
+        const onEnd = (target = null, endX = null, endY = null) => {
             if (!isTracking && !isDragging) return;
+
+            if (endY !== null && typeof endY === 'number') {
+                currentY = endY;
+            }
 
             try {
                 if (target && target.releasePointerCapture && activePointerId !== null) {
@@ -1497,23 +1518,26 @@ const SheetGestureController = {
             sheet.classList.remove('is-dragging');
             document.body.classList.remove('is-modal-dragging');
 
+            const now = Date.now();
             const deltaY = currentY - startY;
-            const timeElapsed = Date.now() - startTime;
-            const velocityY = deltaY / Math.max(timeElapsed, 1); // px / ms
+            const totalTime = Math.max(now - startTime, 1);
+            const overallVelocity = deltaY / totalTime; // px / ms
+            const finalVelocity = (now - lastTime < 160) ? Math.max(recentVelocityY, overallVelocity) : overallVelocity;
             const sheetHeight = sheet.offsetHeight || window.innerHeight * 0.8;
             const distanceRatio = deltaY / sheetHeight;
 
             // RÈGLE PHYSIQUE STRICTEMENT CONFORME AUX DIRECTIVES :
-            // 1. Relâchement au-delà de la moitié du parcours (>= 50%) -> Fermeture
-            // 2. Geste rapide vers le bas (flick vif : vélocité >= 0.50 px/ms avec déplacement > 25px) -> Fermeture rapide
+            // 1. Relâchement au-delà ou égal à la moitié du parcours (>= 50%) -> Fermeture
+            // 2. Geste rapide vers le bas (flick vif : vélocité >= 0.30 px/ms avec déplacement > 20px) -> Fermeture rapide
             // 3. Relâchement avant la moitié (< 50%) sans geste vif -> Réouverture fluide à la position d'origine
             const isPastHalfway = distanceRatio >= 0.50;
-            const isQuickFlickDown = velocityY >= 0.50 && deltaY > 25;
+            const isQuickFlickDown = (finalVelocity >= 0.30 || overallVelocity >= 0.30) && deltaY > 20;
             const shouldDismiss = isPastHalfway || isQuickFlickDown;
 
             if (shouldDismiss) {
                 const remainingDistance = Math.max(sheetHeight - deltaY, 0);
-                const animDuration = Math.min(Math.max(remainingDistance / (velocityY > 0 ? velocityY * 1000 : 900), 0.18), 0.30);
+                const v = Math.max(finalVelocity, overallVelocity, 0.6);
+                const animDuration = Math.min(Math.max(remainingDistance / (v * 1000), 0.16), 0.28);
 
                 sheet.style.transition = `transform ${animDuration.toFixed(2)}s cubic-bezier(0.32, 0.72, 0, 1)`;
                 sheet.style.transform = 'translate3d(0, 100%, 0)';
@@ -1530,16 +1554,16 @@ const SheetGestureController = {
                 }, Math.round(animDuration * 1000));
             } else {
                 // Rebond fluide élastique à l'état initial
-                sheet.style.transition = 'transform 0.34s cubic-bezier(0.16, 1, 0.3, 1)';
+                sheet.style.transition = 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1)';
                 sheet.style.transform = 'translate3d(0, 0, 0)';
-                overlay.style.transition = 'background-color 0.34s ease';
+                overlay.style.transition = 'background-color 0.32s ease';
                 overlay.style.backgroundColor = '';
 
                 setTimeout(() => {
                     sheet.style.transform = '';
                     sheet.style.transition = '';
                     overlay.style.transition = '';
-                }, 340);
+                }, 320);
             }
         };
 
@@ -1556,12 +1580,12 @@ const SheetGestureController = {
 
         window.addEventListener('pointerup', (e) => {
             if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
-            onEnd(e.target);
+            onEnd(e.target, e.clientX, e.clientY);
         }, { passive: true });
 
         window.addEventListener('pointercancel', (e) => {
             if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
-            onEnd(e.target);
+            onEnd(e.target, e.clientX, e.clientY);
         }, { passive: true });
 
         // Touch events fallback pour anciens navigateurs mobiles
@@ -1581,7 +1605,8 @@ const SheetGestureController = {
 
         window.addEventListener('touchend', (e) => {
             if (isTracking || isDragging) {
-                onEnd(e.target);
+                const t = (e.changedTouches && e.changedTouches[0]) || (e.touches && e.touches[0]);
+                onEnd(e.target, t ? t.clientX : null, t ? t.clientY : null);
             }
         }, { passive: true });
     }
