@@ -2293,7 +2293,7 @@ const PropertyRenderer = {
         // Textes principaux
         document.getElementById('prop-name').textContent = prop.name;
         const propSub = document.getElementById('prop-subtitle');
-        if (propSub) propSub.textContent = I18n.t('home_subtitle');
+        if (propSub) propSub.textContent = I18n.t('hero_badge');
 
         // Bloc Wi-Fi & Animation en cascade décalée des cartes principales
         const guideCard = document.getElementById('card-guide-active');
