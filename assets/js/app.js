@@ -1405,16 +1405,16 @@ const SheetGestureController = {
         const onStart = (clientX, clientY, target, pointerId = null) => {
             if (!overlay.classList.contains('open')) return false;
 
-            // Détection : clic/toucher sur la poignée, l'en-tête fixe ou la zone supérieure (65px)
+            // Détection : clic/toucher sur la poignée, l'en-tête fixe ou la zone supérieure (80px)
             const rect = sheet.getBoundingClientRect();
-            const inTopZone = (clientY - rect.top) <= 65;
+            const inTopZone = (clientY - rect.top) <= 80;
 
             if (!isHandleOrHeader(target) && !inTopZone) {
                 return false;
             }
 
-            // Ignorer l'appui sur les boutons interactifs (croix de fermeture, liens, etc.)
-            if (target && target.closest('button, a, [role="button"], input, select, textarea, .btn-close-modal, .cursor-pointer')) {
+            // Ignorer uniquement les boutons interactifs (croix de fermeture, liens externes)
+            if (target && target.closest('button, a, input, select, textarea, .btn-close-modal')) {
                 return false;
             }
 
@@ -1430,8 +1430,8 @@ const SheetGestureController = {
             recentVelocityY = 0;
 
             try {
-                if (pointerId !== null && target && target.setPointerCapture) {
-                    target.setPointerCapture(pointerId);
+                if (pointerId !== null && sheet.setPointerCapture) {
+                    sheet.setPointerCapture(pointerId);
                 }
             } catch (err) {}
 
@@ -1455,7 +1455,7 @@ const SheetGestureController = {
                 isDragging = true;
                 sheet.classList.add('is-dragging');
                 document.body.classList.add('is-modal-dragging');
-                sheet.style.transition = 'none';
+                sheet.style.setProperty('transition', 'none', 'important');
                 overlay.style.transition = 'none';
             }
 
@@ -1481,13 +1481,13 @@ const SheetGestureController = {
                 const sheetHeight = sheet.offsetHeight || window.innerHeight * 0.8;
                 if (deltaY > 0) {
                     // Accompagnement fluide 1:1 vers le bas
-                    sheet.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+                    sheet.style.setProperty('transform', `translate3d(0, ${deltaY}px, 0)`, 'important');
                     const progress = Math.min(deltaY / sheetHeight, 1);
                     overlay.style.backgroundColor = `rgba(15, 23, 42, ${(0.72 * (1 - progress * 0.75)).toFixed(3)})`;
                 } else {
                     // Résistance élastique (rubber-banding) vers le haut
                     const rubberBand = deltaY * 0.18;
-                    sheet.style.transform = `translate3d(0, ${rubberBand}px, 0)`;
+                    sheet.style.setProperty('transform', `translate3d(0, ${rubberBand}px, 0)`, 'important');
                 }
             });
         };
@@ -1500,8 +1500,8 @@ const SheetGestureController = {
             }
 
             try {
-                if (target && target.releasePointerCapture && activePointerId !== null) {
-                    target.releasePointerCapture(activePointerId);
+                if (sheet.releasePointerCapture && activePointerId !== null) {
+                    sheet.releasePointerCapture(activePointerId);
                 }
             } catch (err) {}
 
@@ -1539,29 +1539,29 @@ const SheetGestureController = {
                 const v = Math.max(finalVelocity, overallVelocity, 0.6);
                 const animDuration = Math.min(Math.max(remainingDistance / (v * 1000), 0.16), 0.28);
 
-                sheet.style.transition = `transform ${animDuration.toFixed(2)}s cubic-bezier(0.32, 0.72, 0, 1)`;
-                sheet.style.transform = 'translate3d(0, 100%, 0)';
+                sheet.style.setProperty('transition', `transform ${animDuration.toFixed(2)}s cubic-bezier(0.32, 0.72, 0, 1)`, 'important');
+                sheet.style.setProperty('transform', 'translate3d(0, 100%, 0)', 'important');
                 overlay.style.transition = `opacity ${animDuration.toFixed(2)}s ease`;
                 overlay.style.opacity = '0';
 
                 setTimeout(() => {
                     closeFn(true);
-                    sheet.style.transform = '';
-                    sheet.style.transition = '';
+                    sheet.style.removeProperty('transform');
+                    sheet.style.removeProperty('transition');
                     overlay.style.backgroundColor = '';
                     overlay.style.opacity = '';
                     overlay.style.transition = '';
                 }, Math.round(animDuration * 1000));
             } else {
                 // Rebond fluide élastique à l'état initial
-                sheet.style.transition = 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1)';
-                sheet.style.transform = 'translate3d(0, 0, 0)';
+                sheet.style.setProperty('transition', 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1)', 'important');
+                sheet.style.setProperty('transform', 'translate3d(0, 0, 0)', 'important');
                 overlay.style.transition = 'background-color 0.32s ease';
                 overlay.style.backgroundColor = '';
 
                 setTimeout(() => {
-                    sheet.style.transform = '';
-                    sheet.style.transition = '';
+                    sheet.style.removeProperty('transform');
+                    sheet.style.removeProperty('transition');
                     overlay.style.transition = '';
                 }, 320);
             }
