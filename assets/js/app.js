@@ -1467,9 +1467,9 @@ const SheetGestureController = {
 
             const now = Date.now();
             const dt = now - lastTime;
-            if (dt >= 8) {
+            if (dt >= 5) {
                 const instantVelocity = (clientY - lastY) / dt;
-                recentVelocityY = (recentVelocityY * 0.3) + (instantVelocity * 0.7);
+                recentVelocityY = recentVelocityY === 0 ? instantVelocity : (recentVelocityY * 0.25) + (instantVelocity * 0.75);
                 lastY = clientY;
                 lastTime = now;
             }
@@ -1522,16 +1522,16 @@ const SheetGestureController = {
             const deltaY = currentY - startY;
             const totalTime = Math.max(now - startTime, 1);
             const overallVelocity = deltaY / totalTime; // px / ms
-            const finalVelocity = (now - lastTime < 160) ? Math.max(recentVelocityY, overallVelocity) : overallVelocity;
+            const finalVelocity = (now - lastTime < 250) ? Math.max(recentVelocityY, overallVelocity) : overallVelocity;
             const sheetHeight = sheet.offsetHeight || window.innerHeight * 0.8;
             const distanceRatio = deltaY / sheetHeight;
 
             // RÈGLE PHYSIQUE STRICTEMENT CONFORME AUX DIRECTIVES :
             // 1. Relâchement au-delà ou égal à la moitié du parcours (>= 50%) -> Fermeture
-            // 2. Geste rapide vers le bas (flick vif : vélocité >= 0.30 px/ms avec déplacement > 20px) -> Fermeture rapide
+            // 2. Geste rapide vers le bas (flick vif : vélocité >= 0.20 px/ms avec déplacement >= 35px, ou >= 0.35 px/ms avec déplacement >= 20px) -> Fermeture rapide
             // 3. Relâchement avant la moitié (< 50%) sans geste vif -> Réouverture fluide à la position d'origine
             const isPastHalfway = distanceRatio >= 0.50;
-            const isQuickFlickDown = (finalVelocity >= 0.30 || overallVelocity >= 0.30) && deltaY > 20;
+            const isQuickFlickDown = (finalVelocity >= 0.20 && deltaY >= 35) || (finalVelocity >= 0.35 && deltaY >= 20);
             const shouldDismiss = isPastHalfway || isQuickFlickDown;
 
             if (shouldDismiss) {
