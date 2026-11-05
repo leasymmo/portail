@@ -86,25 +86,25 @@ $manifest = [
     "categories" => ["travel", "lifestyle", "utilities"],
     "icons" => [
         [
-            "src" => "assets/icons/icon-192.png?v=3",
+            "src" => $baseUri . "assets/icons/icon-192.png?v=3",
             "sizes" => "192x192",
             "type" => "image/png",
             "purpose" => "any"
         ],
         [
-            "src" => "assets/icons/icon-512.png?v=3",
+            "src" => $baseUri . "assets/icons/icon-512.png?v=3",
             "sizes" => "512x512",
             "type" => "image/png",
             "purpose" => "any"
         ],
         [
-            "src" => "assets/icons/icon-maskable-192.png?v=3",
+            "src" => $baseUri . "assets/icons/icon-maskable-192.png?v=3",
             "sizes" => "192x192",
             "type" => "image/png",
             "purpose" => "maskable"
         ],
         [
-            "src" => "assets/icons/icon-maskable-512.png?v=3",
+            "src" => $baseUri . "assets/icons/icon-maskable-512.png?v=3",
             "sizes" => "512x512",
             "type" => "image/png",
             "purpose" => "maskable"

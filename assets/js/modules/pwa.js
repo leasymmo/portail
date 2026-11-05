@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.4';
-import { BASE_PATH } from './router.js?v=10.4';
+import { AppState } from './state.js?v=10.5';
+import { BASE_PATH } from './router.js?v=10.5';
 
 export const PwaManager = {
     deferredPrompt: null,
@@ -14,6 +14,9 @@ export const PwaManager = {
     _registration: null,
 
     init() {
+        if (window.__cdhDeferredPrompt) {
+            this.deferredPrompt = window.__cdhDeferredPrompt;
+        }
         this.registerServiceWorker();
         this.initInstallPrompt();
         this.initNetworkStatus();
@@ -71,10 +74,19 @@ export const PwaManager = {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
+            window.__cdhDeferredPrompt = e;
             this.showInstallBanner('native');
         });
 
-        if (isIos && isSafari) {
+        window.addEventListener('appinstalled', () => {
+            this.deferredPrompt = null;
+            window.__cdhDeferredPrompt = null;
+            this.dismissPrompt();
+        });
+
+        if (this.deferredPrompt) {
+            this.showInstallBanner('native');
+        } else if (isIos && isSafari) {
             const hasSeenIosPrompt = localStorage.getItem('cdh_ios_prompt_dismissed');
             if (!hasSeenIosPrompt) {
                 setTimeout(() => {
@@ -89,14 +101,21 @@ export const PwaManager = {
         const banner = document.getElementById('pwa-install-banner');
         const nativeArea = document.getElementById('pwa-prompt-native');
         const iosArea = document.getElementById('pwa-prompt-ios');
+        const androidManualArea = document.getElementById('pwa-prompt-android-manual');
         if (!banner) return;
 
         if (type === 'ios') {
             if (nativeArea) nativeArea.classList.add('hidden');
+            if (androidManualArea) androidManualArea.classList.add('hidden');
             if (iosArea) iosArea.classList.remove('hidden');
+        } else if (type === 'android-manual') {
+            if (nativeArea) nativeArea.classList.add('hidden');
+            if (iosArea) iosArea.classList.add('hidden');
+            if (androidManualArea) androidManualArea.classList.remove('hidden');
         } else {
             if (nativeArea) nativeArea.classList.remove('hidden');
             if (iosArea) iosArea.classList.add('hidden');
+            if (androidManualArea) androidManualArea.classList.add('hidden');
         }
 
         banner.classList.remove('hidden');
@@ -105,17 +124,33 @@ export const PwaManager = {
         });
     },
 
-    triggerInstall() {
-        if (!this.deferredPrompt) {
-            return;
-        }
-        this.deferredPrompt.prompt();
-        this.deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                this.dismissPrompt();
+    async installApp() {
+        if (this.deferredPrompt) {
+            try {
+                this.deferredPrompt.prompt();
+                const choiceResult = await this.deferredPrompt.userChoice;
+                if (choiceResult && choiceResult.outcome === 'accepted') {
+                    this.dismissPrompt();
+                }
+            } catch (err) {
+                console.warn('[PWA] Erreur lors du prompt d’installation :', err);
+            } finally {
+                this.deferredPrompt = null;
+                window.__cdhDeferredPrompt = null;
             }
-            this.deferredPrompt = null;
-        });
+        } else {
+            // Mode repli Android si l'invite automatique n'est pas disponible
+            const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+            if (isIos) {
+                this.showInstallBanner('ios');
+            } else {
+                this.showInstallBanner('android-manual');
+            }
+        }
+    },
+
+    triggerInstall() {
+        return this.installApp();
     },
 
     dismissPrompt() {

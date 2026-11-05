@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.4';
+import { AppState } from './state.js?v=10.5';
 
 export const SheetGestureController = {
     init() {
@@ -264,7 +264,7 @@ export const TabGestureController = {
             if (!e.touches || e.touches.length !== 1) return;
 
             const target = e.target;
-            if (target && target.closest && (target.closest('input') || target.closest('textarea') || target.closest('select'))) {
+            if (target && target.closest && (target.closest('input') || target.closest('textarea') || target.closest('select') || target.closest('button') || target.closest('a') || target.closest('iframe'))) {
                 return;
             }
 
@@ -283,20 +283,23 @@ export const TabGestureController = {
             const currentY = e.touches[0].clientY;
             const deltaX = currentX - this.startX;
             const deltaY = currentY - this.startY;
+            const absX = Math.abs(deltaX);
+            const absY = Math.abs(deltaY);
 
             if (!this.isSwiping && !this.isVerticalScroll) {
-                if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 8) {
-                    this.isVerticalScroll = true;
-                    this.isTracking = false;
-                    return;
-                }
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-                    const currentTab = AppState.currentActiveTab || 'guides';
-                    if ((currentTab === 'guides' && deltaX < 0) || (currentTab === 'videos' && deltaX > 0)) {
-                        this.isSwiping = true;
+                // Détecte la direction prédominante après un seuil initial de 12px
+                if (absX > 12 || absY > 12) {
+                    if (absX > absY * 1.2) {
+                        const currentTab = AppState.currentActiveTab || 'guides';
+                        if ((currentTab === 'guides' && deltaX < 0) || (currentTab === 'videos' && deltaX > 0)) {
+                            this.isSwiping = true;
+                        } else {
+                            this.isTracking = false;
+                        }
                     } else {
+                        // Défilement vertical standard : laisser le navigateur faire son travail natif
+                        this.isVerticalScroll = true;
                         this.isTracking = false;
-                        return;
                     }
                 }
             }
@@ -314,12 +317,14 @@ export const TabGestureController = {
             if (!endTouch) return;
 
             const deltaX = endTouch.clientX - this.startX;
+            const deltaY = endTouch.clientY - this.startY;
             const timeElapsed = Date.now() - this.startTime;
             const velocityX = Math.abs(deltaX) / Math.max(timeElapsed, 1);
 
             this.isSwiping = false;
 
-            const isIntentionalSwipe = (Math.abs(deltaX) > 40) || (Math.abs(deltaX) > 25 && velocityX > 0.35);
+            const isIntentionalSwipe = (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) || 
+                                       (Math.abs(deltaX) > 30 && velocityX > 0.35);
             if (!isIntentionalSwipe) return;
 
             const currentTab = AppState.currentActiveTab || 'guides';

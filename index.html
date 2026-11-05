@@ -11,6 +11,14 @@
     <title>Portail Voyageurs | Conciergerie Carré d'Hôtes</title>
     <meta name="description" content="Portail d'accueil, livrets de bienvenue et vidéos des équipements pour les voyageurs de la conciergerie Carré d'Hôtes à Lyon.">
 
+    <!-- Capture précoce de l'événement PWA avant l'exécution différée des modules ES6 -->
+    <script>
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            window.__cdhDeferredPrompt = e;
+        });
+    </script>
+
     <!-- Favicon du site Web (basé sur l'image picto-light) -->
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png?v=1">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png?v=1">
@@ -66,7 +74,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=10.4">
+    <link rel="stylesheet" href="assets/css/custom.css?v=10.5">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -305,7 +313,7 @@
                 <!-- ----------------------------------------------------------- -->
                 <!-- SECTION 1 : INFOS & GUIDES DE BIENVENUE                     -->
                 <!-- ----------------------------------------------------------- -->
-                <section id="content-guides" class="space-y-3 sm:space-y-4">
+                <section id="content-guides" class="space-y-3 sm:space-y-4 pb-10 sm:pb-6">
                     <div class="text-center mb-2.5 sm:mb-4">
                         <h2 id="prop-welcome-title" data-i18n="welcome_title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Guide de bienvenue</h2>
                         <p id="prop-welcome-subtitle" data-i18n="welcome_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Toutes les informations pratiques pour votre séjour</p>
@@ -454,7 +462,7 @@
                 <!-- ----------------------------------------------------------- -->
                 <!-- SECTION 2 : VIDÉOS & MODES D'EMPLOI                         -->
                 <!-- ----------------------------------------------------------- -->
-                <section id="content-videos" class="hidden space-y-4">
+                <section id="content-videos" class="hidden space-y-4 pb-14 sm:pb-10">
                     <div class="text-center mb-3 sm:mb-4">
                         <h2 data-i18n="videos_title" class="text-lg sm:text-xl font-bold text-ink dark:text-white">Modes d'emploi</h2>
                         <p data-i18n="videos_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-1">Fonctionnement des équipements en vidéo</p>
@@ -1029,12 +1037,29 @@
                 </div>
             </div>
 
+            <!-- CONTENU C : Mode Android Manuel (si l'invite automatique n'est pas supportée ou différée) -->
+            <div id="pwa-prompt-android-manual" class="hidden mt-3 pt-3 border-t border-[#e2e4e6] dark:border-[#38455d] space-y-2">
+                <div class="flex items-center gap-2.5 text-xs text-ink-soft dark:text-gray-300">
+                    <div class="w-6 h-6 rounded-lg bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink dark:text-white flex-shrink-0 shadow-2xs font-bold text-[11px]">1</div>
+                    <p data-i18n="pwa_android_step1">Appuyez sur le menu ⋮ (les 3 points en haut à droite)</p>
+                </div>
+                <div class="flex items-center gap-2.5 text-xs text-ink-soft dark:text-gray-300">
+                    <div class="w-6 h-6 rounded-lg bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink dark:text-white flex-shrink-0 shadow-2xs font-bold text-[11px]">2</div>
+                    <p data-i18n="pwa_android_step2">Choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil »</p>
+                </div>
+                <div class="pt-1 text-right">
+                    <button type="button" onclick="PwaManager.dismissPrompt()" class="px-3.5 py-1.5 text-xs font-bold text-gold hover:text-gold-hover transition cursor-pointer" data-i18n="pwa_ios_gotit">
+                        J'ai compris
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=10.4"></script>
+    <script type="module" src="assets/js/app.js?v=10.5"></script>
 </body>
 </html>

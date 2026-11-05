@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.4';
-import { Utils } from './utils.js?v=10.4';
+import { AppState } from './state.js?v=10.5';
+import { Utils } from './utils.js?v=10.5';
 
 export const I18n = {
     currentLang: 'fr',
@@ -104,6 +104,8 @@ export const I18n = {
             pwa_add: "Ajouter à l'écran d'accueil",
             pwa_ios_step1: "Appuyez sur Partager (en bas de votre écran)",
             pwa_ios_step2: "Faites défiler et choisissez « Sur l'écran d'accueil »",
+            pwa_android_step1: "Appuyez sur le menu ⋮ (les 3 points en haut à droite)",
+            pwa_android_step2: "Choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil »",
             pwa_ios_gotit: "J'ai compris",
             hero_badge: "Conciergerie Privée • Séjour d'Exception",
             wifi_quick_copy: "Copier",
@@ -211,6 +213,8 @@ export const I18n = {
             pwa_add: "Add to home screen",
             pwa_ios_step1: "Tap Share (at the bottom of your screen)",
             pwa_ios_step2: "Scroll down and choose 'Add to Home Screen'",
+            pwa_android_step1: "Tap the browser menu ⋮ (3 dots at top right)",
+            pwa_android_step2: "Select 'Install app' or 'Add to Home Screen'",
             pwa_ios_gotit: "Got it",
             hero_badge: "Private Concierge • Exceptional Stay",
             wifi_quick_copy: "Copy",

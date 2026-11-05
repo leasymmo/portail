@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.4';
-import { Utils } from './utils.js?v=10.4';
-import { I18n } from './i18n.js?v=10.4';
-import { ScrollManager } from './scroll.js?v=10.4';
-import { Router, BASE_PATH } from './router.js?v=10.4';
-import { ModalManager } from './modals.js?v=10.4';
-import { PdfViewer } from './pdf-viewer.js?v=10.4';
+import { AppState } from './state.js?v=10.5';
+import { Utils } from './utils.js?v=10.5';
+import { I18n } from './i18n.js?v=10.5';
+import { ScrollManager } from './scroll.js?v=10.5';
+import { Router, BASE_PATH } from './router.js?v=10.5';
+import { ModalManager } from './modals.js?v=10.5';
+import { PdfViewer } from './pdf-viewer.js?v=10.5';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -401,6 +401,10 @@ export const PropertyRenderer = {
             if (this._tabAnimTimeout) {
                 clearTimeout(this._tabAnimTimeout);
                 this._tabAnimTimeout = null;
+                if (wrapper) {
+                    wrapper.style.height = '';
+                    wrapper.style.transition = '';
+                }
             }
 
             contentGuides.classList.remove('tab-slide-in-right', 'tab-slide-in-left', 'tab-slide-out-left', 'tab-slide-out-right');

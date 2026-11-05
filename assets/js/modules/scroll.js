@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.4';
+import { AppState } from './state.js?v=10.5';
 
 export const ScrollManager = {
     init() {
@@ -74,71 +74,13 @@ export const ScrollManager = {
     },
 
     updatePageScrollState() {
-        requestAnimationFrame(() => {
-            const propView = document.getElementById('view-property');
-            const listView = document.getElementById('view-list');
-            const isPropertyView = propView && !propView.classList.contains('hidden');
-            const isListView = listView && !listView.classList.contains('hidden');
-            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-            let contentHeight = 0;
-
-            const topbar = document.getElementById('main-topbar');
-            const topbarH = topbar ? topbar.offsetHeight : 0;
-            const footer = document.querySelector('footer');
-            const footerH = footer ? footer.offsetHeight : 0;
-
-            if (isPropertyView) {
-                const propHeader = document.querySelector('#view-property > header');
-                const propHeaderH = propHeader ? propHeader.offsetHeight : 0;
-
-                const tabs = document.getElementById('property-tabs-container');
-                const tabsH = (tabs && !tabs.classList.contains('hidden')) ? tabs.offsetHeight : 0;
-
-                const isGuides = AppState.currentActiveTab === 'guides';
-                const activeContent = isGuides ? document.getElementById('content-guides') : document.getElementById('content-videos');
-                const activeContentH = activeContent ? activeContent.offsetHeight : 0;
-
-                const scrollContainer = document.getElementById('scroll-container');
-                let paddingY = 28;
-                if (scrollContainer) {
-                    const cs = window.getComputedStyle(scrollContainer);
-                    paddingY = (parseFloat(cs.paddingTop) || 14) + (parseFloat(cs.paddingBottom) || 14);
-                }
-
-                contentHeight = topbarH + propHeaderH + tabsH + activeContentH + paddingY + footerH;
-            } else if (isListView) {
-                const listHeader = document.querySelector('#view-list > header');
-                const listHeaderH = listHeader ? listHeader.offsetHeight : 0;
-
-                const listCards = document.getElementById('properties-container');
-                const listCardsH = listCards ? listCards.offsetHeight : 0;
-
-                const listContainer = document.getElementById('list-scroll-container');
-                let listPaddingY = 40;
-                if (listContainer) {
-                    const cs = window.getComputedStyle(listContainer);
-                    listPaddingY = (parseFloat(cs.paddingTop) || 20) + (parseFloat(cs.paddingBottom) || 20);
-                }
-
-                const welcomeBlock = listContainer ? listContainer.querySelector('.text-center.mb-6') : null;
-                const welcomeH = welcomeBlock ? welcomeBlock.offsetHeight : 60;
-                const promoBlock = listContainer ? listContainer.querySelector('.border-t') : null;
-                const promoH = promoBlock ? promoBlock.offsetHeight : 120;
-
-                contentHeight = topbarH + listHeaderH + welcomeH + listCardsH + promoH + listPaddingY + footerH;
-            }
-
-            if (contentHeight > 0 && contentHeight <= viewportHeight) {
-                document.documentElement.classList.add('no-scroll');
-                document.body.classList.add('no-scroll');
-                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-                if (document.documentElement) document.documentElement.scrollTop = 0;
-                if (document.body) document.body.scrollTop = 0;
-            } else {
-                document.documentElement.classList.remove('no-scroll');
-                document.body.classList.remove('no-scroll');
-            }
-        });
+        // Garantit que le défilement vertical du document reste 100% natif et fluide
+        if (document.documentElement.classList.contains('no-scroll')) {
+            document.documentElement.classList.remove('no-scroll');
+        }
+        if (document.body.classList.contains('no-scroll')) {
+            document.body.classList.remove('no-scroll');
+        }
     },
 
     lock() {
