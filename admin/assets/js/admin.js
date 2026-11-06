@@ -1049,15 +1049,8 @@ const AdminApp = {
     openTranslationReviewModal(type, overrideEnData = null) {
         const defs = this.getTranslationFieldDefinitions(type);
         const container = document.getElementById('review-modal-fields-container');
-        const countEl = document.getElementById('review-fields-count');
-        const badgeEl = document.getElementById('review-modal-provider-badge');
         const modal = document.getElementById('modal-translation-review');
         if (!container || !modal) return;
-
-        if (badgeEl) {
-            const p = this.state.settings?.ai_provider || 'gemini';
-            badgeEl.textContent = { gemini: 'Google Gemini', openai: 'ChatGPT', claude: 'Claude' }[p] || p;
-        }
 
         this.state.translationReview = { type, fields: [] };
 
@@ -1084,78 +1077,82 @@ const AdminApp = {
         });
 
         if (activeFields.length === 0) {
-            this.showToast('Veuillez renseigner au moins un champ en français avant de réviser la traduction.', 'warning');
+            if (type === 'parking_general') {
+                this.saveParkingGeneral(null, true);
+            } else if (type === 'parking_location') {
+                this.saveLocation(null, true);
+            }
             return;
         }
 
         this.state.translationReview.fields = activeFields;
-        if (countEl) countEl.textContent = activeFields.length;
 
         container.innerHTML = activeFields.map(f => `
-            <div class="p-4 sm:p-5 rounded-2xl bg-night border border-night-border/80 hover:border-gold/40 transition space-y-3 shadow-md">
+            <div class="p-3.5 rounded-2xl bg-night/80 border border-night-border/80 hover:border-gold/30 transition space-y-1.5">
                 <div class="flex items-center justify-between">
-                    <label class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                        <span class="text-gold">●</span>
-                        <span>${this.escape(f.label)}</span>
-                    </label>
-                    <span class="text-[10px] text-gray-400 font-mono">Champ : ${this.escape(f.key)}</span>
+                    <span class="text-xs font-bold text-gray-200 tracking-wide">${this.escape(f.label)}</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Source FR</span>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    <!-- Colonne 1 : Français (Source) -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between text-[11px] font-semibold text-gray-400">
-                            <span class="flex items-center space-x-1.5">
-                                <span>🇫🇷</span>
-                                <span>Français (Source)</span>
-                            </span>
-                            <span class="text-[10px] text-gray-500">Texte d'origine</span>
-                        </div>
-                        <div class="p-3 rounded-xl bg-night-card border border-night-border text-xs text-gray-200 min-h-[48px] whitespace-pre-wrap select-all leading-relaxed">
-                            ${f.frVal ? this.escape(f.frVal) : '<span class="text-gray-500 italic">Non renseigné en français</span>'}
-                        </div>
-                    </div>
-
-                    <!-- Colonne 2 : Anglais (Traduction IA éditable) -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between text-[11px] font-semibold text-gold-light">
-                            <span class="flex items-center space-x-1.5">
-                                <span>🇬🇧</span>
-                                <span>Anglais (Traduction IA)</span>
-                            </span>
-                            <span class="text-[10px] bg-gold/20 text-gold-light px-2 py-0.5 rounded-full border border-gold/30 font-semibold">Éditable directement</span>
-                        </div>
-                        ${f.isTextarea ? `
-                            <textarea data-review-en-id="${f.enId}" rows="${f.rows || 2}"
-                                      class="w-full p-3 rounded-xl bg-night-card border border-gold/40 text-xs text-white focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition font-sans leading-relaxed"
-                                      placeholder="Traduction anglaise...">${this.escape(f.enVal)}</textarea>
-                        ` : `
-                            <input type="text" data-review-en-id="${f.enId}" value="${this.escape(f.enVal)}"
-                                   class="w-full p-3 rounded-xl bg-night-card border border-gold/40 text-xs text-white focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition font-sans"
-                                   placeholder="Traduction anglaise...">
-                        `}
-                    </div>
+                <p class="text-xs text-gray-400 leading-relaxed italic bg-night-card/60 p-2.5 rounded-xl border border-night-border/40 select-all">
+                    ${f.frVal ? this.escape(f.frVal) : '<span class="text-gray-500">Non renseigné</span>'}
+                </p>
+                <div class="pt-0.5">
+                    <span class="block text-[11px] font-semibold text-gold mb-1">Anglais (cliquez pour ajuster si besoin) :</span>
+                    ${f.isTextarea ? `
+                        <textarea data-review-en-id="${f.enId}" rows="${f.rows || 2}"
+                                  class="w-full p-2.5 rounded-xl bg-night-card border border-gold/30 focus:border-gold focus:ring-1 focus:ring-gold text-xs text-white leading-relaxed font-sans transition"
+                                  placeholder="Traduction anglaise...">${this.escape(f.enVal)}</textarea>
+                    ` : `
+                        <input type="text" data-review-en-id="${f.enId}" value="${this.escape(f.enVal)}"
+                               class="w-full p-2.5 rounded-xl bg-night-card border border-gold/30 focus:border-gold focus:ring-1 focus:ring-gold text-xs text-white font-sans transition"
+                               placeholder="Traduction anglaise...">
+                    `}
                 </div>
             </div>
         `).join('');
 
         modal.classList.remove('hidden');
+
+        // Focus immédiat sur le bouton de confirmation (validation en 1 frappe Enter)
+        setTimeout(() => {
+            const confirmBtn = document.getElementById('btn-review-save-direct');
+            if (confirmBtn) confirmBtn.focus();
+        }, 60);
+
+        // Raccourcis clavier : Entrée = valider, Echap = fermer
+        if (this._reviewKeyHandler) {
+            document.removeEventListener('keydown', this._reviewKeyHandler);
+        }
+        this._reviewKeyHandler = (e) => {
+            if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                this.confirmAndSaveReview();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                this.closeTranslationReviewModal();
+            }
+        };
+        document.addEventListener('keydown', this._reviewKeyHandler);
     },
 
     closeTranslationReviewModal() {
         const modal = document.getElementById('modal-translation-review');
         if (modal) modal.classList.add('hidden');
+        if (this._reviewKeyHandler) {
+            document.removeEventListener('keydown', this._reviewKeyHandler);
+            this._reviewKeyHandler = null;
+        }
     },
 
     openDirectReviewModal(type) {
         this.openTranslationReviewModal(type, null);
     },
 
-    async applyReviewTranslations(saveDirectly = false) {
+    async confirmAndSaveReview() {
         const reviewState = this.state.translationReview;
         if (!reviewState || !reviewState.type) return;
 
-        // 1. Reporter toutes les valeurs saisies/éditées dans les inputs du formulaire correspondant
+        // 1. Reporter toutes les valeurs vérifiées dans les champs anglais du formulaire
         document.querySelectorAll('[data-review-en-id]').forEach(input => {
             const targetId = input.dataset.reviewEnId;
             const targetEl = document.getElementById(targetId);
@@ -1164,43 +1161,42 @@ const AdminApp = {
             }
         });
 
-        // 2. Si enregistrement direct demandé
-        if (saveDirectly) {
-            const btnSave = document.getElementById('btn-review-save-direct');
-            const iconEl = document.getElementById('btn-review-save-icon');
-            const labelEl = document.getElementById('btn-review-save-label');
-            const origLabel = labelEl ? labelEl.textContent : 'Valider & Enregistrer en base';
+        const btnSave = document.getElementById('btn-review-save-direct');
+        const iconEl = document.getElementById('btn-review-save-icon');
+        const labelEl = document.getElementById('btn-review-save-label');
+        const origLabel = labelEl ? labelEl.textContent : 'Confirmer & Enregistrer';
 
-            try {
-                if (btnSave) btnSave.disabled = true;
-                if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
-                if (labelEl) labelEl.textContent = 'Enregistrement en base...';
+        try {
+            if (btnSave) btnSave.disabled = true;
+            if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+            if (labelEl) labelEl.textContent = 'Enregistrement...';
 
-                if (reviewState.type === 'parking_general') {
-                    const fakeEvent = { preventDefault: () => {} };
-                    await this.saveParkingGeneral(fakeEvent);
-                } else if (reviewState.type === 'parking_location') {
-                    const fakeEvent = { preventDefault: () => {} };
-                    await this.saveLocation(fakeEvent);
-                }
-
-                this.closeTranslationReviewModal();
-            } catch (err) {
-                this.showToast('Erreur lors de l\'enregistrement : ' + err.message, 'error');
-            } finally {
-                if (btnSave) btnSave.disabled = false;
-                if (iconEl) iconEl.textContent = '💾';
-                if (labelEl) labelEl.textContent = origLabel;
+            if (reviewState.type === 'parking_general') {
+                await this.saveParkingGeneral(null, true);
+            } else if (reviewState.type === 'parking_location') {
+                await this.saveLocation(null, true);
             }
-        } else {
+
             this.closeTranslationReviewModal();
-            this.showToast('Traductions anglaises appliquées au formulaire.', 'info');
-            const boxId = reviewState.type === 'parking_general' ? 'parking-general-en-box' : 'location-en-box';
-            const box = document.getElementById(boxId);
-            if (box) {
-                box.classList.remove('hidden');
-                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
+        } catch (err) {
+            this.showToast('Erreur lors de l\'enregistrement : ' + err.message, 'error');
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (iconEl) iconEl.textContent = '✅';
+            if (labelEl) labelEl.textContent = origLabel;
+        }
+    },
+
+    async applyReviewTranslations(saveDirectly = false) {
+        if (saveDirectly) {
+            await this.confirmAndSaveReview();
+        } else {
+            document.querySelectorAll('[data-review-en-id]').forEach(input => {
+                const targetId = input.dataset.reviewEnId;
+                const targetEl = document.getElementById(targetId);
+                if (targetEl) targetEl.value = input.value.trim();
+            });
+            this.closeTranslationReviewModal();
         }
     },
 
@@ -1271,9 +1267,65 @@ const AdminApp = {
         }
     },
 
-    async saveParkingGeneral(e) {
-        e.preventDefault();
+    async saveParkingGeneral(e, skipReview = false) {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
         const propertyId = this.state.currentPropertyId;
+
+        // Étape 1 : Si pas encore vérifié, on traduit via l'IA et on ouvre le Flash Check (3 secondes)
+        if (!skipReview) {
+            const dataFr = {
+                intro_fr: document.getElementById('parking-intro-fr').value.trim(),
+                important_rule_fr: document.getElementById('parking-rule-fr').value.trim(),
+                free_parking_notes_fr: document.getElementById('parking-free-notes-fr').value.trim(),
+                street_parking_info_fr: document.getElementById('parking-street-info-fr').value.trim(),
+                street_parking_schedule_fr: document.getElementById('parking-street-sched-fr').value.trim(),
+                street_parking_rates_fr: document.getElementById('parking-street-rates-fr').value.trim(),
+                tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim(),
+                tcl_notes_fr: document.getElementById('parking-tcl-notes-fr').value.trim()
+            };
+
+            const hasFrenchContent = Object.values(dataFr).some(v => v.length > 0);
+            if (hasFrenchContent) {
+                const btnSave = document.getElementById('btn-save-parking-general');
+                const iconEl = document.getElementById('btn-save-general-icon');
+                const textEl = document.getElementById('btn-save-general-text');
+                const origText = textEl ? textEl.textContent : 'Enregistrer les règles';
+
+                try {
+                    if (btnSave) btnSave.disabled = true;
+                    if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+                    if (textEl) textEl.textContent = 'Traduction IA en cours...';
+
+                    const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                        type: 'parking_general',
+                        data: dataFr
+                    });
+
+                    if (res.data) {
+                        if (res.data.intro_en !== undefined) document.getElementById('parking-intro-en').value = res.data.intro_en;
+                        if (res.data.important_rule_en !== undefined) document.getElementById('parking-rule-en').value = res.data.important_rule_en;
+                        if (res.data.free_parking_notes_en !== undefined) document.getElementById('parking-free-notes-en').value = res.data.free_parking_notes_en;
+                        if (res.data.street_parking_info_en !== undefined) document.getElementById('parking-street-info-en').value = res.data.street_parking_info_en;
+                        if (res.data.street_parking_schedule_en !== undefined) document.getElementById('parking-street-sched-en').value = res.data.street_parking_schedule_en;
+                        if (res.data.street_parking_rates_en !== undefined) document.getElementById('parking-street-rates-en').value = res.data.street_parking_rates_en;
+                        if (res.data.tcl_conditions_en !== undefined) document.getElementById('parking-tcl-cond-en').value = res.data.tcl_conditions_en;
+                        if (res.data.tcl_notes_en !== undefined) document.getElementById('parking-tcl-notes-en').value = res.data.tcl_notes_en;
+                    }
+
+                    // Ouvre la vérification flash
+                    this.openTranslationReviewModal('parking_general', res.data);
+                    return;
+                } catch (err) {
+                    console.warn('[AI] Échec de la traduction préalable :', err);
+                } finally {
+                    if (btnSave) btnSave.disabled = false;
+                    if (iconEl) iconEl.textContent = '💾';
+                    if (textEl) textEl.textContent = origText;
+                }
+            }
+        }
+
+        // Étape 2 : Sauvegarde directe en base de données
         const data = {
             intro_fr: document.getElementById('parking-intro-fr').value.trim(),
             intro_en: document.getElementById('parking-intro-en').value.trim(),
@@ -1299,7 +1351,7 @@ const AdminApp = {
                 property_id: propertyId,
                 general: data
             });
-            this.showToast(res.message || 'Règles générales enregistrées !', 'success');
+            this.showToast(res.message || 'Règles générales enregistrées avec succès !', 'success');
             await this.loadInitialData();
             await this.fetchAndRenderParking(propertyId);
         } catch (err) {
@@ -1507,14 +1559,75 @@ const AdminApp = {
         }
     },
 
-    async saveLocation(e) {
-        e.preventDefault();
+    async saveLocation(e, skipReview = false) {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
         const id = parseInt(document.getElementById('location-id').value, 10);
+        const nameFr = document.getElementById('location-name-fr').value.trim();
+
+        if (!nameFr) {
+            this.showToast('Veuillez renseigner au moins le nom du lieu en français.', 'warning');
+            return;
+        }
+
+        // Étape 1 : Si pas encore vérifié, on traduit via l'IA et on ouvre le Flash Check (3 secondes)
+        if (!skipReview) {
+            const dataFr = {
+                name_fr: nameFr,
+                category: document.getElementById('location-category').value,
+                address: document.getElementById('location-address').value.trim(),
+                walking_time_fr: document.getElementById('location-walking-fr').value.trim(),
+                transit_time_fr: document.getElementById('location-transit-fr').value.trim(),
+                opening_hours_fr: document.getElementById('location-hours-fr').value.trim(),
+                rates_fr: document.getElementById('location-rates-fr').value.trim(),
+                suitable_vehicles_fr: document.getElementById('location-vehicles-fr').value.trim(),
+                how_to_reach_fr: document.getElementById('location-reach-fr').value.trim(),
+                notes_fr: document.getElementById('location-notes-fr').value.trim()
+            };
+
+            const btnSave = document.getElementById('btn-save-location');
+            const iconEl = document.getElementById('btn-save-loc-icon');
+            const textEl = document.getElementById('btn-save-loc-text');
+            const origText = textEl ? textEl.textContent : 'Enregistrer l\'emplacement';
+
+            try {
+                if (btnSave) btnSave.disabled = true;
+                if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+                if (textEl) textEl.textContent = 'Traduction IA...';
+
+                const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                    type: 'parking_location',
+                    data: dataFr
+                });
+
+                if (res.data) {
+                    if (res.data.name_en !== undefined) document.getElementById('location-name-en').value = res.data.name_en;
+                    if (res.data.walking_time_en !== undefined) document.getElementById('location-walking-en').value = res.data.walking_time_en;
+                    if (res.data.transit_time_en !== undefined) document.getElementById('location-transit-en').value = res.data.transit_time_en;
+                    if (res.data.opening_hours_en !== undefined) document.getElementById('location-hours-en').value = res.data.opening_hours_en;
+                    if (res.data.rates_en !== undefined) document.getElementById('location-rates-en').value = res.data.rates_en;
+                    if (res.data.suitable_vehicles_en !== undefined) document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
+                    if (res.data.how_to_reach_en !== undefined) document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
+                    if (res.data.notes_en !== undefined) document.getElementById('location-notes-en').value = res.data.notes_en;
+                }
+
+                // Ouvre la vérification flash
+                this.openTranslationReviewModal('parking_location', res.data);
+                return;
+            } catch (err) {
+                console.warn('[AI] Échec de la traduction préalable :', err);
+            } finally {
+                if (btnSave) btnSave.disabled = false;
+                if (iconEl) iconEl.textContent = '💾';
+                if (textEl) textEl.textContent = origText;
+            }
+        }
+
+        // Étape 2 : Sauvegarde directe en base de données
         const data = {
             id,
             property_id: parseInt(document.getElementById('location-property-id').value, 10),
             category: document.getElementById('location-category').value,
-            name_fr: document.getElementById('location-name-fr').value.trim(),
+            name_fr: nameFr,
             name_en: document.getElementById('location-name-en').value.trim(),
             address: document.getElementById('location-address').value.trim(),
             walking_time_fr: document.getElementById('location-walking-fr').value.trim(),
@@ -1542,7 +1655,7 @@ const AdminApp = {
 
         try {
             const res = await this.apiRequest('api/index.php?action=parking_location_save', 'POST', { location: data });
-            this.showToast(res.message || 'Emplacement enregistré.');
+            this.showToast(res.message || 'Emplacement enregistré avec succès !', 'success');
             this.closeLocationModal();
             await this.fetchAndRenderParking(data.property_id);
             await this.loadInitialData();
