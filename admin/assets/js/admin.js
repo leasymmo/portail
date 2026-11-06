@@ -2150,13 +2150,7 @@ const AdminApp = {
             resultEl.innerHTML = '';
         }
 
-        // Configuration Stockage & Cloudflare R2
-        const isR2 = (s.storage_driver === 'r2');
-        const radioLocal = document.getElementById('storage-driver-local');
-        const radioR2 = document.getElementById('storage-driver-r2');
-        if (radioR2) radioR2.checked = isR2;
-        if (radioLocal) radioLocal.checked = !isR2;
-
+        // Configuration Cloudflare R2
         if (document.getElementById('r2-account-id')) {
             document.getElementById('r2-account-id').value = s.r2_account_id || '';
         }
@@ -2178,8 +2172,6 @@ const AdminApp = {
         if (document.getElementById('r2-domain-videos')) {
             document.getElementById('r2-domain-videos').value = s.r2_domain_videos || 'https://videos.carredhotes.fr';
         }
-
-        this.handleStorageDriverChange();
 
         const r2ResultEl = document.getElementById('r2-test-result');
         if (r2ResultEl) {
@@ -2214,15 +2206,6 @@ const AdminApp = {
             if (btnStorage) btnStorage.className = 'settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2';
             if (panelAi) panelAi.classList.remove('hidden');
             if (panelStorage) panelStorage.classList.add('hidden');
-        }
-    },
-
-    handleStorageDriverChange() {
-        const isR2 = document.getElementById('storage-driver-r2')?.checked;
-        const r2Group = document.getElementById('r2-settings-group');
-        if (r2Group) {
-            if (isR2) r2Group.classList.remove('hidden');
-            else r2Group.classList.add('hidden');
         }
     },
 
@@ -2390,15 +2373,13 @@ const AdminApp = {
         const modelSelect = document.getElementById('ai-model-select');
         const selectedModel = modelSelect ? modelSelect.value : '';
 
-        const storageDriver = document.getElementById('storage-driver-r2')?.checked ? 'r2' : 'local';
-
         const payload = {
             ai_provider: provider,
             ai_api_key_gemini: (document.getElementById('ai-key-gemini')?.value || '').trim(),
             ai_api_key_openai: (document.getElementById('ai-key-openai')?.value || '').trim(),
             ai_api_key_claude: (document.getElementById('ai-key-claude')?.value || '').trim(),
-            // Paramètres de Stockage & R2
-            storage_driver: storageDriver,
+            // Paramètres Cloudflare R2 (stockage exclusif)
+            storage_driver: 'r2',
             r2_account_id: (document.getElementById('r2-account-id')?.value || '').trim(),
             r2_access_key_id: (document.getElementById('r2-access-key-id')?.value || '').trim(),
             r2_secret_access_key: (document.getElementById('r2-secret-access-key')?.value || '').trim(),

@@ -1340,8 +1340,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </button>
                 <button type="button" id="settings-tab-btn-storage" onclick="AdminApp.switchSettingsTab('storage')"
                         class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2">
-                    <span>📦</span>
-                    <span>Stockage & Cloudflare R2</span>
+                    <span>☁️</span>
+                    <span>Stockage Cloudflare R2</span>
                 </button>
             </div>
 
@@ -1424,52 +1424,42 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
                 </div>
 
-                <!-- PANNEAU 2 : STOCKAGE & CLOUDFLARE R2 -->
+                <!-- PANNEAU 2 : STOCKAGE CLOUDFLARE R2 (EXCLUSIF) -->
                 <div id="settings-panel-storage" class="space-y-4 hidden">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-2">Destination des téléversements (Guides PDF & Vidéos) *</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label class="p-3.5 rounded-2xl bg-night border border-night-border hover:border-gold/50 cursor-pointer flex items-start space-x-3 transition">
-                                <input type="radio" name="storage_driver" value="local" id="storage-driver-local" onchange="AdminApp.handleStorageDriverChange()" class="mt-1 text-gold accent-[#ba9641]">
-                                <div>
-                                    <p class="text-xs font-bold text-white">Serveur Carré d'Hôtes</p>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">Par défaut. Aucun réglage requis, stocké sur l'hébergement web.</p>
-                                </div>
-                            </label>
-                            <label class="p-3.5 rounded-2xl bg-night border border-night-border hover:border-gold/50 cursor-pointer flex items-start space-x-3 transition">
-                                <input type="radio" name="storage_driver" value="r2" id="storage-driver-r2" onchange="AdminApp.handleStorageDriverChange()" class="mt-1 text-gold accent-[#ba9641]">
-                                <div>
-                                    <p class="text-xs font-bold text-white">Cloudflare R2</p>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">Stockage Cloud S3 haute vitesse avec vos sous-domaines guides & vidéos.</p>
-                                </div>
-                            </label>
+                    <div class="p-3.5 rounded-2xl bg-gradient-to-r from-gold/15 via-gold/5 to-transparent border border-gold/30 flex items-start space-x-3">
+                        <span class="text-lg">☁️</span>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Stockage Cloudflare R2 Exclusif</h4>
+                            <p class="text-[11px] text-gray-300 mt-0.5">
+                                Tous les livrets d'accueil PDF et les vidéos tutorielles sont hébergés sur l'infrastructure Cloudflare R2 haute vitesse avec vos sous-domaines personnalisés.
+                            </p>
                         </div>
                     </div>
 
                     <!-- Paramètres Cloudflare R2 -->
-                    <div id="r2-settings-group" class="space-y-3.5 p-4 rounded-2xl bg-night/60 border border-night-border/70 hidden">
+                    <div class="space-y-3.5 p-4 rounded-2xl bg-night/60 border border-night-border/70">
                         <div class="flex items-center justify-between border-b border-night-border/50 pb-2">
                             <span class="text-xs font-bold text-gold flex items-center space-x-1.5">
                                 <span>⚡</span>
-                                <span>Identifiants Cloudflare R2 (API S3)</span>
+                                <span>Identifiants API S3 Cloudflare R2</span>
                             </span>
                             <a href="https://dash.cloudflare.com/?to=/:account/r2/api-tokens" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Créer un token R2 S3 ↗</a>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">ID de Compte Cloudflare (Account ID)</label>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">ID de Compte Cloudflare (Account ID) *</label>
                             <input type="text" id="r2-account-id" placeholder="Ex: 8f2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
                                    class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Access Key ID</label>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Access Key ID *</label>
                                 <input type="text" id="r2-access-key-id" placeholder="Clé d'accès S3 R2"
                                        class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Secret Access Key</label>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Secret Access Key *</label>
                                 <div class="relative">
                                     <input type="password" id="r2-secret-access-key" placeholder="Clé secrète S3 R2"
                                            class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
@@ -1568,6 +1558,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.7"></script>
+    <script src="assets/js/admin.js?v=1.8"></script>
 </body>
 </html>

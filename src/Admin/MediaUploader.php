@@ -12,9 +12,8 @@ use Throwable;
  * SERVICE DE TÉLÉVERSEMENT DE MÉDIAS (GUIDES PDF & VIDÉOS)
  * Conciergerie Carré d'Hôtes - Administration
  * ==============================================================================
- * Gère le téléversement sécurisé de fichiers avec double mode :
- * 1. Stockage Local OVH (par défaut, zéro configuration)
- * 2. Cloudflare R2 Object Storage (S3 SigV4 sans dépendances externes)
+ * Téléversement exclusif vers Cloudflare R2 (API S3 compatible SigV4)
+ * pour un hébergement rapide, sécurisé et haute performance.
  */
 class MediaUploader
 {
@@ -34,7 +33,7 @@ class MediaUploader
     ];
 
     /**
-     * Traite un fichier téléversé et retourne l'URL publique générée
+     * Traite un fichier téléversé et l'envoie sur Cloudflare R2
      *
      * @param array $file Élément de $_FILES
      * @param string $category 'guide' ou 'video'
@@ -85,7 +84,7 @@ class MediaUploader
                 throw new RuntimeException("Le livret PDF ne doit pas dépasser 50 Mo.");
             }
             if ($ext !== 'pdf' || !in_array($mimeType, self::ALLOWED_GUIDE_MIMES, true)) {
-                throw new RuntimeException("Format non autorisé. Seuls les fichiers PDF (.pdf) sont acceptés pour les guides.");
+                throw new RuntimeException("Format non autorisé. Seuls les fichiers PDF (.pdf) sont acceptés pour les livrets d'accueil.");
             }
         } elseif ($category === 'video') {
             if ($fileSize > self::MAX_VIDEO_SIZE_BYTES) {
@@ -99,24 +98,21 @@ class MediaUploader
             throw new RuntimeException("Catégorie de média inconnue : {$category}.");
         }
 
-        // 4. Génération d'un nom de fichier propre et sécurisé
+        // 4. Génération d'un nom de fichier propre et standardisé
         $filename = self::generateFilename($category, $ext, $params, $originalName);
 
-        // 5. Vérifier la configuration du stockage (Cloudflare R2 ou Serveur Local)
+        // 5. Vérifier la configuration Cloudflare R2
         $r2Config = self::getR2Config();
-        $useR2 = ($r2Config['enabled'] && !empty($r2Config['account_id']) && !empty($r2Config['access_key_id']) && !empty($r2Config['secret_access_key']));
-
-        if ($useR2) {
-            try {
-                return self::uploadToCloudflareR2($tmpPath, $category, $filename, $mimeType, $fileSize, $r2Config);
-            } catch (Throwable $e) {
-                // En cas d'erreur R2 spécifique, enregistrer le log et lever l'exception avec détails clairs
-                throw new RuntimeException("Échec de l'envoi vers Cloudflare R2 : " . $e->getMessage());
-            }
+        if (empty($r2Config['account_id']) || empty($r2Config['access_key_id']) || empty($r2Config['secret_access_key'])) {
+            throw new RuntimeException(
+                "Cloudflare R2 n'est pas encore configuré. " .
+                "Veuillez renseigner votre Account ID, Access Key ID et Secret Key dans les paramètres " .
+                "de Configuration (onglet Stockage Cloudflare R2) avant de téléverser un fichier."
+            );
         }
 
-        // Stockage local standard
-        return self::uploadToLocal($tmpPath, $category, $filename, $mimeType, $fileSize);
+        // 6. Téléversement exclusif vers Cloudflare R2
+        return self::uploadToCloudflareR2($tmpPath, $category, $filename, $mimeType, $fileSize, $r2Config);
     }
 
     /**
@@ -126,17 +122,16 @@ class MediaUploader
     {
         $cleanSlug = function (string $str): string {
             $str = preg_replace('~[^\pL\d]+~u', '-', $str);
-            $str = iconv('utf-8', 'us-ascii//TRANSLIT', $str);
-            $str = preg_replace('~[^-\w]+~', '', $str);
-            $str = trim($str, '-');
-            $str = preg_replace('~-+~', '-', $str);
-            return strtolower($str);
+            $str = iconv('utf-8', 'us-ascii//TRANSLIT', (string)$str);
+            $str = preg_replace('~[^-\w]+~', '', (string)$str);
+            $str = trim((string)$str, '-');
+            $str = preg_replace('~-+~', '-', (string)$str);
+            return strtolower((string)$str);
         };
 
         if ($category === 'guide') {
             $propSlug = !empty($params['property_slug']) ? $cleanSlug((string)$params['property_slug']) : 'logement';
             $lang = !empty($params['lang']) && strtolower((string)$params['lang']) === 'en' ? 'en' : 'fr';
-            // Ex: bataille-guide-fr.pdf
             return "{$propSlug}-guide-{$lang}.pdf";
         }
 
@@ -150,94 +145,10 @@ class MediaUploader
                     $videoSlug = 'tutoriel-' . time();
                 }
             }
-            // Ex: bataille-machine-a-cafe.mp4
             return "{$propSlug}-{$videoSlug}.{$ext}";
         }
 
         return time() . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
-    }
-
-    /**
-     * Stocke le fichier sur le serveur local OVH
-     */
-    private static function uploadToLocal(string $tmpPath, string $category, string $filename, string $mimeType, int $fileSize): array
-    {
-        $rootDir = dirname(__DIR__, 2);
-        $subDir = ($category === 'guide') ? 'guides' : 'videos';
-        $targetDir = $rootDir . '/uploads/' . $subDir;
-
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
-                throw new RuntimeException("Impossible de créer le dossier de destination : /uploads/{$subDir}");
-            }
-        }
-
-        // Création/mise à jour du .htaccess de sécurité si manquant
-        $htaccessPath = $rootDir . '/uploads/.htaccess';
-        if (!file_exists($htaccessPath)) {
-            $htaccessContent = <<<HTACCESS
-<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|php8|phps|pl|py|cgi|asp|sh|bash|exe|html|htm|js)$">
-    Order Deny,Allow
-    Deny from all
-</FilesMatch>
-<IfModule mod_php.c>
-    php_flag engine off
-</IfModule>
-<IfModule mod_php7.c>
-    php_flag engine off
-</IfModule>
-<IfModule mod_php8.c>
-    php_flag engine off
-</IfModule>
-<FilesMatch "(?i)\.(pdf|mp4|webm|mov|m4v|jpg|jpeg|png|webp|svg)$">
-    Order Allow,Deny
-    Allow from all
-</FilesMatch>
-<IfModule mod_headers.c>
-    Header set Accept-Ranges bytes
-    Header set Access-Control-Allow-Origin "*"
-</IfModule>
-Options -Indexes -ExecCGI
-HTACCESS;
-            @file_put_contents($htaccessPath, $htaccessContent);
-        }
-
-        $destPath = $targetDir . '/' . $filename;
-        if (!move_uploaded_file($tmpPath, $destPath)) {
-            // Repli sur copy si move_uploaded_file échoue (ex: restrictions open_basedir)
-            if (!copy($tmpPath, $destPath)) {
-                throw new RuntimeException("Échec de l'enregistrement du fichier dans {$targetDir}.");
-            }
-            @unlink($tmpPath);
-        }
-
-        @chmod($destPath, 0644);
-
-        // Détection de l'URL publique
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
-        $host = $_SERVER['HTTP_HOST'] ?? 'www.carredhotes.fr';
-
-        // Base directory (ex: /portail/dev ou /portail)
-        $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '/admin/api/index.php');
-        $portalBasePath = rtrim(dirname($scriptDir, 2), '/');
-        if ($portalBasePath === '\\') {
-            $portalBasePath = '';
-        }
-
-        $relativeUrl = $portalBasePath . '/uploads/' . $subDir . '/' . $filename;
-        $absoluteUrl = $protocol . $host . $relativeUrl;
-
-        return [
-            'ok'             => true,
-            'url'            => $absoluteUrl,
-            'relative_url'   => $relativeUrl,
-            'filename'       => $filename,
-            'size'           => $fileSize,
-            'size_formatted' => self::formatBytes($fileSize),
-            'mime_type'      => $mimeType,
-            'storage'        => 'local',
-            'storage_label'  => 'Serveur Carré d\'Hôtes',
-        ];
     }
 
     /**
@@ -251,101 +162,46 @@ HTACCESS;
         int $fileSize,
         array $config
     ): array {
-        $accountId = $config['account_id'];
-        $accessKey = $config['access_key_id'];
-        $secretKey = $config['secret_access_key'];
+        $accountId = trim((string)$config['account_id']);
+        $accessKey = trim((string)$config['access_key_id']);
+        $secretKey = trim((string)$config['secret_access_key']);
 
-        $bucket = ($category === 'guide') 
-            ? ($config['bucket_guides'] ?: 'carredhotes-guides') 
-            : ($config['bucket_videos'] ?: 'carredhotes-videos');
+        $bucket = ($category === 'guide')
+            ? (!empty($config['bucket_guides']) ? $config['bucket_guides'] : 'carredhotes-guides')
+            : (!empty($config['bucket_videos']) ? $config['bucket_videos'] : 'carredhotes-videos');
 
         $customDomain = ($category === 'guide')
-            ? ($config['domain_guides'] ?: 'https://guides.carredhotes.fr')
-            : ($config['domain_videos'] ?: 'https://videos.carredhotes.fr');
+            ? (!empty($config['domain_guides']) ? $config['domain_guides'] : 'https://guides.carredhotes.fr')
+            : (!empty($config['domain_videos']) ? $config['domain_videos'] : 'https://videos.carredhotes.fr');
 
-        // Préparation du chemin objet (clé R2)
-        // Les sous-domaines R2 attendent souvent le fichier sous le slug ou à la racine
         $objectKey = $filename;
-
-        $host = "{$accountId}.r2.cloudflarestorage.com";
-        $endpoint = "https://{$host}/{$bucket}/{$objectKey}";
 
         $body = file_get_contents($tmpPath);
         if ($body === false) {
-            throw new RuntimeException("Impossible de lire le fichier temporaire.");
-        }
-        $payloadHash = hash('sha256', $body);
-
-        $now = time();
-        $isoDate = gmdate('Ymd\THis\Z', $now);
-        $dateStamp = gmdate('Ymd', $now);
-
-        // SigV4 Canonical Headers
-        $canonicalHeaders = "content-length:{$fileSize}\n"
-                          . "content-type:{$mimeType}\n"
-                          . "host:{$host}\n"
-                          . "x-amz-content-sha256:{$payloadHash}\n"
-                          . "x-amz-date:{$isoDate}\n";
-
-        $signedHeaders = "content-length;content-type;host;x-amz-content-sha256;x-amz-date";
-
-        $canonicalRequest = "PUT\n"
-                          . "/{$bucket}/{$objectKey}\n"
-                          . "\n"
-                          . $canonicalHeaders
-                          . "\n"
-                          . $signedHeaders . "\n"
-                          . $payloadHash;
-
-        $stringToSign = "AWS4-HMAC-SHA256\n"
-                      . "{$isoDate}\n"
-                      . "{$dateStamp}/auto/s3/aws4_request\n"
-                      . hash('sha256', $canonicalRequest);
-
-        // Calcul de la clé de signature dérivée
-        $kDate = hash_hmac('sha256', $dateStamp, 'AWS4' . $secretKey, true);
-        $kRegion = hash_hmac('sha256', 'auto', $kDate, true);
-        $kService = hash_hmac('sha256', 's3', $kRegion, true);
-        $kSigning = hash_hmac('sha256', 'aws4_request', $kService, true);
-        $signature = hash_hmac('sha256', $stringToSign, $kSigning);
-
-        $authorization = "AWS4-HMAC-SHA256 Credential={$accessKey}/{$dateStamp}/auto/s3/aws4_request, SignedHeaders={$signedHeaders}, Signature={$signature}";
-
-        $headers = [
-            "Host: {$host}",
-            "x-amz-date: {$isoDate}",
-            "x-amz-content-sha256: {$payloadHash}",
-            "Content-Type: {$mimeType}",
-            "Content-Length: {$fileSize}",
-            "Authorization: {$authorization}",
-        ];
-
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL            => $endpoint,
-            CURLOPT_CUSTOMREQUEST  => 'PUT',
-            CURLOPT_POSTFIELDS     => $body,
-            CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 15,
-            CURLOPT_TIMEOUT        => 120,
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
-
-        if ($curlError) {
-            throw new RuntimeException("Erreur réseau cURL lors de l'upload R2 : {$curlError}");
+            throw new RuntimeException("Impossible de lire le fichier temporaire avant envoi vers Cloudflare R2.");
         }
 
-        if ($httpCode !== 200 && $httpCode !== 204) {
-            throw new RuntimeException("Cloudflare R2 a renvoyé le statut HTTP {$httpCode}. " . strip_tags((string)$response));
+        $res = self::sendR2Request('PUT', $accountId, $accessKey, $secretKey, $bucket, $objectKey, '', $body, $mimeType);
+
+        if ($res['error']) {
+            throw new RuntimeException("Erreur réseau cURL lors de l'envoi vers Cloudflare R2 : {$res['error']}");
         }
 
-        // Construction de l'URL finale via le sous-domaine personnalisé
+        if ($res['http_code'] !== 200 && $res['http_code'] !== 204) {
+            $detail = self::parseR2ErrorDetail($res['response']);
+            $errMsg = "Cloudflare R2 a renvoyé l'erreur HTTP {$res['http_code']}";
+            if ($detail !== '') {
+                $errMsg .= " ({$detail})";
+            }
+            if ($res['http_code'] === 403) {
+                $errMsg .= " — Vérifiez vos clés API S3 R2 et leurs permissions sur le bucket « {$bucket} ».";
+            } elseif ($res['http_code'] === 404) {
+                $errMsg .= " — Le bucket « {$bucket} » n'existe pas dans votre compte Cloudflare R2.";
+            }
+            throw new RuntimeException($errMsg);
+        }
+
+        // Construction de l'URL publique finale via le sous-domaine Cloudflare configuré
         $publicUrl = rtrim($customDomain, '/') . '/' . $objectKey;
 
         return [
@@ -362,43 +218,172 @@ HTACCESS;
     }
 
     /**
-     * Teste la connexion à Cloudflare R2
+     * Teste la connexion à Cloudflare R2 (vérification de bucket sans transfert lourd)
      */
     public static function testR2Connection(array $config): array
     {
         $accountId = trim((string)($config['account_id'] ?? ''));
         $accessKey = trim((string)($config['access_key_id'] ?? ''));
         $secretKey = trim((string)($config['secret_access_key'] ?? ''));
-        $bucket = trim((string)($config['bucket_guides'] ?? ($config['bucket_videos'] ?? '')));
+        $bucketGuides = trim((string)($config['bucket_guides'] ?? ''));
+        $bucketVideos = trim((string)($config['bucket_videos'] ?? ''));
 
         if (empty($accountId) || empty($accessKey) || empty($secretKey)) {
             return [
                 'ok'    => false,
-                'error' => 'Identifiants R2 incomplets (ID de compte, Access Key ID et Secret Key sont obligatoires).'
+                'error' => 'Identifiants R2 incomplets : l\'Account ID, l\'Access Key ID et la Secret Access Key sont obligatoires.'
             ];
         }
 
-        if (empty($bucket)) {
-            $bucket = 'carredhotes-guides';
+        // Liste des buckets à tester
+        $bucketsToTest = [];
+        if (!empty($bucketGuides)) {
+            $bucketsToTest[] = $bucketGuides;
+        }
+        if (!empty($bucketVideos) && !in_array($bucketVideos, $bucketsToTest, true)) {
+            $bucketsToTest[] = $bucketVideos;
+        }
+        if (empty($bucketsToTest)) {
+            $bucketsToTest[] = 'carredhotes-guides';
         }
 
+        $testedBuckets = [];
+        foreach ($bucketsToTest as $b) {
+            $res = self::sendR2Request('GET', $accountId, $accessKey, $secretKey, $b, '', 'max-keys=1');
+
+            if ($res['error']) {
+                return [
+                    'ok'    => false,
+                    'error' => "Erreur réseau cURL : {$res['error']}"
+                ];
+            }
+
+            if ($res['http_code'] !== 200) {
+                $detail = self::parseR2ErrorDetail($res['response']);
+                $errMsg = "Erreur HTTP {$res['http_code']}";
+                if ($detail !== '') {
+                    $errMsg .= " ({$detail})";
+                }
+
+                if ($res['http_code'] === 403) {
+                    $errMsg .= " — Vérifiez vos identifiants Cloudflare R2 et les autorisations du token sur le bucket « {$b} ».";
+                } elseif ($res['http_code'] === 404) {
+                    $errMsg .= " — Le bucket « {$b} » n'existe pas sur votre compte Cloudflare R2.";
+                }
+
+                return [
+                    'ok'    => false,
+                    'error' => $errMsg
+                ];
+            }
+
+            $testedBuckets[] = $b;
+        }
+
+        $count = count($testedBuckets);
+        $msg = ($count > 1)
+            ? "Connexion Cloudflare R2 réussie ! Les buckets « " . implode(' » et « ', $testedBuckets) . " » sont parfaitement accessibles."
+            : "Connexion Cloudflare R2 réussie ! Le bucket « {$testedBuckets[0]} » est parfaitement accessible.";
+
+        return [
+            'ok'      => true,
+            'message' => $msg
+        ];
+    }
+
+    /**
+     * Lit la configuration Cloudflare R2 enregistrée en base de données
+     */
+    public static function getR2Config(): array
+    {
+        try {
+            $db = \Cdh\Portal\Database::getConnection();
+            $stmt = $db->query('SELECT setting_key, setting_value FROM admin_settings WHERE setting_key LIKE "r2_%"');
+            $settings = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $settings[$row['setting_key']] = $row['setting_value'];
+            }
+
+            return [
+                'account_id'        => (string)($settings['r2_account_id'] ?? ''),
+                'access_key_id'     => (string)($settings['r2_access_key_id'] ?? ''),
+                'secret_access_key' => (string)($settings['r2_secret_access_key'] ?? ''),
+                'bucket_guides'     => (string)($settings['r2_bucket_guides'] ?? 'carredhotes-guides'),
+                'domain_guides'     => (string)($settings['r2_domain_guides'] ?? 'https://guides.carredhotes.fr'),
+                'bucket_videos'     => (string)($settings['r2_bucket_videos'] ?? 'carredhotes-videos'),
+                'domain_videos'     => (string)($settings['r2_domain_videos'] ?? 'https://videos.carredhotes.fr'),
+            ];
+        } catch (Throwable $e) {
+            return [
+                'account_id'        => '',
+                'access_key_id'     => '',
+                'secret_access_key' => '',
+                'bucket_guides'     => 'carredhotes-guides',
+                'domain_guides'     => 'https://guides.carredhotes.fr',
+                'bucket_videos'     => 'carredhotes-videos',
+                'domain_videos'     => 'https://videos.carredhotes.fr',
+            ];
+        }
+    }
+
+    /**
+     * Effectue une requête S3 SigV4 vers Cloudflare R2
+     */
+    private static function sendR2Request(
+        string $method,
+        string $accountId,
+        string $accessKey,
+        string $secretKey,
+        string $bucket,
+        string $objectKey = '',
+        string $queryString = '',
+        string $body = '',
+        string $contentType = ''
+    ): array {
         $host = "{$accountId}.r2.cloudflarestorage.com";
-        $endpoint = "https://{$host}/{$bucket}?max-keys=1";
+        $path = '/' . $bucket;
+        if ($objectKey !== '') {
+            $path .= '/' . ltrim($objectKey, '/');
+        }
+
+        $endpoint = "https://{$host}{$path}";
+        if ($queryString !== '') {
+            $endpoint .= '?' . $queryString;
+        }
 
         $now = time();
         $isoDate = gmdate('Ymd\THis\Z', $now);
         $dateStamp = gmdate('Ymd', $now);
-        $payloadHash = hash('sha256', '');
+        $payloadHash = hash('sha256', $body);
+        $contentLength = strlen($body);
 
-        $canonicalHeaders = "host:{$host}\n"
-                          . "x-amz-content-sha256:{$payloadHash}\n"
-                          . "x-amz-date:{$isoDate}\n";
+        // En-têtes à signer (triés obligatoirement par ordre alphabétique pour AWS SigV4)
+        $headersMap = [];
+        if ($contentLength > 0 || $method === 'PUT') {
+            $headersMap['content-length'] = (string)$contentLength;
+        }
+        if ($contentType !== '') {
+            $headersMap['content-type'] = $contentType;
+        }
+        $headersMap['host'] = $host;
+        $headersMap['x-amz-content-sha256'] = $payloadHash;
+        $headersMap['x-amz-date'] = $isoDate;
 
-        $signedHeaders = "host;x-amz-content-sha256;x-amz-date";
+        ksort($headersMap);
 
-        $canonicalRequest = "GET\n"
-                          . "/{$bucket}\n"
-                          . "max-keys=1\n"
+        $canonicalHeaders = '';
+        $signedHeadersList = [];
+        $curlHeaders = [];
+
+        foreach ($headersMap as $k => $v) {
+            $canonicalHeaders .= "{$k}:{$v}\n";
+            $signedHeadersList[] = $k;
+        }
+        $signedHeaders = implode(';', $signedHeadersList);
+
+        $canonicalRequest = "{$method}\n"
+                          . "{$path}\n"
+                          . "{$queryString}\n"
                           . $canonicalHeaders
                           . "\n"
                           . $signedHeaders . "\n"
@@ -417,79 +402,56 @@ HTACCESS;
 
         $authorization = "AWS4-HMAC-SHA256 Credential={$accessKey}/{$dateStamp}/auto/s3/aws4_request, SignedHeaders={$signedHeaders}, Signature={$signature}";
 
-        $headers = [
-            "Host: {$host}",
-            "x-amz-date: {$isoDate}",
-            "x-amz-content-sha256: {$payloadHash}",
-            "Authorization: {$authorization}",
-        ];
+        foreach ($headersMap as $k => $v) {
+            $curlHeaders[] = "{$k}: {$v}";
+        }
+        $curlHeaders[] = "Authorization: {$authorization}";
 
         $ch = curl_init();
         curl_setopt_array($ch, [
             CURLOPT_URL            => $endpoint,
-            CURLOPT_CUSTOMREQUEST  => 'GET',
-            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_CUSTOMREQUEST  => $method,
+            CURLOPT_HTTPHEADER     => $curlHeaders,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT        => 20,
+            CURLOPT_TIMEOUT        => ($method === 'PUT' ? 120 : 20),
             CURLOPT_SSL_VERIFYPEER => true,
         ]);
+
+        if ($method === 'PUT' && $body !== '') {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        }
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
 
-        if ($curlError) {
-            return [
-                'ok'    => false,
-                'error' => "Erreur de connexion cURL : {$curlError}"
-            ];
-        }
-
-        if ($httpCode === 200) {
-            return [
-                'ok'      => true,
-                'message' => "Connexion Cloudflare R2 réussie ! Le bucket « {$bucket} » est accessible."
-            ];
-        }
-
         return [
-            'ok'    => false,
-            'error' => "Cloudflare R2 a renvoyé l'erreur HTTP {$httpCode}. Vérifiez vos clés et le nom du bucket."
+            'http_code' => $httpCode,
+            'response'  => (string)$response,
+            'error'     => $curlError,
         ];
     }
 
     /**
-     * Lit la configuration R2 stockée en base de données
+     * Extrait le message d'erreur d'une réponse XML Cloudflare R2
      */
-    public static function getR2Config(): array
+    private static function parseR2ErrorDetail(string $xml): string
     {
-        try {
-            $db = \Cdh\Portal\Database::getConnection();
-            $stmt = $db->query('SELECT setting_key, setting_value FROM admin_settings WHERE setting_key LIKE "r2_%" OR setting_key = "storage_driver"');
-            $settings = [];
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $settings[$row['setting_key']] = $row['setting_value'];
-            }
-
-            return [
-                'driver'            => $settings['storage_driver'] ?? 'local',
-                'enabled'           => ($settings['storage_driver'] ?? 'local') === 'r2',
-                'account_id'        => $settings['r2_account_id'] ?? '',
-                'access_key_id'     => $settings['r2_access_key_id'] ?? '',
-                'secret_access_key' => $settings['r2_secret_access_key'] ?? '',
-                'bucket_guides'     => $settings['r2_bucket_guides'] ?? 'carredhotes-guides',
-                'domain_guides'     => $settings['r2_domain_guides'] ?? 'https://guides.carredhotes.fr',
-                'bucket_videos'     => $settings['r2_bucket_videos'] ?? 'carredhotes-videos',
-                'domain_videos'     => $settings['r2_domain_videos'] ?? 'https://videos.carredhotes.fr',
-            ];
-        } catch (Throwable $e) {
-            return [
-                'driver'  => 'local',
-                'enabled' => false,
-            ];
+        if (empty($xml)) {
+            return '';
         }
+
+        if (preg_match('/<Message>(.*?)<\/Message>/s', $xml, $m)) {
+            return htmlspecialchars_decode(trim($m[1]));
+        }
+
+        if (preg_match('/<Code>(.*?)<\/Code>/s', $xml, $m)) {
+            return trim($m[1]);
+        }
+
+        return '';
     }
 
     /**

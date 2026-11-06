@@ -745,8 +745,8 @@ class AdminRepository
             'masked_key_gemini' => $maskKey($raw['ai_api_key_gemini'] ?? null),
             'masked_key_openai' => $maskKey($raw['ai_api_key_openai'] ?? null),
             'masked_key_claude' => $maskKey($raw['ai_api_key_claude'] ?? null),
-            // Stockage et Cloudflare R2
-            'storage_driver' => $raw['storage_driver'] ?? 'local',
+            // Stockage Cloudflare R2 (exclusif)
+            'storage_driver' => 'r2',
             'r2_account_id' => $raw['r2_account_id'] ?? '',
             'r2_access_key_id' => $raw['r2_access_key_id'] ?? '',
             'has_r2_secret' => !empty($raw['r2_secret_access_key']),
@@ -785,11 +785,9 @@ class AdminRepository
             }
         }
 
-        // Paramètres de Stockage & Cloudflare R2
-        if (isset($settings['storage_driver'])) {
-            $driver = in_array($settings['storage_driver'], ['local', 'r2'], true) ? $settings['storage_driver'] : 'local';
-            $stmt->execute(['k' => 'storage_driver', 'v' => $driver, 'v2' => $driver]);
-        }
+        // Stockage Cloudflare R2 exclusif
+        $stmt->execute(['k' => 'storage_driver', 'v' => 'r2', 'v2' => 'r2']);
+
         if (isset($settings['r2_account_id'])) {
             $v = trim((string)$settings['r2_account_id']);
             $stmt->execute(['k' => 'r2_account_id', 'v' => $v, 'v2' => $v]);
@@ -821,7 +819,7 @@ class AdminRepository
             $stmt->execute(['k' => 'r2_domain_videos', 'v' => $v, 'v2' => $v]);
         }
 
-        ActivityLogger::log('update', 'settings', null, "Configuration système mise à jour (IA: {$provider}, Stockage: " . ($settings['storage_driver'] ?? 'local') . ")");
+        ActivityLogger::log('update', 'settings', null, "Configuration système mise à jour (IA: {$provider}, Stockage: Cloudflare R2)");
         return true;
     }
 }

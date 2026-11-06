@@ -37,8 +37,15 @@ if ($rawInput !== false && trim($rawInput) !== '') {
     }
 }
 
-// Détection dépassement de taille maximale d'upload par PHP
-if ($method === 'POST' && empty($_POST) && empty($_FILES) && isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 0) {
+// Détection dépassement de taille maximale d'upload par PHP (uniquement pour les requêtes multipart/form-data)
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+if ($method === 'POST'
+    && stripos($contentType, 'multipart/form-data') !== false
+    && empty($_POST)
+    && empty($_FILES)
+    && isset($_SERVER['CONTENT_LENGTH'])
+    && (int)$_SERVER['CONTENT_LENGTH'] > 0
+) {
     http_response_code(413);
     echo json_encode([
         'ok'    => false,
@@ -486,35 +493,53 @@ try {
             ];
 
             require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
-            $uploadResult = \Cdh\Portal\Admin\MediaUploader::handleUpload($_FILES['file'], $category, $params);
+            try {
+                $uploadResult = \Cdh\Portal\Admin\MediaUploader::handleUpload($_FILES['file'], $category, $params);
+            } catch (RuntimeException $e) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
             
             \Cdh\Portal\Admin\ActivityLogger::log(
                 'upload', 
                 $category, 
                 null, 
-                "Téléversement {$category} : {$uploadResult['filename']} ({$uploadResult['size_formatted']}, {$uploadResult['storage_label']})"
+                "Téléversement {$category} vers Cloudflare R2 : {$uploadResult['filename']} ({$uploadResult['size_formatted']})"
             );
 
             echo json_encode($uploadResult, JSON_UNESCAPED_UNICODE);
             exit;
 
         case 'r2_test':
+            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+            $savedConfig = \Cdh\Portal\Admin\MediaUploader::getR2Config();
+
             $config = [
-                'account_id'        => $body['account_id'] ?? ($_POST['account_id'] ?? ''),
-                'access_key_id'     => $body['access_key_id'] ?? ($_POST['access_key_id'] ?? ''),
-                'secret_access_key' => $body['secret_access_key'] ?? ($_POST['secret_access_key'] ?? ''),
-                'bucket_guides'     => $body['bucket_guides'] ?? ($_POST['bucket_guides'] ?? ''),
-                'bucket_videos'     => $body['bucket_videos'] ?? ($_POST['bucket_videos'] ?? ''),
+                'account_id'        => trim((string)($body['account_id'] ?? ($_POST['account_id'] ?? ''))),
+                'access_key_id'     => trim((string)($body['access_key_id'] ?? ($_POST['access_key_id'] ?? ''))),
+                'secret_access_key' => trim((string)($body['secret_access_key'] ?? ($_POST['secret_access_key'] ?? ''))),
+                'bucket_guides'     => trim((string)($body['bucket_guides'] ?? ($_POST['bucket_guides'] ?? ''))),
+                'bucket_videos'     => trim((string)($body['bucket_videos'] ?? ($_POST['bucket_videos'] ?? ''))),
             ];
 
-            // Si la clé secrète est masquée ou vide, aller chercher celle enregistrée en base
+            // Repli sur la configuration enregistrée si un champ n'est pas fourni ou masqué
+            if (empty($config['account_id'])) {
+                $config['account_id'] = $savedConfig['account_id'] ?? '';
+            }
+            if (empty($config['access_key_id'])) {
+                $config['access_key_id'] = $savedConfig['access_key_id'] ?? '';
+            }
             if (empty($config['secret_access_key']) || strpos($config['secret_access_key'], '•') !== false) {
-                $db = \Cdh\Portal\Database::getConnection();
-                $stmt = $db->query('SELECT setting_value FROM admin_settings WHERE setting_key = "r2_secret_access_key" LIMIT 1');
-                $config['secret_access_key'] = (string)$stmt->fetchColumn();
+                $config['secret_access_key'] = $savedConfig['secret_access_key'] ?? '';
+            }
+            if (empty($config['bucket_guides'])) {
+                $config['bucket_guides'] = $savedConfig['bucket_guides'] ?? 'carredhotes-guides';
+            }
+            if (empty($config['bucket_videos'])) {
+                $config['bucket_videos'] = $savedConfig['bucket_videos'] ?? 'carredhotes-videos';
             }
 
-            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
             $testRes = \Cdh\Portal\Admin\MediaUploader::testR2Connection($config);
             if (!$testRes['ok']) {
                 http_response_code(400);
