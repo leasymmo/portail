@@ -148,3 +148,13 @@ body {
     transition: width 0.2s ease-out;
 }
 
+/* ==============================================================================
+   OPTIMISATIONS TACTILES & MOBILES
+   ============================================================================== */
+@media (max-width: 640px) {
+    button, a, input, select, textarea {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+}
+

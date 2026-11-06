@@ -39,7 +39,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             }
         };
     </script>
-    <link rel="stylesheet" href="assets/css/admin.css?v=1.2">
+    <link rel="stylesheet" href="assets/css/admin.css?v=1.3">
 </head>
 <body class="bg-night text-gray-100 h-screen max-h-screen flex flex-col antialiased selection:bg-gold selection:text-white overflow-hidden">
 
@@ -379,15 +379,15 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                     <!-- Sous-onglets Stationnement (Navigation segmented controls claire et intuitive) -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-night-border/70">
-                        <div class="inline-flex p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner">
+                        <div class="grid grid-cols-1 sm:inline-flex w-full sm:w-auto p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1">
                             <button type="button" id="parking-subtab-btn-general" onclick="AdminApp.switchParkingSubtab('general')"
-                                    class="parking-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25"
+                                    class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-gold text-white shadow-md shadow-gold/25"
                                     title="Informations générales, consignes, voirie et conditions TCL">
                                 <span>📋</span>
                                 <span>Règles Générales & Voirie</span>
                             </button>
                             <button type="button" id="parking-subtab-btn-locations" onclick="AdminApp.switchParkingSubtab('locations')"
-                                    class="parking-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2"
+                                    class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
                                     title="Rues gratuites, dépose-minute, parkings couverts privés et P+R">
                                 <span>📍</span>
                                 <span>Emplacements & Garages</span>
@@ -395,8 +395,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             </button>
                         </div>
 
-                        <div class="flex items-center space-x-2">
-                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                        <div class="flex items-center space-x-2 w-full sm:w-auto">
+                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm">
                                 <span>➕</span>
                                 <span>Ajouter un emplacement</span>
                             </button>
@@ -567,8 +567,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <!-- SOUS-ONGLET B : EMPLACEMENTS DÉTAILLÉS -->
                     <div id="parking-subtab-locations" class="hidden space-y-4">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div class="flex items-center space-x-2">
-                                <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="py-2 px-3 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                            <div class="flex items-center space-x-2 w-full sm:w-auto">
+                                <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="w-full sm:w-auto py-2.5 sm:py-2 px-3 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                                     <option value="all">Toutes les catégories</option>
                                     <option value="free_street">Rues gratuites</option>
                                     <option value="free_spot">Dépose-minute gratuit</option>
@@ -576,7 +576,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                     <option value="tcl_pr">Parcs Relais TCL (P+R)</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="px-3.5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5 self-start sm:self-auto">
+                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center justify-center space-x-1.5 self-start sm:self-auto">
                                 <span>+</span>
                                 <span>Ajouter un emplacement</span>
                             </button>
@@ -667,8 +667,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <!-- =================================================================== -->
 
     <!-- 1. MODALE HÉBERGEMENT (AJOUT / MODIFICATION) -->
-    <div id="modal-property-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-property-form" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <h3 id="modal-property-title" class="text-base font-bold text-white">Ajouter un hébergement</h3>
                 <button type="button" onclick="AdminApp.closePropertyModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -857,8 +857,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 2. MODALE VIDÉO TUTORIEL -->
-    <div id="modal-video-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-video-form" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <h3 id="modal-video-title" class="text-base font-bold text-white">Ajouter une vidéo</h3>
                 <button type="button" onclick="AdminApp.closeVideoModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1007,8 +1007,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 3. MODALE LECTEUR VIDÉO APERÇU -->
-    <div id="modal-video-preview" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-xl p-5 shadow-2xl relative my-auto">
+    <div id="modal-video-preview" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-5 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-3 mb-4">
                 <h4 id="video-preview-title" class="text-sm font-bold text-white truncate">Aperçu de la vidéo</h4>
                 <button type="button" onclick="AdminApp.closeVideoPreview()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1020,8 +1020,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 4. MODALE EMPLACEMENT DE PARKING -->
-    <div id="modal-location-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-location-form" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <div>
                     <h3 id="modal-location-title" class="text-base font-bold text-white">Ajouter un emplacement</h3>
@@ -1218,8 +1218,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 5. MODALE UTILISATEUR ADMINISTRATEUR -->
-    <div id="modal-user-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-user-form" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <h3 id="modal-user-title" class="text-base font-bold text-white">Ajouter un administrateur</h3>
                 <button type="button" onclick="AdminApp.closeUserModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1270,8 +1270,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 6. MODALE PROFIL (CHANGEMENT DE MOT DE PASSE) -->
-    <div id="modal-profile" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-profile" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <h3 class="text-base font-bold text-white">Mon Profil & Mot de passe</h3>
                 <button type="button" onclick="AdminApp.closeProfileModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1305,8 +1305,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 7. MODALE DÉTAILS D'UN LOG D'ACTIVITÉ -->
-    <div id="modal-log-details" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-lg p-6 shadow-2xl relative my-auto">
+    <div id="modal-log-details" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-3 mb-4">
                 <h4 class="text-sm font-bold text-white">Détails des modifications (JSON)</h4>
                 <button type="button" onclick="AdminApp.closeLogDetails()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1316,8 +1316,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 8. MODALE DE CONFIRMATION GÉNÉRIQUE -->
-    <div id="modal-confirmation" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
-        <div class="bg-night-card border border-red-500/30 rounded-3xl w-full max-w-md p-6 shadow-2xl relative my-auto text-center space-y-4">
+    <div id="modal-confirmation" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-red-500/30 rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl relative my-auto text-center space-y-4">
             <div class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/30 flex items-center justify-center text-xl mx-auto">
                 ⚠️
             </div>
@@ -1576,6 +1576,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.9"></script>
+    <script src="assets/js/admin.js?v=2.0"></script>
 </body>
 </html>

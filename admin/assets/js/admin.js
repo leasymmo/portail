@@ -362,28 +362,33 @@ const AdminApp = {
             return;
         }
 
-        container.innerHTML = list.map(p => `
-            <div class="rounded-2xl bg-night-card border border-night-border hover:border-gold/40 p-5 transition flex flex-col justify-between group shadow-lg">
+        container.innerHTML = list.map(p => {
+            const hasFrGuide = Boolean(p.guide_pdf_url_fr && p.guide_pdf_url_fr.trim());
+            const hasEnGuide = Boolean(p.guide_pdf_url_en && p.guide_pdf_url_en.trim());
+            return `
+            <div class="rounded-2xl bg-night-card border border-night-border hover:border-gold/40 p-4 sm:p-5 transition flex flex-col justify-between group shadow-lg">
                 <div>
+                    <!-- En-tête hébergement -->
                     <div class="flex items-start justify-between gap-3 mb-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 rounded-2xl bg-gold/15 text-gold border border-gold/30 flex items-center justify-center font-bold text-sm shadow-md shadow-gold/10">
+                        <div class="flex items-center space-x-3 min-w-0 flex-1">
+                            <div class="w-10 h-10 rounded-2xl bg-gold/15 text-gold border border-gold/30 flex items-center justify-center font-bold text-sm shadow-md shadow-gold/10 flex-shrink-0">
                                 ${p.name.substring(0, 2).toUpperCase()}
                             </div>
-                            <div>
-                                <h4 class="text-base font-bold text-white group-hover:text-gold transition">${this.escape(p.name)}</h4>
-                                <span class="text-xs font-mono text-gray-400">/${this.escape(p.slug)}</span>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-base font-bold text-white group-hover:text-gold transition truncate">${this.escape(p.name)}</h4>
+                                <span class="text-xs font-mono text-gray-400 block truncate">/${this.escape(p.slug)}</span>
                             </div>
                         </div>
                         <button type="button" onclick="AdminApp.togglePropertyStatus(${p.id})" title="Cliquer pour activer/désactiver"
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition ${p.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition flex-shrink-0 ${p.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
                             ${p.active == 1 ? '● Actif' : '○ Inactif'}
                         </button>
                     </div>
 
-                    ${p.address ? `<p class="text-xs text-gray-300 mb-3 flex items-center"><span class="mr-1.5">📍</span>${this.escape(p.address)}</p>` : ''}
+                    ${p.address ? `<p class="text-xs text-gray-300 mb-3 flex items-center"><span class="mr-1.5 flex-shrink-0">📍</span><span class="truncate">${this.escape(p.address)}</span></p>` : ''}
 
-                    <div class="grid grid-cols-2 gap-2 text-xs py-3 border-y border-night-border/50 my-3">
+                    <!-- Métriques Wi-Fi & Modules -->
+                    <div class="grid grid-cols-2 gap-2 text-xs py-2.5 border-y border-night-border/50 my-3">
                         <div class="bg-night/50 p-2.5 rounded-xl border border-night-border/30">
                             <div class="text-gray-400 text-[10px] uppercase font-semibold">Wi-Fi</div>
                             <div class="font-bold text-white truncate mt-0.5">${p.wifi_ssid ? this.escape(p.wifi_ssid) : '<span class="text-gray-500 italic">Non configuré</span>'}</div>
@@ -393,22 +398,30 @@ const AdminApp = {
                             <div class="font-bold text-white truncate mt-0.5">🎬 ${p.videos_count} · 🅿️ ${p.parking_locations_count}</div>
                         </div>
                     </div>
+
+                    <!-- Guides PDF R2 Status -->
+                    <div class="flex items-center space-x-2 text-[11px] mb-2">
+                        <span class="text-gray-400">Guides PDF :</span>
+                        <span class="px-2 py-0.5 rounded-md ${hasFrGuide ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-gray-500 border border-night-border'}">FR ${hasFrGuide ? '✓' : '—'}</span>
+                        <span class="px-2 py-0.5 rounded-md ${hasEnGuide ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-gray-500 border border-night-border'}">EN ${hasEnGuide ? '✓' : '—'}</span>
+                    </div>
                 </div>
 
-                <div class="pt-2 flex items-center justify-between border-t border-night-border/40 gap-2">
-                    <div class="flex items-center space-x-1.5">
-                        <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-gold hover:text-white text-xs font-semibold text-gray-200 transition">
+                <!-- Barre d'actions responsive -->
+                <div class="pt-3 flex flex-wrap items-center justify-between border-t border-night-border/40 gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" class="px-3 py-1.5 rounded-xl bg-night border border-night-border hover:bg-gold hover:text-white hover:border-gold text-xs font-semibold text-gray-200 transition">
                             ✏️ Éditer
                         </button>
                         <button type="button" onclick="AdminApp.selectPropertyAndTab(${p.id}, 'videos')" class="px-2.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 text-xs font-semibold transition" title="Gérer les vidéos">
-                            🎬 Vidéos
+                            🎬 Vidéos (${p.videos_count})
                         </button>
                         <button type="button" onclick="AdminApp.selectPropertyAndTab(${p.id}, 'parking')" class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-400 text-xs font-semibold transition" title="Gérer le stationnement">
                             🅿️ Parking
                         </button>
                     </div>
-                    <div class="flex items-center space-x-1">
-                        <a href="${this.getPortalUrl(p.slug)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition" title="Tester le portail voyageur">
+                    <div class="flex items-center space-x-1.5 ml-auto">
+                        <a href="${this.getPortalUrl(p.slug)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl bg-night border border-night-border hover:bg-white/10 text-gray-400 hover:text-white transition" title="Tester le portail voyageur">
                             👁️
                         </a>
                         <button type="button" onclick="AdminApp.confirmDeleteProperty(${p.id}, '${this.escape(p.name)}')" class="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 transition" title="Supprimer">
@@ -417,7 +430,8 @@ const AdminApp = {
                     </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     },
 
     openPropertyModal(id = 0) {
@@ -624,47 +638,77 @@ const AdminApp = {
         }
 
         container.innerHTML = `
-            <div class="space-y-3" id="sortable-videos">
-                ${list.map((v, index) => `
-                    <div class="p-4 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 flex items-center justify-between gap-3 transition shadow-md" data-id="${v.id}">
-                        <div class="flex items-center space-x-3.5 min-w-0">
-                            <!-- Poignée de déplacement / ordre -->
-                            <div class="flex flex-col space-y-1 text-gray-500">
-                                <button type="button" onclick="AdminApp.moveVideo(${v.id}, -1)" ${index === 0 ? 'disabled class="opacity-20"' : 'class="hover:text-gold"'} title="Monter">▲</button>
-                                <button type="button" onclick="AdminApp.moveVideo(${v.id}, 1)" ${index === list.length - 1 ? 'disabled class="opacity-20"' : 'class="hover:text-gold"'} title="Descendre">▼</button>
-                            </div>
-
-                            <!-- Badge icône -->
-                            <div class="w-11 h-11 rounded-2xl ${this.escape(v.icon_bg_color || 'bg-blue-50')} ${this.escape(v.icon_text_color || 'text-blue-500')} flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
-                                ${this.escape(v.icon || '🎬')}
-                            </div>
-
-                            <div class="min-w-0">
-                                <div class="flex items-center space-x-2">
-                                    <h5 class="text-sm font-bold text-white truncate">${this.escape(v.title_fr)}</h5>
-                                    <span class="text-[10px] text-gray-400 font-mono">#${v.display_order}</span>
+            <div class="space-y-3.5" id="sortable-videos">
+                ${list.map((v, index) => {
+                    const isR2 = (v.video_url && (v.video_url.includes('carredhotes-videos') || v.video_url.includes('r2.dev') || v.video_url.includes('cloudflarestorage')));
+                    return `
+                    <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 transition shadow-lg group" data-id="${v.id}">
+                        <!-- LIGNE 1 : EN-TÊTE / IDENTITÉ DE LA VIDÉO (Pleine largeur sur mobile, titre jamais masqué) -->
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+                                <!-- Poignée d'ordre ▲ / ▼ -->
+                                <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
+                                    <button type="button" onclick="AdminApp.moveVideo(${v.id}, -1)" ${index === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
+                                    <button type="button" onclick="AdminApp.moveVideo(${v.id}, 1)" ${index === list.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
                                 </div>
-                                <p class="text-xs text-gray-400 truncate mt-0.5">🇬🇧 ${this.escape(v.title_en || v.title_fr)}</p>
-                                <p class="text-[10px] text-gray-500 truncate font-mono mt-0.5">${this.escape(v.video_url)}</p>
+
+                                <!-- Badge icône -->
+                                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${this.escape(v.icon_bg_color || 'bg-blue-50')} ${this.escape(v.icon_text_color || 'text-blue-500')} flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 shadow-md">
+                                    ${this.escape(v.icon || '🎬')}
+                                </div>
+
+                                <!-- Titre & métadonnées : S'affiche en pleine largeur sans être écrasé -->
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center flex-wrap gap-2">
+                                        <h5 class="text-sm sm:text-base font-bold text-white group-hover:text-gold transition break-words">
+                                            ${this.escape(v.title_fr)}
+                                        </h5>
+                                        <span class="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 rounded bg-night border border-night-border">#${v.display_order}</span>
+                                        ${isR2 ? '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">☁️ R2</span>' : ''}
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-1 flex items-center gap-1.5 break-words">
+                                        <span>🇬🇧</span>
+                                        <span class="italic">${this.escape(v.title_en || v.title_fr)}</span>
+                                    </p>
+                                    <p class="text-[11px] text-gray-500 font-mono mt-1 truncate" title="${this.escape(v.video_url)}">
+                                        🔗 ${this.escape(v.video_url)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Statut Actif / Masqué en haut à droite -->
+                            <div class="flex-shrink-0">
+                                <button type="button" onclick="AdminApp.toggleVideoStatus(${v.id})" title="Cliquer pour basculer la visibilité"
+                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${v.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
+                                    ${v.active == 1 ? '● Actif' : '○ Masqué'}
+                                </button>
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-2 flex-shrink-0">
-                            <button type="button" onclick="AdminApp.previewVideo('${this.escape(v.video_url)}', '${this.escape(v.title_fr)}')" class="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition" title="Lire la vidéo">
-                                ▶️ Aperçu
+                        <!-- LIGNE 2 : BARRE D'ACTIONS (SÉPARÉE, RESPONSIVE & ADAPTÉE AU MOBILE) -->
+                        <div class="pt-3 mt-3.5 border-t border-night-border/50 flex flex-wrap items-center justify-between gap-2">
+                            <button type="button" onclick="AdminApp.previewVideo('${this.escape(v.video_url)}', '${this.escape(v.title_fr)}')" 
+                                    class="px-3.5 py-1.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-200 transition flex items-center space-x-1.5 shadow-sm">
+                                <span>▶️</span>
+                                <span>Lire la vidéo</span>
                             </button>
-                            <button type="button" onclick="AdminApp.toggleVideoStatus(${v.id})" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${v.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30'}">
-                                ${v.active == 1 ? 'Actif' : 'Masqué'}
-                            </button>
-                            <button type="button" onclick="AdminApp.openVideoModal(${v.id})" class="p-1.5 rounded-lg bg-white/5 hover:bg-gold hover:text-white text-gray-400 transition" title="Modifier">
-                                ✏️
-                            </button>
-                            <button type="button" onclick="AdminApp.confirmDeleteVideo(${v.id}, '${this.escape(v.title_fr)}')" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 transition" title="Supprimer">
-                                🗑️
-                            </button>
+
+                            <div class="flex items-center space-x-2 ml-auto">
+                                <button type="button" onclick="AdminApp.openVideoModal(${v.id})" 
+                                        class="px-3 py-1.5 rounded-xl bg-night border border-night-border hover:bg-gold hover:text-white hover:border-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm" title="Modifier les informations">
+                                    <span>✏️</span>
+                                    <span>Modifier</span>
+                                </button>
+                                <button type="button" onclick="AdminApp.confirmDeleteVideo(${v.id}, '${this.escape(v.title_fr)}')" 
+                                        class="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 text-xs font-semibold text-red-400 transition flex items-center space-x-1 shadow-sm" title="Supprimer la vidéo">
+                                    <span>🗑️</span>
+                                    <span>Supprimer</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
     },
@@ -843,9 +887,9 @@ const AdminApp = {
 
         if (url.includes('drive.google.com')) {
             const embedUrl = url.replace(/\/view.*$/, '/preview');
-            container.innerHTML = `<iframe src="${embedUrl}" class="w-full h-80 rounded-xl border-0" allow="autoplay; fullscreen"></iframe>`;
+            container.innerHTML = `<iframe src="${embedUrl}" class="w-full h-64 sm:h-80 rounded-xl border-0" allow="autoplay; fullscreen"></iframe>`;
         } else {
-            container.innerHTML = `<video controls autoplay class="w-full max-h-96 rounded-xl bg-black"><source src="${this.escape(url)}" type="video/mp4">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
+            container.innerHTML = `<video controls autoplay playsinline class="w-full max-h-[60vh] sm:max-h-96 rounded-xl bg-black shadow-inner"><source src="${this.escape(url)}" type="video/mp4">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
         }
 
         modal.classList.remove('hidden');
@@ -1457,42 +1501,76 @@ const AdminApp = {
         }
 
         container.innerHTML = `
-            <div class="space-y-3">
+            <div class="space-y-3.5">
                 ${list.map((loc, idx) => {
-                    const badge = catLabels[loc.category] || { label: loc.category, color: 'bg-gray-500/10 text-gray-400' };
+                    const badge = catLabels[loc.category] || { label: loc.category, color: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
+                    const hasAddress = (loc.address && loc.address.trim().length > 0);
                     return `
-                        <div class="p-4 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 flex items-center justify-between gap-3 transition shadow-md">
-                            <div class="flex items-center space-x-3.5 min-w-0">
-                                <div class="flex flex-col space-y-1 text-gray-500">
-                                    <button type="button" onclick="AdminApp.moveLocation(${loc.id}, -1)" ${idx === 0 ? 'disabled class="opacity-20"' : 'class="hover:text-gold"'} title="Monter">▲</button>
-                                    <button type="button" onclick="AdminApp.moveLocation(${loc.id}, 1)" ${idx === list.length - 1 ? 'disabled class="opacity-20"' : 'class="hover:text-gold"'} title="Descendre">▼</button>
+                        <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 transition shadow-lg group">
+                            <!-- LIGNE 1 : EN-TÊTE / NOM DE L'EMPLACEMENT & STATUT (S'affiche en pleine largeur sans être écrasé) -->
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+                                    <!-- Poignée d'ordre ▲ / ▼ -->
+                                    <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
+                                        <button type="button" onclick="AdminApp.moveLocation(${loc.id}, -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
+                                        <button type="button" onclick="AdminApp.moveLocation(${loc.id}, 1)" ${idx === list.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center flex-wrap gap-2 mb-1">
+                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badge.color}">${badge.label}</span>
+                                            <h5 class="text-sm sm:text-base font-bold text-white group-hover:text-gold transition break-words">
+                                                ${this.escape(loc.name_fr)}
+                                            </h5>
+                                        </div>
+                                        <p class="text-xs text-gray-400 flex items-center gap-1.5 break-words">
+                                            <span>🇬🇧</span>
+                                            <span class="italic">${this.escape(loc.name_en || loc.name_fr)}</span>
+                                        </p>
+                                        
+                                        <!-- Métriques claires (temps à pied, transports, capacité, adresse) -->
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                                            ${loc.walking_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚶 ${this.escape(loc.walking_time_fr)}</span>` : ''}
+                                            ${loc.transit_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚇 ${this.escape(loc.transit_time_fr)}</span>` : ''}
+                                            ${loc.capacity ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚗 ${this.escape(loc.capacity)}</span>` : ''}
+                                            ${loc.address ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-400 truncate max-w-xs" title="${this.escape(loc.address)}">📍 ${this.escape(loc.address)}</span>` : ''}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="min-w-0">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badge.color}">${badge.label}</span>
-                                        <h5 class="text-sm font-bold text-white truncate">${this.escape(loc.name_fr)}</h5>
-                                    </div>
-                                    <p class="text-xs text-gray-400 truncate mt-0.5">🇬🇧 ${this.escape(loc.name_en || loc.name_fr)}</p>
-                                    <p class="text-xs text-gray-300 mt-1 flex flex-wrap gap-2 text-[11px]">
-                                        ${loc.walking_time_fr ? `<span>🚶 ${this.escape(loc.walking_time_fr)}</span>` : ''}
-                                        ${loc.transit_time_fr ? `<span>🚇 ${this.escape(loc.transit_time_fr)}</span>` : ''}
-                                        ${loc.capacity ? `<span>🚗 ${this.escape(loc.capacity)}</span>` : ''}
-                                        ${loc.address ? `<span class="text-gray-500">📍 ${this.escape(loc.address)}</span>` : ''}
-                                    </p>
+                                <!-- Statut Actif / Masqué -->
+                                <div class="flex-shrink-0">
+                                    <button type="button" onclick="AdminApp.toggleLocationStatus(${loc.id})" title="Cliquer pour basculer la visibilité"
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${loc.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
+                                        ${loc.active == 1 ? '● Actif' : '○ Masqué'}
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="flex items-center space-x-2 flex-shrink-0">
-                                <button type="button" onclick="AdminApp.toggleLocationStatus(${loc.id})" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${loc.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30'}">
-                                    ${loc.active == 1 ? 'Actif' : 'Masqué'}
-                                </button>
-                                <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" class="p-1.5 rounded-lg bg-white/5 hover:bg-gold hover:text-white text-gray-400 transition" title="Modifier">
-                                    ✏️
-                                </button>
-                                <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id}, '${this.escape(loc.name_fr)}')" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 transition" title="Supprimer">
-                                    🗑️
-                                </button>
+                            <!-- LIGNE 2 : BARRE D'ACTIONS -->
+                            <div class="pt-3 mt-3.5 border-t border-night-border/50 flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                    ${hasAddress ? `
+                                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" rel="noopener noreferrer"
+                                           class="px-3.5 py-1.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition inline-flex items-center space-x-1.5 shadow-sm">
+                                            <span>🗺️</span>
+                                            <span>Ouvrir sur Maps</span>
+                                        </a>
+                                    ` : '<span class="text-[11px] text-gray-500 italic">Pas d\'adresse renseignée</span>'}
+                                </div>
+
+                                <div class="flex items-center space-x-2 ml-auto">
+                                    <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" 
+                                            class="px-3 py-1.5 rounded-xl bg-night border border-night-border hover:bg-gold hover:text-white hover:border-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm" title="Modifier l'emplacement">
+                                        <span>✏️</span>
+                                        <span>Modifier</span>
+                                    </button>
+                                    <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id}, '${this.escape(loc.name_fr)}')" 
+                                            class="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 text-xs font-semibold text-red-400 transition flex items-center space-x-1 shadow-sm" title="Supprimer cet emplacement">
+                                        <span>🗑️</span>
+                                        <span>Supprimer</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
