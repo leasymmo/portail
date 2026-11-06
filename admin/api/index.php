@@ -423,6 +423,35 @@ try {
             ], JSON_UNESCAPED_UNICODE);
             exit;
 
+        case 'translate_preview':
+            $type = $body['type'] ?? ($_POST['type'] ?? '');
+            $inputData = $body['data'] ?? ($_POST['data'] ?? []);
+            if (!is_array($inputData)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Données de formulaire invalides.']);
+                exit;
+            }
+
+            $db = \Cdh\Portal\Database::getConnection();
+            require_once dirname(__DIR__, 2) . '/src/Admin/AiTranslator.php';
+
+            if ($type === 'parking_general') {
+                $result = \Cdh\Portal\Admin\AiTranslator::translateParkingGeneral($db, $inputData, true, true);
+            } elseif ($type === 'parking_location') {
+                $result = \Cdh\Portal\Admin\AiTranslator::translateParkingLocation($db, $inputData, true, true);
+            } else {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Type de traduction non supporté : ' . $type]);
+                exit;
+            }
+
+            echo json_encode([
+                'ok'   => true,
+                'type' => $type,
+                'data' => $result
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+
         default:
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'Action inconnue : ' . $action]);

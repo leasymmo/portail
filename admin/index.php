@@ -453,40 +453,71 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 <input type="text" id="parking-tcl-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Parkings relais Laurent Bonnevay et La Soie situés à 10-15 min en Métro A.">
                             </div>
 
-                            <!-- CHAMPS ANGLAIS MASQUÉS (Alimentés automatiquement par l'IA lors de la sauvegarde) -->
-                            <input type="hidden" id="parking-intro-en">
-                            <input type="hidden" id="parking-rule-en">
-                            <input type="hidden" id="parking-free-notes-en">
-                            <input type="hidden" id="parking-street-info-en">
-                            <input type="hidden" id="parking-street-sched-en">
-                            <input type="hidden" id="parking-street-rates-en">
-                            <input type="hidden" id="parking-tcl-cond-en">
-                            <input type="hidden" id="parking-tcl-notes-en">
-
-                            <!-- Volet accordéon replié : Aperçu de la traduction anglaise en base -->
-                            <details class="rounded-xl border border-night-border/70 bg-night/40 text-xs group">
-                                <summary class="p-3 font-semibold text-gray-400 hover:text-white cursor-pointer select-none flex items-center justify-between">
-                                    <span class="flex items-center space-x-2">
-                                        <span>🇬🇧</span>
-                                        <span>Consulter l'aperçu de la version anglaise (générée par l'IA)</span>
-                                    </span>
-                                    <span class="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
-                                </summary>
-                                <div id="parking-general-en-preview" class="p-4 border-t border-night-border/70 space-y-3 text-gray-300 text-xs">
-                                    <p class="text-[11px] text-gray-400 italic">Aucune traduction pour l'instant ou sélectionnez un logement.</p>
+                            <!-- BOÎTE D'APERÇU & VÉRIFICATION DE LA VERSION ANGLAISE (Révélée par le bouton de traduction) -->
+                            <div id="parking-general-en-box" class="rounded-2xl border border-gold/40 bg-gold/5 p-4 sm:p-5 space-y-4 hidden shadow-inner">
+                                <div class="flex items-center justify-between border-b border-gold/20 pb-3">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-base">🇬🇧</span>
+                                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Aperçu & Vérification de la version anglaise (IA)</h4>
+                                        <span class="text-[10px] bg-gold/20 text-gold-light px-2 py-0.5 rounded-full border border-gold/30 font-semibold">Modifiable</span>
+                                    </div>
+                                    <button type="button" onclick="document.getElementById('parking-general-en-box').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs">Masquer ✕</button>
                                 </div>
-                            </details>
+                                <p class="text-[11px] text-gray-300">Vous pouvez relire et ajuster manuellement les textes traduits par l'IA ci-dessous avant d'enregistrer.</p>
 
-                            <div class="pt-4 flex items-center justify-between border-t border-night-border/50">
-                                <span class="text-[11px] text-gray-400 flex items-center gap-1.5">
-                                    <span>⚡</span>
-                                    <span>Traduction IA instantanée à l'enregistrement</span>
-                                </span>
-                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-2">
-                                    <span>💾</span>
-                                    <span>Enregistrer & Traduire</span>
-                                </button>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Introduction (English)</label>
+                                        <textarea id="parking-intro-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-amber-400 mb-1">Alerte impérative (English)</label>
+                                        <textarea id="parking-rule-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Notes places gratuites (English)</label>
+                                            <input type="text" id="parking-free-notes-en" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Horaires payants voirie (English)</label>
+                                            <input type="text" id="parking-street-sched-en" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Périmètre voirie payante (English)</label>
+                                        <textarea id="parking-street-info-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Grille tarifaire voirie (English)</label>
+                                        <textarea id="parking-street-rates-en" rows="3" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Conditions gratuité TCL (English)</label>
+                                        <textarea id="parking-tcl-cond-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Lignes & accès TCL (English)</label>
+                                        <input type="text" id="parking-tcl-notes-en" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                    </div>
+                                </div>
                             </div>
+
+                            <div class="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-night-border/50">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button" id="btn-preview-translate-general" onclick="AdminApp.previewTranslateGeneral()" class="px-4 py-2.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold-light hover:text-white font-bold text-xs transition flex items-center justify-center space-x-2">
+                                        <span id="btn-preview-general-icon">✨</span>
+                                        <span id="btn-preview-general-text">Traduire en anglais & Vérifier l'aperçu</span>
+                                    </button>
+                                    <button type="button" onclick="AdminApp.toggleEnglishBox('parking-general-en-box')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Afficher ou masquer manuellement les champs anglais">
+                                        <span>🇬🇧</span>
+                                        <span class="hidden sm:inline">Aperçu EN</span>
+                                    </button>
+                                </div>
+                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center justify-center space-x-2">
+                                    <span>💾</span>
+                                    <span>Enregistrer (FR + EN)</span>
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -774,22 +805,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <input type="hidden" id="location-id" value="0">
                 <input type="hidden" id="location-property-id" value="0">
 
-                <!-- CHAMPS ANGLAIS MASQUÉS (remplis automatiquement par l'IA lors de la sauvegarde) -->
-                <input type="hidden" id="location-name-en">
-                <input type="hidden" id="location-walking-en">
-                <input type="hidden" id="location-transit-en">
-                <input type="hidden" id="location-hours-en">
-                <input type="hidden" id="location-rates-en">
-                <input type="hidden" id="location-vehicles-en">
-                <input type="hidden" id="location-reach-en">
-                <input type="hidden" id="location-notes-en">
-
-                <!-- Bannière rappel IA -->
-                <div class="bg-gold/10 border border-gold/30 rounded-xl p-3 flex items-center space-x-2 text-xs text-gold-light">
-                    <span>✨</span>
-                    <span>Traduction bilingue : Les équivalents anglais seront générés automatiquement par l'IA lors de l'enregistrement.</span>
-                </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Catégorie *</label>
@@ -887,6 +902,56 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                            class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                 </div>
 
+                <!-- BOÎTE D'APERÇU & VÉRIFICATION DE LA VERSION ANGLAISE -->
+                <div id="location-en-box" class="rounded-2xl border border-gold/40 bg-gold/5 p-4 space-y-3 hidden shadow-inner">
+                    <div class="flex items-center justify-between border-b border-gold/20 pb-2.5">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm">🇬🇧</span>
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Aperçu & Vérification en anglais (IA)</h4>
+                            <span class="text-[10px] bg-gold/20 text-gold-light px-2 py-0.5 rounded-full border border-gold/30 font-semibold">Modifiable</span>
+                        </div>
+                        <button type="button" onclick="document.getElementById('location-en-box').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs">Masquer ✕</button>
+                    </div>
+                    <p class="text-[11px] text-gray-300">Modifiez les textes traduits par l'IA si nécessaire avant d'enregistrer.</p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Nom du parking / rue (English)</label>
+                            <input type="text" id="location-name-en" placeholder="Street Name or Parking" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-gray-300 mb-1">Temps de marche (English)</label>
+                                <input type="text" id="location-walking-en" placeholder="Approx. 5 min walk" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-gray-300 mb-1">Temps transports TCL (English)</label>
+                                <input type="text" id="location-transit-en" placeholder="Approx. 10 min by Metro A" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Horaires (English)</label>
+                            <input type="text" id="location-hours-en" placeholder="Open 24/7" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Tarifs (English)</label>
+                            <textarea id="location-rates-en" rows="2" placeholder="15 min free then €2/h" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Véhicules adaptés (English)</label>
+                            <input type="text" id="location-vehicles-en" placeholder="City cars, SUVs, sedans" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Itinéraire retour (English)</label>
+                            <textarea id="location-reach-en" rows="2" placeholder="Take Metro A to Flachet..." class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-300 mb-1">Notes & remarques (English)</label>
+                            <input type="text" id="location-notes-en" placeholder="Ideal for quick luggage unloading." class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-between pt-2">
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre d'affichage</label>
@@ -898,9 +963,21 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-night-border flex justify-end space-x-2">
-                    <button type="button" onclick="AdminApp.closeLocationModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Annuler</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer</button>
+                <div class="pt-4 border-t border-night-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" id="btn-preview-translate-loc" onclick="AdminApp.previewTranslateLocation()" class="px-3.5 py-2.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold-light hover:text-white font-bold text-xs transition flex items-center justify-center space-x-1.5">
+                            <span id="btn-preview-loc-icon">✨</span>
+                            <span id="btn-preview-loc-text">Traduire en anglais & Vérifier l'aperçu</span>
+                        </button>
+                        <button type="button" onclick="AdminApp.toggleEnglishBox('location-en-box')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Afficher ou masquer manuellement les champs anglais">
+                            <span>🇬🇧</span>
+                            <span class="hidden sm:inline">Aperçu EN</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2 justify-end">
+                        <button type="button" onclick="AdminApp.closeLocationModal()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Annuler</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1122,6 +1199,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.2"></script>
+    <script src="assets/js/admin.js?v=1.3"></script>
 </body>
 </html>

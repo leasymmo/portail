@@ -777,29 +777,85 @@ const AdminApp = {
         document.getElementById('parking-tcl-notes-fr').value = gen.tcl_notes_fr || '';
         document.getElementById('parking-tcl-notes-en').value = gen.tcl_notes_en || '';
 
-        this.renderEnglishGeneralPreview(gen);
+        const hasEn = !!(gen.intro_en || gen.important_rule_en || gen.free_parking_notes_en || gen.street_parking_info_en);
+        const box = document.getElementById('parking-general-en-box');
+        if (box) {
+            if (hasEn) {
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        }
     },
 
-    renderEnglishGeneralPreview(gen) {
-        const preview = document.getElementById('parking-general-en-preview');
-        if (!preview) return;
+    toggleEnglishBox(boxId) {
+        const box = document.getElementById(boxId);
+        if (box) {
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    },
 
-        if (!gen || (!gen.intro_en && !gen.important_rule_en && !gen.street_parking_info_en && !gen.tcl_conditions_en)) {
-            preview.innerHTML = `<p class="text-[11px] text-gray-400 italic">Aucune traduction anglaise enregistrée pour l'instant. Saisissez votre texte en français puis enregistrez pour que l'IA génère la traduction.</p>`;
+    async previewTranslateGeneral() {
+        const data = {
+            intro_fr: document.getElementById('parking-intro-fr').value.trim(),
+            important_rule_fr: document.getElementById('parking-rule-fr').value.trim(),
+            free_parking_notes_fr: document.getElementById('parking-free-notes-fr').value.trim(),
+            street_parking_info_fr: document.getElementById('parking-street-info-fr').value.trim(),
+            street_parking_schedule_fr: document.getElementById('parking-street-sched-fr').value.trim(),
+            street_parking_rates_fr: document.getElementById('parking-street-rates-fr').value.trim(),
+            tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim(),
+            tcl_notes_fr: document.getElementById('parking-tcl-notes-fr').value.trim()
+        };
+
+        const hasContent = Object.values(data).some(v => v.length > 0);
+        if (!hasContent) {
+            this.showToast('Veuillez renseigner au moins un champ en français avant de traduire.', 'warning');
             return;
         }
 
-        const items = [];
-        if (gen.intro_en) items.push(`<div><strong class="text-gold block mb-0.5">Introduction (EN) :</strong><span>${this.escape(gen.intro_en)}</span></div>`);
-        if (gen.important_rule_en) items.push(`<div><strong class="text-amber-400 block mb-0.5">Alerte / Règle d'or (EN) :</strong><span>${this.escape(gen.important_rule_en)}</span></div>`);
-        if (gen.free_parking_notes_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Notes places gratuites (EN) :</strong><span>${this.escape(gen.free_parking_notes_en)}</span></div>`);
-        if (gen.street_parking_info_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Voirie payante (EN) :</strong><span>${this.escape(gen.street_parking_info_en)}</span></div>`);
-        if (gen.street_parking_schedule_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Horaires payants (EN) :</strong><span>${this.escape(gen.street_parking_schedule_en)}</span></div>`);
-        if (gen.street_parking_rates_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Tarifs voirie (EN) :</strong><pre class="font-mono text-[11px] text-gray-300 whitespace-pre-wrap">${this.escape(gen.street_parking_rates_en)}</pre></div>`);
-        if (gen.tcl_conditions_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Conditions TCL P+R (EN) :</strong><span>${this.escape(gen.tcl_conditions_en)}</span></div>`);
-        if (gen.tcl_notes_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Lignes & accès TCL (EN) :</strong><span>${this.escape(gen.tcl_notes_en)}</span></div>`);
+        const btn = document.getElementById('btn-preview-translate-general');
+        const btnIcon = document.getElementById('btn-preview-general-icon');
+        const btnText = document.getElementById('btn-preview-general-text');
+        const origIcon = btnIcon ? btnIcon.textContent : '✨';
+        const origText = btnText ? btnText.textContent : 'Traduire en anglais & Vérifier l\'aperçu';
 
-        preview.innerHTML = items.join('');
+        try {
+            if (btn) btn.disabled = true;
+            if (btnIcon) btnIcon.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+            if (btnText) btnText.textContent = 'Traduction IA en cours...';
+
+            const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                type: 'parking_general',
+                data: data
+            });
+
+            if (res.data) {
+                if (res.data.intro_en !== undefined) document.getElementById('parking-intro-en').value = res.data.intro_en;
+                if (res.data.important_rule_en !== undefined) document.getElementById('parking-rule-en').value = res.data.important_rule_en;
+                if (res.data.free_parking_notes_en !== undefined) document.getElementById('parking-free-notes-en').value = res.data.free_parking_notes_en;
+                if (res.data.street_parking_info_en !== undefined) document.getElementById('parking-street-info-en').value = res.data.street_parking_info_en;
+                if (res.data.street_parking_schedule_en !== undefined) document.getElementById('parking-street-sched-en').value = res.data.street_parking_schedule_en;
+                if (res.data.street_parking_rates_en !== undefined) document.getElementById('parking-street-rates-en').value = res.data.street_parking_rates_en;
+                if (res.data.tcl_conditions_en !== undefined) document.getElementById('parking-tcl-cond-en').value = res.data.tcl_conditions_en;
+                if (res.data.tcl_notes_en !== undefined) document.getElementById('parking-tcl-notes-en').value = res.data.tcl_notes_en;
+            }
+
+            const box = document.getElementById('parking-general-en-box');
+            if (box) {
+                box.classList.remove('hidden');
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            this.showToast('Traduction anglaise générée ! Vous pouvez relire et ajuster les champs ci-dessous.', 'success');
+        } catch (err) {
+            this.showToast('Erreur de traduction : ' + err.message, 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+            if (btnIcon) btnIcon.textContent = origIcon;
+            if (btnText) btnText.textContent = origText;
+        }
     },
 
     async saveParkingGeneral(e) {
@@ -830,9 +886,9 @@ const AdminApp = {
                 property_id: propertyId,
                 general: data
             });
-            this.showToast(res.message || 'Règles générales enregistrées et traduites par IA !', 'success');
+            this.showToast(res.message || 'Règles générales enregistrées !', 'success');
             await this.loadInitialData();
-            await this.loadParkingData(propertyId);
+            await this.fetchAndRenderParking(propertyId);
         } catch (err) {
             this.showToast(err.message, 'error');
         }
@@ -954,11 +1010,21 @@ const AdminApp = {
             document.getElementById('location-notes-en').value = loc.notes_en || '';
             document.getElementById('location-order').value = loc.display_order || 0;
             document.getElementById('location-active').checked = (loc.active == 1);
+
+            const hasEn = !!(loc.name_en || loc.walking_time_en || loc.rates_en || loc.opening_hours_en || loc.notes_en);
+            const box = document.getElementById('location-en-box');
+            if (box) {
+                if (hasEn) box.classList.remove('hidden');
+                else box.classList.add('hidden');
+            }
         } else {
             titleEl.textContent = 'Ajouter un emplacement de stationnement';
             document.getElementById('location-category').value = 'free_street';
             document.getElementById('location-order').value = this.state.currentParkingLocations.length + 1;
             document.getElementById('location-active').checked = true;
+
+            const box = document.getElementById('location-en-box');
+            if (box) box.classList.add('hidden');
         }
 
         modal.classList.remove('hidden');
@@ -967,6 +1033,68 @@ const AdminApp = {
     closeLocationModal() {
         const modal = document.getElementById('modal-location-form');
         if (modal) modal.classList.add('hidden');
+    },
+
+    async previewTranslateLocation() {
+        const nameFr = document.getElementById('location-name-fr').value.trim();
+        if (!nameFr) {
+            this.showToast('Veuillez renseigner au moins le nom du lieu en français.', 'warning');
+            return;
+        }
+
+        const data = {
+            name_fr: nameFr,
+            category: document.getElementById('location-category').value,
+            address: document.getElementById('location-address').value.trim(),
+            walking_time_fr: document.getElementById('location-walking-fr').value.trim(),
+            transit_time_fr: document.getElementById('location-transit-fr').value.trim(),
+            opening_hours_fr: document.getElementById('location-hours-fr').value.trim(),
+            rates_fr: document.getElementById('location-rates-fr').value.trim(),
+            suitable_vehicles_fr: document.getElementById('location-vehicles-fr').value.trim(),
+            how_to_reach_fr: document.getElementById('location-reach-fr').value.trim(),
+            notes_fr: document.getElementById('location-notes-fr').value.trim()
+        };
+
+        const btn = document.getElementById('btn-preview-translate-loc');
+        const btnIcon = document.getElementById('btn-preview-loc-icon');
+        const btnText = document.getElementById('btn-preview-loc-text');
+        const origIcon = btnIcon ? btnIcon.textContent : '✨';
+        const origText = btnText ? btnText.textContent : 'Traduire en anglais & Vérifier l\'aperçu';
+
+        try {
+            if (btn) btn.disabled = true;
+            if (btnIcon) btnIcon.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+            if (btnText) btnText.textContent = 'Traduction IA en cours...';
+
+            const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                type: 'parking_location',
+                data: data
+            });
+
+            if (res.data) {
+                if (res.data.name_en !== undefined) document.getElementById('location-name-en').value = res.data.name_en;
+                if (res.data.walking_time_en !== undefined) document.getElementById('location-walking-en').value = res.data.walking_time_en;
+                if (res.data.transit_time_en !== undefined) document.getElementById('location-transit-en').value = res.data.transit_time_en;
+                if (res.data.opening_hours_en !== undefined) document.getElementById('location-hours-en').value = res.data.opening_hours_en;
+                if (res.data.rates_en !== undefined) document.getElementById('location-rates-en').value = res.data.rates_en;
+                if (res.data.suitable_vehicles_en !== undefined) document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
+                if (res.data.how_to_reach_en !== undefined) document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
+                if (res.data.notes_en !== undefined) document.getElementById('location-notes-en').value = res.data.notes_en;
+            }
+
+            const box = document.getElementById('location-en-box');
+            if (box) {
+                box.classList.remove('hidden');
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            this.showToast('Traduction anglaise générée ! Vous pouvez relire et ajuster les champs ci-dessous.', 'success');
+        } catch (err) {
+            this.showToast('Erreur de traduction : ' + err.message, 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+            if (btnIcon) btnIcon.textContent = origIcon;
+            if (btnText) btnText.textContent = origText;
+        }
     },
 
     async saveLocation(e) {

@@ -281,8 +281,9 @@ class AiTranslator
     /**
      * Traduit les champs de règles générales de stationnement
      * Reçoit le tableau complet (avec champs *_fr) et remplit les versions *_en
+     * Si $force = false, les champs *_en déjà renseignés (ex: vérifiés/modifiés manuellement) sont préservés.
      */
-    public static function translateParkingGeneral(PDO $db, array $data): array
+    public static function translateParkingGeneral(PDO $db, array $data, bool $force = false, bool $throwOnError = false): array
     {
         $fieldsToTranslate = [
             'intro'                  => $data['intro_fr'] ?? null,
@@ -297,6 +298,11 @@ class AiTranslator
 
         $dict = [];
         foreach ($fieldsToTranslate as $key => $val) {
+            $enKey = $key . '_en';
+            // Si non forcé et déjà renseigné, on conserve la valeur existante
+            if (!$force && !empty($data[$enKey]) && trim((string)$data[$enKey]) !== '') {
+                continue;
+            }
             if ($val !== null && trim((string)$val) !== '') {
                 $dict[$key] = trim((string)$val);
             }
@@ -306,7 +312,7 @@ class AiTranslator
             return $data;
         }
 
-        $translated = self::translateDictWithDbConfig($db, $dict, 'Règles générales de stationnement');
+        $translated = self::translateDictWithDbConfig($db, $dict, 'Règles générales de stationnement', $throwOnError);
         if (!empty($translated)) {
             foreach ($translated as $key => $enVal) {
                 $enKey = $key . '_en';
@@ -320,8 +326,9 @@ class AiTranslator
     /**
      * Traduit les champs d'un lieu de stationnement
      * Reçoit le tableau (avec champs *_fr) et remplit les versions *_en
+     * Si $force = false, les champs *_en déjà renseignés sont préservés.
      */
-    public static function translateParkingLocation(PDO $db, array $data): array
+    public static function translateParkingLocation(PDO $db, array $data, bool $force = false, bool $throwOnError = false): array
     {
         $fieldsToTranslate = [
             'name'             => $data['name_fr'] ?? null,
@@ -336,6 +343,10 @@ class AiTranslator
 
         $dict = [];
         foreach ($fieldsToTranslate as $key => $val) {
+            $enKey = $key . '_en';
+            if (!$force && !empty($data[$enKey]) && trim((string)$data[$enKey]) !== '') {
+                continue;
+            }
             if ($val !== null && trim((string)$val) !== '') {
                 $dict[$key] = trim((string)$val);
             }
@@ -345,7 +356,7 @@ class AiTranslator
             return $data;
         }
 
-        $translated = self::translateDictWithDbConfig($db, $dict, 'Fiche détaillée de lieu de stationnement');
+        $translated = self::translateDictWithDbConfig($db, $dict, 'Fiche détaillée de lieu de stationnement', $throwOnError);
         if (!empty($translated)) {
             foreach ($translated as $key => $enVal) {
                 $enKey = $key . '_en';
@@ -359,7 +370,7 @@ class AiTranslator
     /**
      * Récupère la config IA depuis la table admin_settings et traduit le dictionnaire
      */
-    public static function translateDictWithDbConfig(PDO $db, array $dict, string $context = ''): array
+    public static function translateDictWithDbConfig(PDO $db, array $dict, string $context = '', bool $throwOnError = false): array
     {
         try {
             $stmt = $db->query('SELECT setting_key, setting_value FROM admin_settings WHERE setting_key LIKE "ai_%"');
@@ -375,13 +386,18 @@ class AiTranslator
             $model = $settings[$modelKey] ?? (self::DEFAULT_MODELS[$provider] ?? null);
 
             if (empty($apiKey)) {
-                // Pas de clé configurée : on journalise un avis sans bloquer l'enregistrement
+                if ($throwOnError) {
+                    throw new \RuntimeException("Aucune clé API configurée pour " . strtoupper($provider) . ". Rendez-vous dans la configuration IA pour saisir votre clé.");
+                }
                 return [];
             }
 
             return self::callProvider($provider, $apiKey, $model, $dict, $context);
         } catch (Throwable $e) {
             error_log('[AiTranslator] Erreur lors de la traduction : ' . $e->getMessage());
+            if ($throwOnError) {
+                throw $e;
+            }
             return [];
         }
     }
