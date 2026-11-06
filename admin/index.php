@@ -964,7 +964,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 3. MODALE LECTEUR VIDÉO APERÇU -->
-    <div id="modal-video-preview" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+    <div id="modal-video-preview" class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto" onclick="if(event.target === this) AdminApp.closeVideoPreview()">
         <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-5 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-3 mb-4">
                 <h4 id="video-preview-title" class="text-sm font-bold text-white truncate">Aperçu de la vidéo</h4>
@@ -1489,6 +1489,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=2.4"></script>
+    <script src="assets/js/admin.js?v=2.5"></script>
 </body>
 </html>

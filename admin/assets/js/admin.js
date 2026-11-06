@@ -1311,23 +1311,37 @@ const AdminApp = {
         const titleEl = document.getElementById('video-preview-title');
         if (!modal || !container) return;
 
-        titleEl.textContent = title;
+        titleEl.textContent = title || 'Aperçu vidéo';
 
         if (url.includes('drive.google.com')) {
             const embedUrl = url.replace(/\/view.*$/, '/preview');
-            container.innerHTML = `<iframe src="${embedUrl}" class="w-full h-64 sm:h-80 rounded-xl border-0" allow="autoplay; fullscreen"></iframe>`;
+            container.innerHTML = `<iframe src="${this.escape(embedUrl)}" class="w-full h-64 sm:h-80 rounded-xl border-0" allow="autoplay; fullscreen"></iframe>`;
         } else {
-            container.innerHTML = `<video controls autoplay playsinline class="w-full max-h-[60vh] sm:max-h-96 rounded-xl bg-black shadow-inner"><source src="${this.escape(url)}" type="video/mp4">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
+            container.innerHTML = `
+                <video src="${this.escape(url)}" controls autoplay playsinline class="w-full max-h-[70vh] rounded-xl bg-black shadow-inner">
+                    Votre navigateur ne prend pas en charge la lecture de cette vidéo.
+                </video>
+            `;
         }
 
         modal.classList.remove('hidden');
     },
 
+    playVideoPreview(title, url) {
+        this.previewVideo(url, title);
+    },
+
     closeVideoPreview() {
         const modal = document.getElementById('modal-video-preview');
         const container = document.getElementById('video-preview-player-container');
+        if (container) {
+            const video = container.querySelector('video');
+            if (video) {
+                try { video.pause(); video.src = ''; } catch(e) {}
+            }
+            container.innerHTML = '';
+        }
         if (modal) modal.classList.add('hidden');
-        if (container) container.innerHTML = '';
     },
 
     // --------------------------------------------------------------------------
@@ -3422,31 +3436,7 @@ const AdminApp = {
             return;
         }
         const titleFr = document.getElementById('video-title-fr')?.value || 'Aperçu vidéo';
-        this.playVideoPreview(titleFr, url);
-    },
-
-    playVideoPreview(title, url) {
-        const modal = document.getElementById('modal-video-preview');
-        const titleEl = document.getElementById('video-preview-title');
-        const container = document.getElementById('video-preview-player-container');
-        if (!modal || !container) return;
-
-        if (titleEl) titleEl.textContent = title;
-        if (this.isGoogleDriveUrl(url)) {
-            const embed = this.getGoogleDriveEmbedUrl(url);
-            container.innerHTML = `<iframe src="${this.escape(embed)}" class="w-full aspect-video border-0" allow="autoplay; fullscreen"></iframe>`;
-        } else {
-            container.innerHTML = `<video controls autoplay class="w-full max-h-[70vh] bg-black rounded-xl"><source src="${this.escape(url)}">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
-        }
-
-        modal.classList.remove('hidden');
-    },
-
-    closeVideoPreview() {
-        const modal = document.getElementById('modal-video-preview');
-        const container = document.getElementById('video-preview-player-container');
-        if (container) container.innerHTML = '';
-        if (modal) modal.classList.add('hidden');
+        this.previewVideo(url, titleFr);
     },
 
     formatBytes(bytes) {
