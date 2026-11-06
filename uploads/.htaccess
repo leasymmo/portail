@@ -1,0 +1,34 @@
+# ==============================================================================
+# SÉCURITÉ DU RÉPERTOIRE D'UPLOADS (CARRÉ D'HÔTES)
+# ==============================================================================
+
+# Interdire l'exécution de tout script (PHP, CGI, Perl, Python, Shell...)
+<FilesMatch "(?i)\.(php|phtml|php3|php4|php5|php7|php8|phps|pl|py|cgi|asp|sh|bash|exe|html|htm|js)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Désactiver les moteurs de script
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Autoriser uniquement les types de médias légitimes (PDF, Vidéos, Images)
+<FilesMatch "(?i)\.(pdf|mp4|webm|mov|m4v|jpg|jpeg|png|webp|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Autoriser les requêtes partielles (Range) pour le streaming fluide des vidéos MP4
+<IfModule mod_headers.c>
+    Header set Accept-Ranges bytes
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
+
+Options -Indexes -ExecCGI

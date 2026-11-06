@@ -39,7 +39,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             }
         };
     </script>
-    <link rel="stylesheet" href="assets/css/admin.css?v=1.1">
+    <link rel="stylesheet" href="assets/css/admin.css?v=1.2">
 </head>
 <body class="bg-night text-gray-100 h-screen max-h-screen flex flex-col antialiased selection:bg-gold selection:text-white overflow-hidden">
 
@@ -112,12 +112,12 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                     <div class="pt-2 border-t border-night-border/50 my-1"></div>
 
-                    <button type="button" onclick="AdminApp.openAiSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group" title="Configuration IA (Gemini, ChatGPT, Claude)">
+                    <button type="button" onclick="AdminApp.openSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group" title="Configuration (IA, R2 & Stockage)">
                         <div class="flex items-center space-x-3 overflow-hidden">
-                            <span class="text-base flex-shrink-0 group-hover:scale-110 transition-transform">✨</span>
-                            <span class="sidebar-text-label text-gold-light group-hover:text-gold font-bold truncate">Traduction IA</span>
+                            <span class="text-base flex-shrink-0 group-hover:scale-110 transition-transform">⚙️</span>
+                            <span class="sidebar-text-label text-gold-light group-hover:text-gold font-bold truncate">Configuration</span>
                         </div>
-                        <span id="nav-ai-provider-badge" class="sidebar-badge text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-md bg-gold/15 text-gold border border-gold/30 flex-shrink-0">Gemini</span>
+                        <span id="nav-ai-provider-badge" class="sidebar-badge text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-md bg-gold/15 text-gold border border-gold/30 flex-shrink-0">IA & Médias</span>
                     </button>
                 </nav>
             </div>
@@ -716,16 +716,128 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
                 </div>
 
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Lien Guide de bienvenue PDF (Français)</label>
-                        <input type="url" id="property-guide-fr" placeholder="https://guides.carredhotes.fr/bataille/guide-fr.pdf"
-                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                <!-- Livrets d'accueil & Guides Voyageurs (Téléversement direct PDF ou URL) -->
+                <div class="space-y-3 p-4 rounded-2xl bg-night/50 border border-night-border/60">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-white flex items-center space-x-2">
+                            <span>📄</span>
+                            <span>Livrets d'accueil (Guides PDF)</span>
+                        </label>
+                        <span class="text-[10px] text-gray-400">PDF direct ou Cloudflare R2</span>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Lien Guide de bienvenue PDF (Anglais)</label>
-                        <input type="url" id="property-guide-en" placeholder="https://guides.carredhotes.fr/bataille/guide-en.pdf"
-                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+
+                    <!-- Guide FR -->
+                    <div class="space-y-1.5 p-3 rounded-xl bg-night border border-night-border/80">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-200 flex items-center space-x-1.5">
+                                <span>🇫🇷</span>
+                                <span>Guide en Français</span>
+                            </span>
+                            <button type="button" onclick="AdminApp.toggleManualUrl('property-guide-fr-manual')" class="text-[11px] text-gold hover:underline">
+                                URL directe ▾
+                            </button>
+                        </div>
+
+                        <!-- Dropzone FR -->
+                        <div id="dropzone-guide-fr" 
+                             class="upload-dropzone border-2 border-dashed border-night-border hover:border-gold/60 rounded-xl p-3 text-center cursor-pointer transition bg-night/40 group"
+                             onclick="document.getElementById('property-guide-fr-file').click()"
+                             ondragover="AdminApp.handleDragOver(event)" 
+                             ondragleave="AdminApp.handleDragLeave(event)" 
+                             ondrop="AdminApp.handleDrop(event, 'guide', 'fr')">
+                            <input type="file" id="property-guide-fr-file" accept="application/pdf,.pdf" class="hidden" onchange="AdminApp.handleGuideFileUpload(this, 'fr')">
+                            <div class="flex items-center justify-center space-x-2 text-xs text-gray-300">
+                                <span class="text-base group-hover:scale-110 transition-transform">📤</span>
+                                <span><strong class="text-gold">Téléverser</strong> ou glisser le PDF (FR)</span>
+                            </div>
+                        </div>
+
+                        <!-- Barre de progression FR -->
+                        <div id="progress-guide-fr" class="hidden space-y-1 pt-1">
+                            <div class="flex justify-between text-[11px] text-gray-300">
+                                <span id="progress-text-guide-fr">Envoi du livret FR...</span>
+                                <span id="progress-percent-guide-fr" class="font-mono text-gold font-bold">0%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-night-border rounded-full overflow-hidden">
+                                <div id="progress-bar-guide-fr" class="h-full bg-gold rounded-full transition-all duration-150" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Carte aperçu FR -->
+                        <div id="preview-guide-fr" class="hidden items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                            <div class="flex items-center space-x-2 min-w-0">
+                                <span class="text-emerald-400">✓</span>
+                                <span id="preview-filename-guide-fr" class="text-gray-200 font-mono truncate max-w-[200px]">guide-fr.pdf</span>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                <a id="link-preview-guide-fr" href="#" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Voir ↗</a>
+                                <button type="button" onclick="AdminApp.clearUploadedMedia('guide', 'fr')" class="text-[11px] text-red-400 hover:text-red-300">Supprimer</button>
+                            </div>
+                        </div>
+
+                        <!-- Champ URL manuel FR (repliable) -->
+                        <div id="property-guide-fr-manual" class="hidden pt-1">
+                            <input type="url" id="property-guide-fr" placeholder="https://guides.carredhotes.fr/bataille/guide-fr.pdf"
+                                   oninput="AdminApp.onGuideUrlInput('fr')"
+                                   class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <!-- Guide EN -->
+                    <div class="space-y-1.5 p-3 rounded-xl bg-night border border-night-border/80">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-200 flex items-center space-x-1.5">
+                                <span>🇬🇧</span>
+                                <span>Guide en Anglais</span>
+                            </span>
+                            <button type="button" onclick="AdminApp.toggleManualUrl('property-guide-en-manual')" class="text-[11px] text-gold hover:underline">
+                                URL directe ▾
+                            </button>
+                        </div>
+
+                        <!-- Dropzone EN -->
+                        <div id="dropzone-guide-en" 
+                             class="upload-dropzone border-2 border-dashed border-night-border hover:border-gold/60 rounded-xl p-3 text-center cursor-pointer transition bg-night/40 group"
+                             onclick="document.getElementById('property-guide-en-file').click()"
+                             ondragover="AdminApp.handleDragOver(event)" 
+                             ondragleave="AdminApp.handleDragLeave(event)" 
+                             ondrop="AdminApp.handleDrop(event, 'guide', 'en')">
+                            <input type="file" id="property-guide-en-file" accept="application/pdf,.pdf" class="hidden" onchange="AdminApp.handleGuideFileUpload(this, 'en')">
+                            <div class="flex items-center justify-center space-x-2 text-xs text-gray-300">
+                                <span class="text-base group-hover:scale-110 transition-transform">📤</span>
+                                <span><strong class="text-gold">Téléverser</strong> ou glisser le PDF (EN)</span>
+                            </div>
+                        </div>
+
+                        <!-- Barre de progression EN -->
+                        <div id="progress-guide-en" class="hidden space-y-1 pt-1">
+                            <div class="flex justify-between text-[11px] text-gray-300">
+                                <span id="progress-text-guide-en">Envoi du livret EN...</span>
+                                <span id="progress-percent-guide-en" class="font-mono text-gold font-bold">0%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-night-border rounded-full overflow-hidden">
+                                <div id="progress-bar-guide-en" class="h-full bg-gold rounded-full transition-all duration-150" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Carte aperçu EN -->
+                        <div id="preview-guide-en" class="hidden items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                            <div class="flex items-center space-x-2 min-w-0">
+                                <span class="text-emerald-400">✓</span>
+                                <span id="preview-filename-guide-en" class="text-gray-200 font-mono truncate max-w-[200px]">guide-en.pdf</span>
+                            </div>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
+                                <a id="link-preview-guide-en" href="#" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Voir ↗</a>
+                                <button type="button" onclick="AdminApp.clearUploadedMedia('guide', 'en')" class="text-[11px] text-red-400 hover:text-red-300">Supprimer</button>
+                            </div>
+                        </div>
+
+                        <!-- Champ URL manuel EN (repliable) -->
+                        <div id="property-guide-en-manual" class="hidden pt-1">
+                            <input type="url" id="property-guide-en" placeholder="https://guides.carredhotes.fr/bataille/guide-en.pdf"
+                                   oninput="AdminApp.onGuideUrlInput('en')"
+                                   class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        </div>
                     </div>
                 </div>
 
@@ -773,10 +885,66 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                            class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">URL de la vidéo (MP4 ou Google Drive) *</label>
-                    <input type="url" id="video-url" required placeholder="https://videos.carredhotes.fr/bataille/machine-a-cafe.mp4"
-                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                <!-- Téléversement direct du fichier vidéo ou saisie URL -->
+                <div class="space-y-2 p-3.5 rounded-2xl bg-night/50 border border-night-border/60">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-white flex items-center space-x-1.5">
+                            <span>🎬</span>
+                            <span>Fichier Vidéo du tutoriel *</span>
+                        </label>
+                        <button type="button" onclick="AdminApp.toggleManualUrl('video-url-manual')" class="text-[11px] text-gold hover:underline">
+                            URL directe ▾
+                        </button>
+                    </div>
+
+                    <!-- Dropzone Vidéo -->
+                    <div id="dropzone-video" 
+                         class="upload-dropzone border-2 border-dashed border-night-border hover:border-gold/60 rounded-xl p-4 text-center cursor-pointer transition bg-night/40 group"
+                         onclick="document.getElementById('video-file-input').click()"
+                         ondragover="AdminApp.handleDragOver(event)" 
+                         ondragleave="AdminApp.handleDragLeave(event)" 
+                         ondrop="AdminApp.handleDrop(event, 'video')">
+                        <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" class="hidden" onchange="AdminApp.handleVideoFileUpload(this)">
+                        <div class="space-y-1">
+                            <span class="text-2xl block group-hover:scale-110 transition-transform">🎥</span>
+                            <p class="text-xs text-gray-200"><strong class="text-gold">Téléverser la vidéo</strong> ou glisser le fichier</p>
+                            <p class="text-[10px] text-gray-400">MP4, WebM ou MOV (haute fluidité mobile & web)</p>
+                        </div>
+                    </div>
+
+                    <!-- Barre de progression Vidéo -->
+                    <div id="progress-video" class="hidden space-y-1.5 pt-1">
+                        <div class="flex justify-between text-[11px] text-gray-300">
+                            <span id="progress-text-video">Téléversement de la vidéo...</span>
+                            <span id="progress-percent-video" class="font-mono text-gold font-bold">0%</span>
+                        </div>
+                        <div class="w-full h-2 bg-night-border rounded-full overflow-hidden">
+                            <div id="progress-bar-video" class="h-full bg-gold rounded-full transition-all duration-150" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Carte aperçu vidéo configurée -->
+                    <div id="preview-video-container" class="hidden items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                        <div class="flex items-center space-x-2.5 min-w-0">
+                            <span class="text-emerald-400 text-sm">✓</span>
+                            <div class="min-w-0">
+                                <p id="preview-filename-video" class="text-white font-mono text-xs truncate max-w-[220px]">video.mp4</p>
+                                <p id="preview-meta-video" class="text-[10px] text-emerald-300">Vidéo prête pour diffusion</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <button type="button" onclick="AdminApp.previewCurrentVideo()" class="px-2.5 py-1 rounded-lg bg-gold/20 text-gold hover:bg-gold/30 text-[11px] font-bold">▶ Tester</button>
+                            <button type="button" onclick="AdminApp.clearUploadedMedia('video')" class="text-[11px] text-red-400 hover:text-red-300">Retirer</button>
+                        </div>
+                    </div>
+
+                    <!-- Champ URL manuel Vidéo (repliable) -->
+                    <div id="video-url-manual" class="hidden pt-1.5">
+                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">URL directe (Cloudflare R2, Google Drive, MP4)</label>
+                        <input type="url" id="video-url" required placeholder="https://videos.carredhotes.fr/bataille/machine-a-cafe.mp4"
+                               oninput="AdminApp.onVideoUrlInput()"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3 p-3.5 rounded-2xl bg-night/50 border border-night-border/40">
@@ -1160,96 +1328,213 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         </div>
     </div>
 
-    <!-- 9. MODALE CONFIGURATION INTELLIGENCE ARTIFICIELLE (IA) -->
+    <!-- 9. MODALE CONFIGURATION (INTELLIGENCE ARTIFICIELLE & STOCKAGE R2) -->
     <div id="modal-ai-settings" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
-            <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
+        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-xl max-h-[92vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
+            <!-- Entête modale -->
+            <div class="flex items-center justify-between border-b border-night-border p-5 sm:p-6 pb-4">
                 <div class="flex items-center space-x-2.5">
-                    <span class="w-8 h-8 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-base">✨</span>
+                    <span class="w-9 h-9 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-lg">⚙️</span>
                     <div>
-                        <h3 class="text-base font-bold text-white">Traduction Automatique & IA</h3>
-                        <p class="text-[11px] text-gray-400">Synchronisation bilingue FR ➜ EN instantanée</p>
+                        <h3 class="text-base font-bold text-white">Configuration Générale</h3>
+                        <p class="text-[11px] text-gray-400">Intelligence Artificielle, Stockage & Téléversements</p>
                     </div>
                 </div>
                 <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
             </div>
 
-            <form id="ai-settings-form" onsubmit="AdminApp.saveAiSettings(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Moteur d'Intelligence Artificielle *</label>
-                    <select id="ai-provider-select" onchange="AdminApp.handleAiProviderChange()" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                        <option value="gemini">Google Gemini (Recommandé - rapide, précis & économique)</option>
-                        <option value="openai">ChatGPT / OpenAI (gpt-4o-mini)</option>
-                        <option value="claude">Anthropic Claude (claude-3-5-haiku)</option>
-                    </select>
-                </div>
+            <!-- Onglets de configuration -->
+            <div class="px-5 sm:px-6 pt-3 border-b border-night-border/70 flex space-x-2 bg-night/30">
+                <button type="button" id="settings-tab-btn-ai" onclick="AdminApp.switchSettingsTab('ai')"
+                        class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25">
+                    <span>✨</span>
+                    <span>Traduction IA</span>
+                </button>
+                <button type="button" id="settings-tab-btn-storage" onclick="AdminApp.switchSettingsTab('storage')"
+                        class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2">
+                    <span>📦</span>
+                    <span>Stockage & Cloudflare R2</span>
+                </button>
+            </div>
 
-                <!-- Section Clé API Gemini -->
-                <div id="ai-key-group-gemini" class="ai-key-group space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <label class="block text-xs font-semibold text-gray-300">Clé API Google Gemini</label>
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé Google AI Studio ↗</a>
+            <!-- Formulaire unifié -->
+            <form id="ai-settings-form" onsubmit="AdminApp.saveAiSettings(event)" class="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1">
+                
+                <!-- PANNEAU 1 : TRADUCTION IA -->
+                <div id="settings-panel-ai" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Moteur d'Intelligence Artificielle *</label>
+                        <select id="ai-provider-select" onchange="AdminApp.handleAiProviderChange()" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                            <option value="gemini">Google Gemini (Recommandé - rapide, précis & économique)</option>
+                            <option value="openai">ChatGPT / OpenAI (gpt-4o-mini)</option>
+                            <option value="claude">Anthropic Claude (claude-3-5-haiku)</option>
+                        </select>
                     </div>
-                    <div class="relative">
-                        <input type="password" id="ai-key-gemini" placeholder="AIzaSy..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                        <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-gemini')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
-                    </div>
-                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-3.5-flash</code> (repli auto sur <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-3-flash-preview</code>)</p>
-                </div>
 
-                <!-- Section Clé API OpenAI -->
-                <div id="ai-key-group-openai" class="ai-key-group space-y-1.5 hidden">
-                    <div class="flex items-center justify-between">
-                        <label class="block text-xs font-semibold text-gray-300">Clé API OpenAI (ChatGPT)</label>
-                        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé OpenAI ↗</a>
+                    <!-- Section Clé API Gemini -->
+                    <div id="ai-key-group-gemini" class="ai-key-group space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-gray-300">Clé API Google Gemini</label>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé Google AI Studio ↗</a>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="ai-key-gemini" placeholder="AIzaSy..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                            <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-gemini')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                        </div>
+                        <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-3.5-flash</code></p>
                     </div>
-                    <div class="relative">
-                        <input type="password" id="ai-key-openai" placeholder="sk-proj-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                        <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-openai')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
-                    </div>
-                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gpt-4o-mini</code></p>
-                </div>
 
-                <!-- Section Clé API Claude -->
-                <div id="ai-key-group-claude" class="ai-key-group space-y-1.5 hidden">
-                    <div class="flex items-center justify-between">
-                        <label class="block text-xs font-semibold text-gray-300">Clé API Anthropic Claude</label>
-                        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé Anthropic ↗</a>
+                    <!-- Section Clé API OpenAI -->
+                    <div id="ai-key-group-openai" class="ai-key-group space-y-1.5 hidden">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-gray-300">Clé API OpenAI (ChatGPT)</label>
+                            <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé OpenAI ↗</a>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="ai-key-openai" placeholder="sk-proj-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                            <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-openai')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                        </div>
+                        <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gpt-4o-mini</code></p>
                     </div>
-                    <div class="relative">
-                        <input type="password" id="ai-key-claude" placeholder="sk-ant-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                        <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-claude')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
-                    </div>
-                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">claude-3-5-haiku-latest</code></p>
-                </div>
 
-                <!-- Sélecteur dynamique de modèle (interroge l'API de l'IA en direct) -->
-                <div class="pt-1 border-t border-night-border/50">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="block text-xs font-semibold text-gray-300">Modèle sélectionné *</label>
-                        <button type="button" onclick="AdminApp.refreshAiModels()" class="text-[11px] text-gold hover:text-gold-light flex items-center space-x-1 hover:underline cursor-pointer" title="Interroger l'API pour récupérer les modèles disponibles">
-                            <span id="ai-models-refresh-icon">🔄</span>
-                            <span id="ai-models-refresh-label">Actualiser les modèles</span>
+                    <!-- Section Clé API Claude -->
+                    <div id="ai-key-group-claude" class="ai-key-group space-y-1.5 hidden">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-semibold text-gray-300">Clé API Anthropic Claude</label>
+                            <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé Anthropic ↗</a>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="ai-key-claude" placeholder="sk-ant-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                            <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-claude')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                        </div>
+                        <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">claude-3-5-haiku-latest</code></p>
+                    </div>
+
+                    <!-- Sélecteur dynamique de modèle -->
+                    <div class="pt-1 border-t border-night-border/50">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-semibold text-gray-300">Modèle sélectionné *</label>
+                            <button type="button" onclick="AdminApp.refreshAiModels()" class="text-[11px] text-gold hover:text-gold-light flex items-center space-x-1 hover:underline cursor-pointer" title="Interroger l'API pour récupérer les modèles disponibles">
+                                <span id="ai-models-refresh-icon">🔄</span>
+                                <span id="ai-models-refresh-label">Actualiser les modèles</span>
+                            </button>
+                        </div>
+                        <select id="ai-model-select" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                            <option value="">Chargement des modèles disponibles...</option>
+                        </select>
+                        <p class="text-[11px] text-gray-400 mt-1">Interroge l'API en direct pour vous proposer uniquement les modèles actifs.</p>
+                    </div>
+
+                    <!-- Zone résultat test connexion IA -->
+                    <div id="ai-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+
+                    <div class="pt-2">
+                        <button type="button" id="btn-test-ai" onclick="AdminApp.testAiConnection()" class="px-3.5 py-2 rounded-xl bg-night border border-night-border hover:border-gold/50 text-xs text-gray-300 hover:text-white transition flex items-center space-x-1.5">
+                            <span>⚡</span>
+                            <span>Tester la connexion IA</span>
                         </button>
                     </div>
-                    <select id="ai-model-select" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                        <option value="">Chargement des modèles disponibles...</option>
-                    </select>
-                    <p class="text-[11px] text-gray-400 mt-1">Interroge l'API en direct pour vous proposer uniquement les modèles actifs et compatibles.</p>
                 </div>
 
-                <!-- Zone résultat test connexion -->
-                <div id="ai-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
-
-                <div class="pt-4 border-t border-night-border flex items-center justify-between">
-                    <button type="button" id="btn-test-ai" onclick="AdminApp.testAiConnection()" class="px-3.5 py-2 rounded-xl bg-night border border-night-border hover:border-gold/50 text-xs text-gray-300 hover:text-white transition flex items-center space-x-1.5">
-                        <span>⚡</span>
-                        <span>Tester la connexion</span>
-                    </button>
-                    <div class="flex space-x-2">
-                        <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Fermer</button>
-                        <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer</button>
+                <!-- PANNEAU 2 : STOCKAGE & CLOUDFLARE R2 -->
+                <div id="settings-panel-storage" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-2">Destination des téléversements (Guides PDF & Vidéos) *</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label class="p-3.5 rounded-2xl bg-night border border-night-border hover:border-gold/50 cursor-pointer flex items-start space-x-3 transition">
+                                <input type="radio" name="storage_driver" value="local" id="storage-driver-local" onchange="AdminApp.handleStorageDriverChange()" class="mt-1 text-gold accent-[#ba9641]">
+                                <div>
+                                    <p class="text-xs font-bold text-white">Serveur Carré d'Hôtes</p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">Par défaut. Aucun réglage requis, stocké sur l'hébergement web.</p>
+                                </div>
+                            </label>
+                            <label class="p-3.5 rounded-2xl bg-night border border-night-border hover:border-gold/50 cursor-pointer flex items-start space-x-3 transition">
+                                <input type="radio" name="storage_driver" value="r2" id="storage-driver-r2" onchange="AdminApp.handleStorageDriverChange()" class="mt-1 text-gold accent-[#ba9641]">
+                                <div>
+                                    <p class="text-xs font-bold text-white">Cloudflare R2</p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">Stockage Cloud S3 haute vitesse avec vos sous-domaines guides & vidéos.</p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
+
+                    <!-- Paramètres Cloudflare R2 -->
+                    <div id="r2-settings-group" class="space-y-3.5 p-4 rounded-2xl bg-night/60 border border-night-border/70 hidden">
+                        <div class="flex items-center justify-between border-b border-night-border/50 pb-2">
+                            <span class="text-xs font-bold text-gold flex items-center space-x-1.5">
+                                <span>⚡</span>
+                                <span>Identifiants Cloudflare R2 (API S3)</span>
+                            </span>
+                            <a href="https://dash.cloudflare.com/?to=/:account/r2/api-tokens" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Créer un token R2 S3 ↗</a>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">ID de Compte Cloudflare (Account ID)</label>
+                            <input type="text" id="r2-account-id" placeholder="Ex: 8f2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Access Key ID</label>
+                                <input type="text" id="r2-access-key-id" placeholder="Clé d'accès S3 R2"
+                                       class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Secret Access Key</label>
+                                <div class="relative">
+                                    <input type="password" id="r2-secret-access-key" placeholder="Clé secrète S3 R2"
+                                           class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                    <button type="button" onclick="AdminApp.toggleKeyVisibility('r2-secret-access-key')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration des sous-domaines et buckets -->
+                        <div class="pt-2 border-t border-night-border/50 space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-300 mb-1">Bucket pour Livrets PDF</label>
+                                    <input type="text" id="r2-bucket-guides" placeholder="carredhotes-guides"
+                                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-300 mb-1">Domaine Public Guides</label>
+                                    <input type="url" id="r2-domain-guides" placeholder="https://guides.carredhotes.fr"
+                                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-300 mb-1">Bucket pour Vidéos MP4</label>
+                                    <input type="text" id="r2-bucket-videos" placeholder="carredhotes-videos"
+                                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-gray-300 mb-1">Domaine Public Vidéos</label>
+                                    <input type="url" id="r2-domain-videos" placeholder="https://videos.carredhotes.fr"
+                                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zone résultat test connexion R2 -->
+                        <div id="r2-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+
+                        <div class="pt-1">
+                            <button type="button" id="btn-test-r2" onclick="AdminApp.testR2Connection()" class="px-3.5 py-2 rounded-xl bg-night border border-night-border hover:border-gold/50 text-xs text-gray-300 hover:text-white transition flex items-center space-x-1.5">
+                                <span>⚡</span>
+                                <span>Tester la connexion Cloudflare R2</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Modale -->
+                <div class="pt-4 border-t border-night-border flex items-center justify-end space-x-2">
+                    <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Fermer</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer la configuration</button>
                 </div>
             </form>
         </div>
@@ -1308,6 +1593,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.5"></script>
+    <script src="assets/js/admin.js?v=1.6"></script>
 </body>
 </html>

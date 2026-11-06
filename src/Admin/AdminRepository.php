@@ -745,6 +745,16 @@ class AdminRepository
             'masked_key_gemini' => $maskKey($raw['ai_api_key_gemini'] ?? null),
             'masked_key_openai' => $maskKey($raw['ai_api_key_openai'] ?? null),
             'masked_key_claude' => $maskKey($raw['ai_api_key_claude'] ?? null),
+            // Stockage et Cloudflare R2
+            'storage_driver' => $raw['storage_driver'] ?? 'local',
+            'r2_account_id' => $raw['r2_account_id'] ?? '',
+            'r2_access_key_id' => $raw['r2_access_key_id'] ?? '',
+            'has_r2_secret' => !empty($raw['r2_secret_access_key']),
+            'masked_r2_secret' => $maskKey($raw['r2_secret_access_key'] ?? null),
+            'r2_bucket_guides' => $raw['r2_bucket_guides'] ?? 'carredhotes-guides',
+            'r2_domain_guides' => $raw['r2_domain_guides'] ?? 'https://guides.carredhotes.fr',
+            'r2_bucket_videos' => $raw['r2_bucket_videos'] ?? 'carredhotes-videos',
+            'r2_domain_videos' => $raw['r2_domain_videos'] ?? 'https://videos.carredhotes.fr',
         ];
     }
 
@@ -762,7 +772,7 @@ class AdminRepository
         // Fournisseur actif
         $stmt->execute(['k' => 'ai_provider', 'v' => $provider, 'v2' => $provider]);
 
-        // Mise à jour conditionnelle des clés (si non vide et non masquée '••••')
+        // Mise à jour conditionnelle des clés IA (si non vide et non masquée '••••')
         $keyFields = ['gemini', 'openai', 'claude'];
         foreach ($keyFields as $kf) {
             $keyInput = trim((string)($settings['ai_api_key_' . $kf] ?? ''));
@@ -775,7 +785,43 @@ class AdminRepository
             }
         }
 
-        ActivityLogger::log('update', 'settings', null, "Configuration IA ({$provider})");
+        // Paramètres de Stockage & Cloudflare R2
+        if (isset($settings['storage_driver'])) {
+            $driver = in_array($settings['storage_driver'], ['local', 'r2'], true) ? $settings['storage_driver'] : 'local';
+            $stmt->execute(['k' => 'storage_driver', 'v' => $driver, 'v2' => $driver]);
+        }
+        if (isset($settings['r2_account_id'])) {
+            $v = trim((string)$settings['r2_account_id']);
+            $stmt->execute(['k' => 'r2_account_id', 'v' => $v, 'v2' => $v]);
+        }
+        if (isset($settings['r2_access_key_id'])) {
+            $v = trim((string)$settings['r2_access_key_id']);
+            $stmt->execute(['k' => 'r2_access_key_id', 'v' => $v, 'v2' => $v]);
+        }
+        if (isset($settings['r2_secret_access_key'])) {
+            $sec = trim((string)$settings['r2_secret_access_key']);
+            if ($sec !== '' && strpos($sec, '•') === false) {
+                $stmt->execute(['k' => 'r2_secret_access_key', 'v' => $sec, 'v2' => $sec]);
+            }
+        }
+        if (isset($settings['r2_bucket_guides'])) {
+            $v = trim((string)$settings['r2_bucket_guides']);
+            $stmt->execute(['k' => 'r2_bucket_guides', 'v' => $v, 'v2' => $v]);
+        }
+        if (isset($settings['r2_domain_guides'])) {
+            $v = trim((string)$settings['r2_domain_guides']);
+            $stmt->execute(['k' => 'r2_domain_guides', 'v' => $v, 'v2' => $v]);
+        }
+        if (isset($settings['r2_bucket_videos'])) {
+            $v = trim((string)$settings['r2_bucket_videos']);
+            $stmt->execute(['k' => 'r2_bucket_videos', 'v' => $v, 'v2' => $v]);
+        }
+        if (isset($settings['r2_domain_videos'])) {
+            $v = trim((string)$settings['r2_domain_videos']);
+            $stmt->execute(['k' => 'r2_domain_videos', 'v' => $v, 'v2' => $v]);
+        }
+
+        ActivityLogger::log('update', 'settings', null, "Configuration système mise à jour (IA: {$provider}, Stockage: " . ($settings['storage_driver'] ?? 'local') . ")");
         return true;
     }
 }

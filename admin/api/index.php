@@ -37,6 +37,16 @@ if ($rawInput !== false && trim($rawInput) !== '') {
     }
 }
 
+// Détection dépassement de taille maximale d'upload par PHP
+if ($method === 'POST' && empty($_POST) && empty($_FILES) && isset($_SERVER['CONTENT_LENGTH']) && (int)$_SERVER['CONTENT_LENGTH'] > 0) {
+    http_response_code(413);
+    echo json_encode([
+        'ok'    => false,
+        'error' => 'Le fichier envoyé est trop volumineux pour la configuration actuelle du serveur (limite: ' . ini_get('post_max_size') . ').'
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Vérification CSRF sur toutes les actions modifiantes
 if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
     Auth::checkCsrf();
@@ -54,13 +64,19 @@ try {
             $recentLogs = ActivityLogger::getRecent(15);
             $settings = $repo->getSettings();
             echo json_encode([
-                'ok'         => true,
-                'user'       => $currentUser,
-                'csrf_token' => Auth::getCsrfToken(),
-                'stats'      => $stats,
-                'properties' => $properties,
-                'recent_logs'=> $recentLogs,
-                'settings'   => $settings
+                'ok'            => true,
+                'user'          => $currentUser,
+                'csrf_token'    => Auth::getCsrfToken(),
+                'stats'         => $stats,
+                'properties'    => $properties,
+                'recent_logs'   => $recentLogs,
+                'settings'      => $settings,
+                'upload_limits' => [
+                    'upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'post_max_size'       => ini_get('post_max_size'),
+                    'max_guide_mb'        => 50,
+                    'max_video_mb'        => 250,
+                ]
             ], JSON_UNESCAPED_UNICODE);
             exit;
 
@@ -450,6 +466,60 @@ try {
                 'type' => $type,
                 'data' => $result
             ], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        // ----------------------------------------------------------------------
+        // TÉLÉVERSEMENT DE MÉDIAS (GUIDES PDF & VIDÉOS)
+        // ----------------------------------------------------------------------
+        case 'upload_media':
+            if (empty($_FILES['file'])) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Aucun fichier reçu dans la requête.']);
+                exit;
+            }
+
+            $category = (string)($_POST['category'] ?? 'guide');
+            $params = [
+                'property_slug' => $_POST['property_slug'] ?? '',
+                'video_slug'    => $_POST['video_slug'] ?? '',
+                'lang'          => $_POST['lang'] ?? 'fr',
+            ];
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+            $uploadResult = \Cdh\Portal\Admin\MediaUploader::handleUpload($_FILES['file'], $category, $params);
+            
+            \Cdh\Portal\Admin\ActivityLogger::log(
+                'upload', 
+                $category, 
+                null, 
+                "Téléversement {$category} : {$uploadResult['filename']} ({$uploadResult['size_formatted']}, {$uploadResult['storage_label']})"
+            );
+
+            echo json_encode($uploadResult, JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'r2_test':
+            $config = [
+                'account_id'        => $body['account_id'] ?? ($_POST['account_id'] ?? ''),
+                'access_key_id'     => $body['access_key_id'] ?? ($_POST['access_key_id'] ?? ''),
+                'secret_access_key' => $body['secret_access_key'] ?? ($_POST['secret_access_key'] ?? ''),
+                'bucket_guides'     => $body['bucket_guides'] ?? ($_POST['bucket_guides'] ?? ''),
+                'bucket_videos'     => $body['bucket_videos'] ?? ($_POST['bucket_videos'] ?? ''),
+            ];
+
+            // Si la clé secrète est masquée ou vide, aller chercher celle enregistrée en base
+            if (empty($config['secret_access_key']) || strpos($config['secret_access_key'], '•') !== false) {
+                $db = \Cdh\Portal\Database::getConnection();
+                $stmt = $db->query('SELECT setting_value FROM admin_settings WHERE setting_key = "r2_secret_access_key" LIMIT 1');
+                $config['secret_access_key'] = (string)$stmt->fetchColumn();
+            }
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+            $testRes = \Cdh\Portal\Admin\MediaUploader::testR2Connection($config);
+            if (!$testRes['ok']) {
+                http_response_code(400);
+            }
+            echo json_encode($testRes, JSON_UNESCAPED_UNICODE);
             exit;
 
         default:

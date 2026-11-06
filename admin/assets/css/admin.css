@@ -122,3 +122,29 @@ body {
         display: none;
     }
 }
+
+/* ==============================================================================
+   ZONES DE TÉLÉVERSEMENT (DROPZONES & BARRES DE PROGRESSION)
+   ============================================================================== */
+.upload-dropzone {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.upload-dropzone:hover {
+    border-color: rgba(186, 150, 65, 0.7);
+    background-color: rgba(186, 150, 65, 0.05);
+}
+
+.upload-dropzone.dragover {
+    border-color: #ba9641 !important;
+    background-color: rgba(186, 150, 65, 0.12) !important;
+    transform: scale(1.01);
+    box-shadow: 0 0 20px rgba(186, 150, 65, 0.2);
+}
+
+.upload-progress-bar {
+    transition: width 0.2s ease-out;
+}
+

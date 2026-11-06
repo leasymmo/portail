@@ -34,3 +34,10 @@ Thumbs.db
 .agents/*
 !.agents/skills/
 .gemini/
+
+# Fichiers téléversés (guides PDF & vidéos)
+uploads/guides/*
+!uploads/guides/.gitkeep
+uploads/videos/*
+!uploads/videos/.gitkeep
+

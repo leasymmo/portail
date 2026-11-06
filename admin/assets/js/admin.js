@@ -443,8 +443,14 @@ const AdminApp = {
             document.getElementById('property-active').checked = (prop.active == 1);
         } else {
             titleEl.textContent = 'Ajouter un nouvel hébergement';
+            document.getElementById('property-guide-fr').value = '';
+            document.getElementById('property-guide-en').value = '';
             document.getElementById('property-active').checked = true;
         }
+
+        // Met à jour l'affichage des prévisualisations et dropzones des guides
+        this.onGuideUrlInput('fr');
+        this.onGuideUrlInput('en');
 
         modal.classList.remove('hidden');
     },
@@ -661,12 +667,19 @@ const AdminApp = {
             document.getElementById('video-active').checked = (v.active == 1);
         } else {
             titleEl.textContent = 'Ajouter un tutoriel vidéo';
+            document.getElementById('video-title-fr').value = '';
+            document.getElementById('video-title-en').value = '';
+            document.getElementById('video-slug').value = '';
+            document.getElementById('video-url').value = '';
             document.getElementById('video-icon').value = '🎬';
             document.getElementById('video-bg-color').value = 'bg-blue-50';
             document.getElementById('video-text-color').value = 'text-blue-500';
             document.getElementById('video-order').value = this.state.currentVideos.length + 1;
             document.getElementById('video-active').checked = true;
         }
+
+        // Met à jour l'affichage de la prévisualisation et dropzone vidéo
+        this.onVideoUrlInput();
 
         modal.classList.remove('hidden');
     },
@@ -1989,31 +2002,31 @@ const AdminApp = {
     },
 
     // --------------------------------------------------------------------------
-    // CONFIGURATION & GESTION DE L'IA (GEMINI / CHATGPT / CLAUDE)
+    // CONFIGURATION (IA & STOCKAGE CLOUDFLARE R2 / LOCAL)
     // --------------------------------------------------------------------------
+
+    openSettingsModal() {
+        this.openAiSettingsModal();
+    },
 
     openAiSettingsModal() {
         const modal = document.getElementById('modal-ai-settings');
         if (!modal) return;
 
         const s = this.state.settings || {};
+        
+        // Configuration IA
         const providerSelect = document.getElementById('ai-provider-select');
         if (providerSelect) {
             providerSelect.value = s.ai_provider || 'gemini';
         }
 
         const keyGemini = document.getElementById('ai-key-gemini');
-        if (keyGemini) {
-            keyGemini.value = s.masked_key_gemini || '';
-        }
+        if (keyGemini) keyGemini.value = s.masked_key_gemini || '';
         const keyOpenai = document.getElementById('ai-key-openai');
-        if (keyOpenai) {
-            keyOpenai.value = s.masked_key_openai || '';
-        }
+        if (keyOpenai) keyOpenai.value = s.masked_key_openai || '';
         const keyClaude = document.getElementById('ai-key-claude');
-        if (keyClaude) {
-            keyClaude.value = s.masked_key_claude || '';
-        }
+        if (keyClaude) keyClaude.value = s.masked_key_claude || '';
 
         this.handleAiProviderChange();
         this.refreshAiModels();
@@ -2024,12 +2037,119 @@ const AdminApp = {
             resultEl.innerHTML = '';
         }
 
+        // Configuration Stockage & Cloudflare R2
+        const isR2 = (s.storage_driver === 'r2');
+        const radioLocal = document.getElementById('storage-driver-local');
+        const radioR2 = document.getElementById('storage-driver-r2');
+        if (radioR2) radioR2.checked = isR2;
+        if (radioLocal) radioLocal.checked = !isR2;
+
+        if (document.getElementById('r2-account-id')) {
+            document.getElementById('r2-account-id').value = s.r2_account_id || '';
+        }
+        if (document.getElementById('r2-access-key-id')) {
+            document.getElementById('r2-access-key-id').value = s.r2_access_key_id || '';
+        }
+        if (document.getElementById('r2-secret-access-key')) {
+            document.getElementById('r2-secret-access-key').value = s.masked_r2_secret || '';
+        }
+        if (document.getElementById('r2-bucket-guides')) {
+            document.getElementById('r2-bucket-guides').value = s.r2_bucket_guides || 'carredhotes-guides';
+        }
+        if (document.getElementById('r2-domain-guides')) {
+            document.getElementById('r2-domain-guides').value = s.r2_domain_guides || 'https://guides.carredhotes.fr';
+        }
+        if (document.getElementById('r2-bucket-videos')) {
+            document.getElementById('r2-bucket-videos').value = s.r2_bucket_videos || 'carredhotes-videos';
+        }
+        if (document.getElementById('r2-domain-videos')) {
+            document.getElementById('r2-domain-videos').value = s.r2_domain_videos || 'https://videos.carredhotes.fr';
+        }
+
+        this.handleStorageDriverChange();
+
+        const r2ResultEl = document.getElementById('r2-test-result');
+        if (r2ResultEl) {
+            r2ResultEl.classList.add('hidden');
+            r2ResultEl.innerHTML = '';
+        }
+
+        // Par défaut sur le premier onglet
+        this.switchSettingsTab('ai');
+
         modal.classList.remove('hidden');
     },
 
     closeAiSettingsModal() {
         const modal = document.getElementById('modal-ai-settings');
         if (modal) modal.classList.add('hidden');
+    },
+
+    switchSettingsTab(tab) {
+        const btnAi = document.getElementById('settings-tab-btn-ai');
+        const btnStorage = document.getElementById('settings-tab-btn-storage');
+        const panelAi = document.getElementById('settings-panel-ai');
+        const panelStorage = document.getElementById('settings-panel-storage');
+
+        if (tab === 'storage') {
+            if (btnStorage) btnStorage.className = 'settings-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25';
+            if (btnAi) btnAi.className = 'settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2';
+            if (panelStorage) panelStorage.classList.remove('hidden');
+            if (panelAi) panelAi.classList.add('hidden');
+        } else {
+            if (btnAi) btnAi.className = 'settings-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25';
+            if (btnStorage) btnStorage.className = 'settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2';
+            if (panelAi) panelAi.classList.remove('hidden');
+            if (panelStorage) panelStorage.classList.add('hidden');
+        }
+    },
+
+    handleStorageDriverChange() {
+        const isR2 = document.getElementById('storage-driver-r2')?.checked;
+        const r2Group = document.getElementById('r2-settings-group');
+        if (r2Group) {
+            if (isR2) r2Group.classList.remove('hidden');
+            else r2Group.classList.add('hidden');
+        }
+    },
+
+    async testR2Connection() {
+        const btn = document.getElementById('btn-test-r2');
+        const resultEl = document.getElementById('r2-test-result');
+        if (!resultEl) return;
+
+        const config = {
+            account_id: document.getElementById('r2-account-id')?.value.trim() || '',
+            access_key_id: document.getElementById('r2-access-key-id')?.value.trim() || '',
+            secret_access_key: document.getElementById('r2-secret-access-key')?.value.trim() || '',
+            bucket_guides: document.getElementById('r2-bucket-guides')?.value.trim() || '',
+            bucket_videos: document.getElementById('r2-bucket-videos')?.value.trim() || ''
+        };
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳</span><span>Test de l'accès Cloudflare R2...</span>`;
+        }
+
+        resultEl.classList.remove('hidden');
+        resultEl.className = 'p-3 rounded-xl text-xs space-y-1 border bg-night/80 border-gold/30 text-gold-light';
+        resultEl.innerHTML = `<p class="flex items-center gap-2"><span>🔄</span><span>Interrogation de l'API S3 Cloudflare R2...</span></p>`;
+
+        try {
+            const res = await this.apiRequest('api/index.php?action=r2_test', 'POST', config);
+            resultEl.className = 'p-3.5 rounded-xl text-xs space-y-1.5 border bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+            resultEl.innerHTML = `<div class="flex items-center space-x-2 font-bold text-emerald-400"><span>✅</span><span>${this.escape(res.message || 'Connexion R2 validée !')}</span></div>`;
+            this.showToast("Connexion Cloudflare R2 réussie !", "success");
+        } catch (err) {
+            resultEl.className = 'p-3.5 rounded-xl text-xs space-y-1 border bg-red-500/10 border-red-500/30 text-red-300';
+            resultEl.innerHTML = `<div class="flex items-center space-x-2 font-bold text-red-400"><span>❌</span><span>Échec de connexion R2</span></div><p class="text-[11px] text-red-200 mt-1">${this.escape(err.message)}</p>`;
+            this.showToast(`Erreur R2 : ${err.message}`, "error");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<span>⚡</span><span>Tester la connexion Cloudflare R2</span>`;
+            }
+        }
     },
 
     handleAiProviderChange() {
@@ -2145,7 +2265,7 @@ const AdminApp = {
         } finally {
             if (testBtn) {
                 testBtn.disabled = false;
-                testBtn.innerHTML = `<span>⚡</span><span>Tester la connexion</span>`;
+                testBtn.innerHTML = `<span>⚡</span><span>Tester la connexion IA</span>`;
             }
         }
     },
@@ -2157,11 +2277,22 @@ const AdminApp = {
         const modelSelect = document.getElementById('ai-model-select');
         const selectedModel = modelSelect ? modelSelect.value : '';
 
+        const storageDriver = document.getElementById('storage-driver-r2')?.checked ? 'r2' : 'local';
+
         const payload = {
             ai_provider: provider,
             ai_api_key_gemini: (document.getElementById('ai-key-gemini')?.value || '').trim(),
             ai_api_key_openai: (document.getElementById('ai-key-openai')?.value || '').trim(),
-            ai_api_key_claude: (document.getElementById('ai-key-claude')?.value || '').trim()
+            ai_api_key_claude: (document.getElementById('ai-key-claude')?.value || '').trim(),
+            // Paramètres de Stockage & R2
+            storage_driver: storageDriver,
+            r2_account_id: (document.getElementById('r2-account-id')?.value || '').trim(),
+            r2_access_key_id: (document.getElementById('r2-access-key-id')?.value || '').trim(),
+            r2_secret_access_key: (document.getElementById('r2-secret-access-key')?.value || '').trim(),
+            r2_bucket_guides: (document.getElementById('r2-bucket-guides')?.value || '').trim(),
+            r2_domain_guides: (document.getElementById('r2-domain-guides')?.value || '').trim(),
+            r2_bucket_videos: (document.getElementById('r2-bucket-videos')?.value || '').trim(),
+            r2_domain_videos: (document.getElementById('r2-domain-videos')?.value || '').trim(),
         };
 
         if (selectedModel) {
@@ -2175,7 +2306,7 @@ const AdminApp = {
 
             this.state.settings = res.settings;
             this.updateAiBadges();
-            this.showToast(res.message || 'Configuration IA enregistrée avec succès.', 'success');
+            this.showToast(res.message || 'Configuration enregistrée avec succès.', 'success');
             this.closeAiSettingsModal();
         } catch (err) {
             this.showToast(err.message, 'error');
@@ -2197,6 +2328,338 @@ const AdminApp = {
         if (parkingBadge) {
             parkingBadge.textContent = displayName;
         }
+    },
+
+    // --------------------------------------------------------------------------
+    // TÉLÉVERSEMENT DE MÉDIAS (GUIDES PDF & VIDÉOS TUTORIELS)
+    // --------------------------------------------------------------------------
+
+    uploadMediaFile(file, category, extraParams = {}, progressCallback = null) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'api/index.php?action=upload_media', true);
+
+            if (this.state.csrfToken) {
+                xhr.setRequestHeader('X-CSRF-Token', this.state.csrfToken);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', category);
+            if (this.state.csrfToken) {
+                formData.append('csrf_token', this.state.csrfToken);
+            }
+
+            for (const [k, v] of Object.entries(extraParams)) {
+                if (v !== undefined && v !== null) {
+                    formData.append(k, v);
+                }
+            }
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && typeof progressCallback === 'function') {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    progressCallback(percent, e.loaded, e.total);
+                }
+            };
+
+            xhr.onload = () => {
+                try {
+                    const res = JSON.parse(xhr.responseText);
+                    if (xhr.status >= 200 && xhr.status < 300 && res.ok) {
+                        resolve(res);
+                    } else {
+                        reject(new Error(res.error || `Erreur serveur HTTP ${xhr.status}`));
+                    }
+                } catch (err) {
+                    reject(new Error(`Réponse serveur inattendue : ${xhr.responseText.substring(0, 100)}`));
+                }
+            };
+
+            xhr.onerror = () => {
+                reject(new Error("Erreur réseau lors de l'envoi du fichier."));
+            };
+
+            xhr.send(formData);
+        });
+    },
+
+    handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.add('dragover');
+    },
+
+    handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove('dragover');
+    },
+
+    handleDrop(e, category, lang = null) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove('dragover');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (category === 'guide') {
+                this.uploadGuideFile(file, lang || 'fr');
+            } else if (category === 'video') {
+                this.uploadVideoFile(file);
+            }
+        }
+    },
+
+    toggleManualUrl(containerId) {
+        const el = document.getElementById(containerId);
+        if (el) el.classList.toggle('hidden');
+    },
+
+    handleGuideFileUpload(inputEl, lang) {
+        if (!inputEl || !inputEl.files || inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+        this.uploadGuideFile(file, lang);
+    },
+
+    async uploadGuideFile(file, lang) {
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+            this.showToast("Seuls les livrets au format PDF (.pdf) sont acceptés.", "error");
+            return;
+        }
+        if (file.size > 52428800) {
+            this.showToast("Le livret PDF ne doit pas dépasser 50 Mo.", "error");
+            return;
+        }
+
+        const progressEl = document.getElementById(`progress-guide-${lang}`);
+        const barEl = document.getElementById(`progress-bar-guide-${lang}`);
+        const percentEl = document.getElementById(`progress-percent-guide-${lang}`);
+        const textEl = document.getElementById(`progress-text-guide-${lang}`);
+        const dropzoneEl = document.getElementById(`dropzone-guide-${lang}`);
+        const previewEl = document.getElementById(`preview-guide-${lang}`);
+        const previewNameEl = document.getElementById(`preview-filename-guide-${lang}`);
+        const previewLinkEl = document.getElementById(`link-preview-guide-${lang}`);
+        const urlInput = document.getElementById(`property-guide-${lang}`);
+
+        if (progressEl) progressEl.classList.remove('hidden');
+        if (barEl) barEl.style.width = '0%';
+        if (percentEl) percentEl.textContent = '0%';
+        if (textEl) textEl.textContent = `Téléversement de ${file.name}...`;
+
+        let slug = (document.getElementById('property-slug')?.value || '').trim();
+        if (!slug) {
+            const nameVal = (document.getElementById('property-name')?.value || '').trim();
+            slug = this.slugify(nameVal) || 'logement';
+        }
+
+        try {
+            const res = await this.uploadMediaFile(file, 'guide', {
+                property_slug: slug,
+                lang: lang
+            }, (percent, loaded, total) => {
+                if (barEl) barEl.style.width = `${percent}%`;
+                if (percentEl) percentEl.textContent = `${percent}%`;
+                if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
+            });
+
+            if (urlInput) {
+                urlInput.value = res.url;
+            }
+
+            if (previewNameEl) previewNameEl.textContent = `${res.filename} (${res.size_formatted})`;
+            if (previewLinkEl) previewLinkEl.href = res.url;
+            if (previewEl) previewEl.classList.remove('hidden');
+            if (dropzoneEl) dropzoneEl.classList.add('hidden');
+
+            this.showToast(`Guide PDF (${lang.toUpperCase()}) téléversé avec succès (${res.storage_label}) !`, 'success');
+        } catch (err) {
+            this.showToast(`Échec du téléversement : ${err.message}`, 'error');
+        } finally {
+            if (progressEl) progressEl.classList.add('hidden');
+            const fileInput = document.getElementById(`property-guide-${lang}-file`);
+            if (fileInput) fileInput.value = '';
+        }
+    },
+
+    onGuideUrlInput(lang) {
+        const urlInput = document.getElementById(`property-guide-${lang}`);
+        const url = urlInput ? urlInput.value.trim() : '';
+        const previewEl = document.getElementById(`preview-guide-${lang}`);
+        const previewNameEl = document.getElementById(`preview-filename-guide-${lang}`);
+        const previewLinkEl = document.getElementById(`link-preview-guide-${lang}`);
+        const dropzoneEl = document.getElementById(`dropzone-guide-${lang}`);
+
+        if (url) {
+            const fname = url.split('/').pop().split('?')[0] || `guide-${lang}.pdf`;
+            if (previewNameEl) previewNameEl.textContent = fname;
+            if (previewLinkEl) previewLinkEl.href = url;
+            if (previewEl) previewEl.classList.remove('hidden');
+            if (dropzoneEl) dropzoneEl.classList.add('hidden');
+        } else {
+            if (previewEl) previewEl.classList.add('hidden');
+            if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+        }
+    },
+
+    handleVideoFileUpload(inputEl) {
+        if (!inputEl || !inputEl.files || inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+        this.uploadVideoFile(file);
+    },
+
+    async uploadVideoFile(file) {
+        if (!file) return;
+        const allowedExts = ['.mp4', '.webm', '.mov', '.m4v'];
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        if (!allowedExts.includes(ext) && !file.type.startsWith('video/')) {
+            this.showToast("Seuls les formats vidéo MP4, WebM ou MOV sont acceptés.", "error");
+            return;
+        }
+        if (file.size > 262144000) {
+            this.showToast("La vidéo ne doit pas dépasser 250 Mo.", "error");
+            return;
+        }
+
+        const progressEl = document.getElementById('progress-video');
+        const barEl = document.getElementById('progress-bar-video');
+        const percentEl = document.getElementById('progress-percent-video');
+        const textEl = document.getElementById('progress-text-video');
+        const dropzoneEl = document.getElementById('dropzone-video');
+        const previewEl = document.getElementById('preview-video-container');
+        const previewNameEl = document.getElementById('preview-filename-video');
+        const previewMetaEl = document.getElementById('preview-meta-video');
+        const urlInput = document.getElementById('video-url');
+
+        if (progressEl) progressEl.classList.remove('hidden');
+        if (barEl) barEl.style.width = '0%';
+        if (percentEl) percentEl.textContent = '0%';
+        if (textEl) textEl.textContent = `Téléversement de ${file.name}...`;
+
+        const currentProp = this.state.properties.find(p => p.id == this.state.currentPropertyId);
+        const propSlug = currentProp ? currentProp.slug : 'general';
+        let videoSlug = (document.getElementById('video-slug')?.value || '').trim();
+        if (!videoSlug) {
+            const titleFr = (document.getElementById('video-title-fr')?.value || '').trim();
+            videoSlug = this.slugify(titleFr) || 'tutoriel';
+            const slugInput = document.getElementById('video-slug');
+            if (slugInput) slugInput.value = videoSlug;
+        }
+
+        try {
+            const res = await this.uploadMediaFile(file, 'video', {
+                property_slug: propSlug,
+                video_slug: videoSlug
+            }, (percent, loaded, total) => {
+                if (barEl) barEl.style.width = `${percent}%`;
+                if (percentEl) percentEl.textContent = `${percent}%`;
+                if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
+            });
+
+            if (urlInput) {
+                urlInput.value = res.url;
+            }
+
+            if (previewNameEl) previewNameEl.textContent = res.filename;
+            if (previewMetaEl) previewMetaEl.textContent = `${res.size_formatted} • ${res.storage_label}`;
+            if (previewEl) previewEl.classList.remove('hidden');
+            if (dropzoneEl) dropzoneEl.classList.add('hidden');
+
+            this.showToast(`Vidéo tutoriel téléversée avec succès (${res.storage_label}) !`, 'success');
+        } catch (err) {
+            this.showToast(`Échec du téléversement : ${err.message}`, 'error');
+        } finally {
+            if (progressEl) progressEl.classList.add('hidden');
+            const fileInput = document.getElementById('video-file-input');
+            if (fileInput) fileInput.value = '';
+        }
+    },
+
+    onVideoUrlInput() {
+        const urlInput = document.getElementById('video-url');
+        const url = urlInput ? urlInput.value.trim() : '';
+        const previewEl = document.getElementById('preview-video-container');
+        const previewNameEl = document.getElementById('preview-filename-video');
+        const previewMetaEl = document.getElementById('preview-meta-video');
+        const dropzoneEl = document.getElementById('dropzone-video');
+
+        if (url) {
+            const fname = url.split('/').pop().split('?')[0] || 'video.mp4';
+            if (previewNameEl) previewNameEl.textContent = fname;
+            if (previewMetaEl) previewMetaEl.textContent = 'URL vidéo configurée';
+            if (previewEl) previewEl.classList.remove('hidden');
+            if (dropzoneEl) dropzoneEl.classList.add('hidden');
+        } else {
+            if (previewEl) previewEl.classList.add('hidden');
+            if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+        }
+    },
+
+    clearUploadedMedia(category, lang = null) {
+        if (category === 'guide') {
+            const urlInput = document.getElementById(`property-guide-${lang}`);
+            if (urlInput) urlInput.value = '';
+            const previewEl = document.getElementById(`preview-guide-${lang}`);
+            if (previewEl) previewEl.classList.add('hidden');
+            const dropzoneEl = document.getElementById(`dropzone-guide-${lang}`);
+            if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+            const fileInput = document.getElementById(`property-guide-${lang}-file`);
+            if (fileInput) fileInput.value = '';
+        } else if (category === 'video') {
+            const urlInput = document.getElementById('video-url');
+            if (urlInput) urlInput.value = '';
+            const previewEl = document.getElementById('preview-video-container');
+            if (previewEl) previewEl.classList.add('hidden');
+            const dropzoneEl = document.getElementById('dropzone-video');
+            if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+            const fileInput = document.getElementById('video-file-input');
+            if (fileInput) fileInput.value = '';
+        }
+    },
+
+    previewCurrentVideo() {
+        const urlInput = document.getElementById('video-url');
+        const url = urlInput ? urlInput.value.trim() : '';
+        if (!url) {
+            this.showToast("Aucune vidéo configurée pour l'instant.", "error");
+            return;
+        }
+        const titleFr = document.getElementById('video-title-fr')?.value || 'Aperçu vidéo';
+        this.playVideoPreview(titleFr, url);
+    },
+
+    playVideoPreview(title, url) {
+        const modal = document.getElementById('modal-video-preview');
+        const titleEl = document.getElementById('video-preview-title');
+        const container = document.getElementById('video-preview-player-container');
+        if (!modal || !container) return;
+
+        if (titleEl) titleEl.textContent = title;
+        if (this.isGoogleDriveUrl(url)) {
+            const embed = this.getGoogleDriveEmbedUrl(url);
+            container.innerHTML = `<iframe src="${this.escape(embed)}" class="w-full aspect-video border-0" allow="autoplay; fullscreen"></iframe>`;
+        } else {
+            container.innerHTML = `<video controls autoplay class="w-full max-h-[70vh] bg-black rounded-xl"><source src="${this.escape(url)}" type="video/mp4">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
+        }
+
+        modal.classList.remove('hidden');
+    },
+
+    closeVideoPreview() {
+        const modal = document.getElementById('modal-video-preview');
+        const container = document.getElementById('video-preview-player-container');
+        if (container) container.innerHTML = '';
+        if (modal) modal.classList.add('hidden');
+    },
+
+    formatBytes(bytes) {
+        if (bytes >= 1048576) {
+            return (bytes / 1048576).toFixed(1) + ' Mo';
+        }
+        if (bytes >= 1024) {
+            return Math.round(bytes / 1024) + ' Ko';
+        }
+        return bytes + ' o';
     }
 };
 
