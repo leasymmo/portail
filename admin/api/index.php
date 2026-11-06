@@ -195,23 +195,55 @@ try {
             $data = $body['video'] ?? $_POST;
             $id = isset($data['id']) ? (int)$data['id'] : 0;
 
-            if (empty($data['property_id']) || empty($data['title_fr']) || empty($data['video_url'])) {
+            $propertyId = (int)($data['property_id'] ?? 0);
+            $titleFr = trim((string)($data['title_fr'] ?? ''));
+            $slug = trim((string)($data['slug'] ?? ''));
+            $videoUrl = trim((string)($data['video_url'] ?? ''));
+
+            if ($propertyId <= 0 || empty($titleFr)) {
                 http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => 'Veuillez renseigner le logement, le titre français et l\'URL de la vidéo.']);
+                echo json_encode([
+                    'ok' => false,
+                    'error' => 'Veuillez sélectionner un hébergement et renseigner le titre du tutoriel.'
+                ], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
-            // Génération automatique du slug s'il n'est pas fourni
+            if (empty($slug)) {
+                http_response_code(400);
+                echo json_encode([
+                    'ok' => false,
+                    'error' => 'Le slug unique de la vidéo est obligatoire pour valider le formulaire.'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+            $data['slug'] = \Cdh\Portal\Admin\MediaUploader::sanitizeSlug($slug);
             if (empty($data['slug'])) {
-                $data['slug'] = preg_replace('/[^a-z0-9\-]/', '', strtolower(str_replace(' ', '-', iconv('UTF-8', 'ASCII//TRANSLIT', $data['title_fr']))));
+                http_response_code(400);
+                echo json_encode([
+                    'ok' => false,
+                    'error' => 'Le format du slug est invalide (doit contenir des caractères alphanumériques ou tirets).'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            if (empty($videoUrl)) {
+                http_response_code(400);
+                echo json_encode([
+                    'ok' => false,
+                    'error' => 'L\'URL ou le fichier de la vidéo est obligatoire.'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
             }
 
             if ($id > 0) {
                 $ok = $repo->updateVideo($id, $data);
-                echo json_encode(['ok' => $ok, 'id' => $id, 'message' => 'Vidéo mise à jour.']);
+                echo json_encode(['ok' => $ok, 'id' => $id, 'message' => 'Tutoriel vidéo mis à jour avec succès.'], JSON_UNESCAPED_UNICODE);
             } else {
                 $newId = $repo->createVideo($data);
-                echo json_encode(['ok' => true, 'id' => $newId, 'message' => 'Vidéo ajoutée.']);
+                echo json_encode(['ok' => true, 'id' => $newId, 'message' => 'Tutoriel vidéo ajouté avec succès.'], JSON_UNESCAPED_UNICODE);
             }
             exit;
 

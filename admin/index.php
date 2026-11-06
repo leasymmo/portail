@@ -826,9 +826,13 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Slug URL unique *</label>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-300">Slug URL unique *</label>
+                        <span class="text-[10px] text-gold font-mono">Requis pour Cloudflare R2</span>
+                    </div>
                     <input type="text" id="video-slug" required oninput="AdminApp.onVideoSlugInput(this.value)" placeholder="machine-a-cafe"
                            class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                    <p class="text-[10px] text-gray-400 mt-1">Obligatoire : définit le nom exact du fichier sur Cloudflare R2 (ex: <code class="text-gold">machine-a-cafe.mp4</code>).</p>
                 </div>
 
                 <!-- Téléversement direct du fichier vidéo ou saisie URL -->
@@ -862,8 +866,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" class="hidden" onchange="AdminApp.handleVideoFileUpload(this)">
                         <div class="space-y-1">
                             <span class="text-2xl block group-hover:scale-110 transition-transform">🎥</span>
-                            <p class="text-xs text-gray-200"><strong class="text-gold">Téléverser la vidéo</strong> ou glisser le fichier</p>
-                            <p class="text-[10px] text-gray-400">MP4, WebM ou MOV (haute fluidité mobile & web)</p>
+                            <p class="text-xs text-gray-200"><strong class="text-gold">Choisir la vidéo</strong> ou glisser le fichier</p>
+                            <p class="text-[10px] text-gray-400">Le téléversement s'effectue à l'enregistrement (MP4, WebM ou MOV)</p>
                         </div>
                     </div>
 
@@ -878,25 +882,25 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </div>
                     </div>
 
-                    <!-- Carte aperçu vidéo configurée -->
-                    <div id="preview-video-container" class="hidden items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                    <!-- Carte aperçu vidéo configurée ou fichier en attente -->
+                    <div id="preview-video-container" class="hidden items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all">
                         <div class="flex items-center space-x-2.5 min-w-0">
-                            <span class="text-emerald-400 text-sm">✓</span>
+                            <span id="preview-badge-video" class="text-emerald-400 text-base">✓</span>
                             <div class="min-w-0">
-                                <p id="preview-filename-video" class="text-white font-mono text-xs truncate max-w-[220px]">video.mp4</p>
+                                <p id="preview-filename-video" class="text-white font-mono text-xs font-semibold truncate max-w-[220px]">video.mp4</p>
                                 <p id="preview-meta-video" class="text-[10px] text-emerald-300">Vidéo prête pour diffusion</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 flex-shrink-0">
-                            <button type="button" onclick="AdminApp.previewCurrentVideo()" class="px-2.5 py-1 rounded-lg bg-gold/20 text-gold hover:bg-gold/30 text-[11px] font-bold">▶ Tester</button>
-                            <button type="button" onclick="AdminApp.clearUploadedMedia('video')" class="text-[11px] text-red-400 hover:text-red-300">Retirer</button>
+                            <button type="button" id="preview-btn-play-video" onclick="AdminApp.previewCurrentVideo()" class="px-2.5 py-1 rounded-lg bg-gold/20 text-gold hover:bg-gold/30 text-[11px] font-bold">▶ Tester</button>
+                            <button type="button" onclick="AdminApp.clearUploadedMedia('video')" class="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold">Changer</button>
                         </div>
                     </div>
 
                     <!-- Champ URL manuel Vidéo (repliable) -->
                     <div id="video-url-manual" class="hidden pt-1.5">
                         <label class="block text-[11px] font-semibold text-gray-300 mb-1">URL directe (Cloudflare R2, Google Drive, MP4)</label>
-                        <input type="url" id="video-url" required placeholder="https://videos.carredhotes.fr/bataille/machine-a-cafe.mp4"
+                        <input type="url" id="video-url" placeholder="https://videos.carredhotes.fr/bataille/machine-a-cafe.mp4"
                                oninput="AdminApp.onVideoUrlInput()"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                     </div>
@@ -943,8 +947,10 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </div>
 
                 <div class="pt-4 border-t border-night-border flex justify-end space-x-2">
-                    <button type="button" onclick="AdminApp.closeVideoModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Annuler</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer</button>
+                    <button type="button" id="btn-cancel-video" onclick="AdminApp.closeVideoModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Annuler</button>
+                    <button type="submit" id="btn-save-video" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
+                        <span>Enregistrer</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -1476,6 +1482,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=2.2"></script>
+    <script src="assets/js/admin.js?v=2.3"></script>
 </body>
 </html>

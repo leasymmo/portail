@@ -19,7 +19,9 @@ const AdminApp = {
         users: [],
         logs: [],
         activeTab: 'dashboard',
-        isDev: false
+        isDev: false,
+        pendingVideoFile: null,
+        pendingVideoObjectUrl: null
     },
 
     // --------------------------------------------------------------------------
@@ -799,6 +801,28 @@ const AdminApp = {
         const form = document.getElementById('video-form');
         if (!modal || !form) return;
 
+        // Réinitialisation de tout fichier en attente
+        if (this.state.pendingVideoObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingVideoObjectUrl); } catch(e) {}
+            this.state.pendingVideoObjectUrl = null;
+        }
+        this.state.pendingVideoFile = null;
+
+        const fileInput = document.getElementById('video-file-input');
+        if (fileInput) fileInput.value = '';
+
+        const progressEl = document.getElementById('progress-video');
+        if (progressEl) progressEl.classList.add('hidden');
+
+        const saveBtn = document.getElementById('btn-save-video');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<span>Enregistrer</span>';
+            saveBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+        const cancelBtn = document.getElementById('btn-cancel-video');
+        if (cancelBtn) cancelBtn.disabled = false;
+
         form.reset();
         document.getElementById('video-id').value = id;
         document.getElementById('video-property-id').value = this.state.currentPropertyId;
@@ -829,8 +853,8 @@ const AdminApp = {
             document.getElementById('video-active').checked = true;
         }
 
-        // Met à jour l'affichage de la prévisualisation et dropzone vidéo
-        this.onVideoUrlInput();
+        // Met à jour l'affichage de l'aperçu et de la destination Cloudflare R2
+        this.updateVideoStagedPreview();
         this.updateVideoR2Preview();
 
         modal.classList.remove('hidden');
@@ -843,10 +867,16 @@ const AdminApp = {
             slugInput.value = this.slugify(val);
         }
         this.updateVideoR2Preview();
+        if (this.state.pendingVideoFile) {
+            this.updateVideoStagedPreview();
+        }
     },
 
     onVideoSlugInput(val) {
         this.updateVideoR2Preview();
+        if (this.state.pendingVideoFile) {
+            this.updateVideoStagedPreview();
+        }
     },
 
     updateVideoR2Preview() {
@@ -861,48 +891,177 @@ const AdminApp = {
             }
         }
 
+        let ext = 'mp4';
+        if (this.state.pendingVideoFile) {
+            const fExt = this.state.pendingVideoFile.name.split('.').pop().toLowerCase();
+            if (fExt) ext = fExt;
+        }
+
         const previewEl = document.getElementById('video-r2-dest-preview');
         if (previewEl) {
             if (videoSlug) {
-                previewEl.textContent = `carredhotes-videos/${propSlug}/${videoSlug}.mp4`;
+                previewEl.textContent = `carredhotes-videos/${propSlug}/${videoSlug}.${ext}`;
                 previewEl.className = 'font-mono text-gold font-bold truncate';
             } else {
-                previewEl.textContent = `carredhotes-videos/${propSlug}/[slug-vidéo].mp4 (saisir le titre d'abord)`;
-                previewEl.className = 'font-mono text-gray-400 font-semibold truncate italic';
+                previewEl.textContent = `carredhotes-videos/${propSlug}/[slug-vidéo].${ext} (champ obligatoire)`;
+                previewEl.className = 'font-mono text-amber-400 font-semibold truncate italic';
             }
         }
     },
 
     closeVideoModal() {
+        if (this.state.pendingVideoObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingVideoObjectUrl); } catch(e) {}
+            this.state.pendingVideoObjectUrl = null;
+        }
+        this.state.pendingVideoFile = null;
         const modal = document.getElementById('modal-video-form');
         if (modal) modal.classList.add('hidden');
     },
 
     async saveVideo(e) {
         e.preventDefault();
+
         const id = parseInt(document.getElementById('video-id').value, 10);
+        const propertyId = parseInt(document.getElementById('video-property-id').value, 10);
+        const titleFr = (document.getElementById('video-title-fr').value || '').trim();
+        const titleEn = (document.getElementById('video-title-en').value || '').trim();
+        let slug = (document.getElementById('video-slug').value || '').trim();
+        let videoUrl = (document.getElementById('video-url').value || '').trim();
+
+        // 1. Validation de l'hébergement associé
+        const currentProp = this.state.properties.find(p => p.id == propertyId);
+        const propSlug = currentProp ? currentProp.slug : '';
+        if (!propSlug) {
+            this.showToast("Veuillez sélectionner un hébergement valide.", "error");
+            return;
+        }
+
+        // 2. Validation du titre en français
+        if (!titleFr) {
+            this.showToast("Le titre en français est obligatoire.", "error");
+            const titleInput = document.getElementById('video-title-fr');
+            if (titleInput) {
+                titleInput.focus();
+                titleInput.classList.add('border-red-500', 'ring-2', 'ring-red-500/50');
+                setTimeout(() => titleInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/50'), 2500);
+            }
+            return;
+        }
+
+        // 3. Validation impérative du Slug (strictement requis avant téléversement ou création)
+        if (!slug) {
+            this.showToast("Le slug unique est obligatoire pour valider le formulaire et nommer la vidéo sur Cloudflare.", "error");
+            const slugInput = document.getElementById('video-slug');
+            if (slugInput) {
+                slugInput.focus();
+                slugInput.classList.add('border-red-500', 'ring-2', 'ring-red-500/50');
+                setTimeout(() => slugInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/50'), 2500);
+            }
+            return;
+        }
+
+        slug = this.slugify(slug);
+        const slugInput = document.getElementById('video-slug');
+        if (slugInput) slugInput.value = slug;
+
+        // 4. Vérifier qu'un fichier est en attente OU qu'une URL directe existe
+        if (!this.state.pendingVideoFile && !videoUrl) {
+            this.showToast("Veuillez choisir un fichier vidéo ou saisir une URL directe.", "warning");
+            return;
+        }
+
+        const saveBtn = document.getElementById('btn-save-video');
+        const cancelBtn = document.getElementById('btn-cancel-video');
+        const origBtnHtml = saveBtn ? saveBtn.innerHTML : '<span>Enregistrer</span>';
+
+        const setBusyState = (isBusy, label) => {
+            if (saveBtn) {
+                saveBtn.disabled = isBusy;
+                if (isBusy) {
+                    saveBtn.innerHTML = `<span>⏳</span> <span>${label}</span>`;
+                    saveBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                } else {
+                    saveBtn.innerHTML = origBtnHtml;
+                    saveBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+                }
+            }
+            if (cancelBtn) cancelBtn.disabled = isBusy;
+        };
+
+        const progressEl = document.getElementById('progress-video');
+        const barEl = document.getElementById('progress-bar-video');
+        const percentEl = document.getElementById('progress-percent-video');
+        const textEl = document.getElementById('progress-text-video');
+
+        // 5. Téléversement Cloudflare R2 UNIQUEMENT à la validation du formulaire
+        if (this.state.pendingVideoFile) {
+            const file = this.state.pendingVideoFile;
+            setBusyState(true, "Téléversement vers Cloudflare R2...");
+
+            if (progressEl) progressEl.classList.remove('hidden');
+            if (barEl) barEl.style.width = '0%';
+            if (percentEl) percentEl.textContent = '0%';
+            if (textEl) textEl.textContent = `Téléversement vers carredhotes-videos/${propSlug}/${slug}...`;
+
+            try {
+                const res = await this.uploadMediaFile(file, 'video', {
+                    property_slug: propSlug,
+                    video_slug: slug
+                }, (percent, loaded, total) => {
+                    if (barEl) barEl.style.width = `${percent}%`;
+                    if (percentEl) percentEl.textContent = `${percent}%`;
+                    if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
+                });
+
+                // URL Cloudflare R2 finale
+                videoUrl = res.url;
+                const urlInput = document.getElementById('video-url');
+                if (urlInput) urlInput.value = videoUrl;
+
+                // Nettoyage de l'objet temporaire
+                if (this.state.pendingVideoObjectUrl) {
+                    try { URL.revokeObjectURL(this.state.pendingVideoObjectUrl); } catch(e) {}
+                    this.state.pendingVideoObjectUrl = null;
+                }
+                this.state.pendingVideoFile = null;
+
+            } catch (uploadErr) {
+                setBusyState(false);
+                if (progressEl) progressEl.classList.add('hidden');
+                this.showToast(`Échec du téléversement sur Cloudflare R2 : ${uploadErr.message}. Aucun enregistrement créé.`, "error");
+                return; // INTERRUPT : ne pas enregistrer en BDD si l'upload a échoué
+            }
+        }
+
+        // 6. Enregistrement en base de données (strictement lié à la vidéo Cloudflare R2)
+        setBusyState(true, "Enregistrement en base...");
+
         const data = {
             id,
-            property_id: parseInt(document.getElementById('video-property-id').value, 10),
-            title_fr: document.getElementById('video-title-fr').value.trim(),
-            title_en: document.getElementById('video-title-en').value.trim(),
-            slug: document.getElementById('video-slug').value.trim(),
-            icon: document.getElementById('video-icon').value.trim(),
-            icon_bg_color: document.getElementById('video-bg-color').value.trim(),
-            icon_text_color: document.getElementById('video-text-color').value.trim(),
-            video_url: document.getElementById('video-url').value.trim(),
+            property_id: propertyId,
+            title_fr: titleFr,
+            title_en: titleEn,
+            slug: slug,
+            icon: document.getElementById('video-icon').value.trim() || '🎬',
+            icon_bg_color: document.getElementById('video-bg-color').value.trim() || 'bg-blue-50',
+            icon_text_color: document.getElementById('video-text-color').value.trim() || 'text-blue-500',
+            video_url: videoUrl,
             display_order: parseInt(document.getElementById('video-order').value, 10) || 0,
             active: document.getElementById('video-active').checked ? 1 : 0
         };
 
         try {
             const res = await this.apiRequest('api/index.php?action=video_save', 'POST', { video: data });
-            this.showToast(res.message || 'Tutoriel vidéo enregistré.');
+            this.showToast(res.message || 'Tutoriel vidéo enregistré et connecté avec succès.');
             this.closeVideoModal();
             await this.fetchAndRenderVideos(data.property_id);
             await this.loadInitialData();
         } catch (err) {
-            this.showToast(err.message, 'error');
+            this.showToast(`Erreur d'enregistrement : ${err.message}`, 'error');
+        } finally {
+            setBusyState(false);
+            if (progressEl) progressEl.classList.add('hidden');
         }
     },
 
@@ -2729,7 +2888,7 @@ const AdminApp = {
             if (category === 'guide') {
                 this.uploadGuideFile(file, lang || 'fr');
             } else if (category === 'video') {
-                this.uploadVideoFile(file);
+                this.stageVideoFile(file);
             }
         }
     },
@@ -2848,114 +3007,154 @@ const AdminApp = {
     handleVideoFileUpload(inputEl) {
         if (!inputEl || !inputEl.files || inputEl.files.length === 0) return;
         const file = inputEl.files[0];
-        this.uploadVideoFile(file);
+        this.stageVideoFile(file);
     },
 
-    async uploadVideoFile(file) {
+    stageVideoFile(file) {
         if (!file) return;
         const allowedExts = ['.mp4', '.webm', '.mov', '.m4v'];
         const ext = '.' + file.name.split('.').pop().toLowerCase();
         if (!allowedExts.includes(ext) && !file.type.startsWith('video/')) {
             this.showToast("Seuls les formats vidéo MP4, WebM ou MOV sont acceptés.", "error");
+            const fileInput = document.getElementById('video-file-input');
+            if (fileInput) fileInput.value = '';
             return;
         }
         if (file.size > 262144000) {
             this.showToast("La vidéo ne doit pas dépasser 250 Mo.", "error");
-            return;
-        }
-
-        // 1. Vérification impérative du logement associé
-        const currentProp = this.state.properties.find(p => p.id == this.state.currentPropertyId);
-        const propSlug = currentProp ? currentProp.slug : '';
-        if (!propSlug) {
-            this.showToast("Veuillez d'abord sélectionner un hébergement pour associer cette vidéo.", "warning");
             const fileInput = document.getElementById('video-file-input');
             if (fileInput) fileInput.value = '';
             return;
         }
 
-        // 2. Vérification impérative du slug vidéo avant l'upload
-        let videoSlug = (document.getElementById('video-slug')?.value || '').trim();
-        if (!videoSlug) {
-            const titleFr = (document.getElementById('video-title-fr')?.value || '').trim();
-            if (titleFr) {
-                videoSlug = this.slugify(titleFr);
-                const slugInput = document.getElementById('video-slug');
-                if (slugInput) slugInput.value = videoSlug;
-                this.updateVideoR2Preview();
-            }
+        // Nettoyage de l'ancien object URL
+        if (this.state.pendingVideoObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingVideoObjectUrl); } catch(e) {}
+            this.state.pendingVideoObjectUrl = null;
         }
 
-        if (!videoSlug) {
-            this.showToast("Veuillez d'abord renseigner le titre ou le slug de la vidéo pour nommer le fichier sur Cloudflare R2.", "warning");
-            const titleInput = document.getElementById('video-title-fr');
-            if (titleInput) {
-                titleInput.focus();
-                titleInput.classList.add('border-gold', 'ring-2', 'ring-gold/50');
-                setTimeout(() => titleInput.classList.remove('border-gold', 'ring-2', 'ring-gold/50'), 2500);
-            }
-            const fileInput = document.getElementById('video-file-input');
-            if (fileInput) fileInput.value = '';
-            return;
+        this.state.pendingVideoFile = file;
+        try {
+            this.state.pendingVideoObjectUrl = URL.createObjectURL(file);
+        } catch(e) {
+            this.state.pendingVideoObjectUrl = null;
         }
 
-        const progressEl = document.getElementById('progress-video');
-        const barEl = document.getElementById('progress-bar-video');
-        const percentEl = document.getElementById('progress-percent-video');
-        const textEl = document.getElementById('progress-text-video');
+        // Pré-remplissage intelligent du titre et du slug si non encore saisis
+        const titleInput = document.getElementById('video-title-fr');
+        const slugInput = document.getElementById('video-slug');
+        const baseName = file.name.replace(/\.[^/.]+$/, "");
+
+        if (titleInput && !titleInput.value.trim()) {
+            const cleanTitle = baseName.replace(/[-_]+/g, ' ');
+            titleInput.value = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+        }
+
+        if (slugInput && !slugInput.value.trim()) {
+            const seed = titleInput && titleInput.value.trim() ? titleInput.value.trim() : baseName;
+            slugInput.value = this.slugify(seed);
+        }
+
+        this.updateVideoStagedPreview();
+        this.updateVideoR2Preview();
+
+        this.showToast(`Vidéo sélectionnée (${file.name}). Elle sera téléversée lors de l'enregistrement.`, "info");
+    },
+
+    uploadVideoFile(file) {
+        // Alias de compatibilité
+        this.stageVideoFile(file);
+    },
+
+    updateVideoStagedPreview() {
         const dropzoneEl = document.getElementById('dropzone-video');
         const previewEl = document.getElementById('preview-video-container');
         const previewNameEl = document.getElementById('preview-filename-video');
         const previewMetaEl = document.getElementById('preview-meta-video');
-        const urlInput = document.getElementById('video-url');
+        const badgeEl = document.getElementById('preview-badge-video');
+        const playBtn = document.getElementById('preview-btn-play-video');
 
-        if (progressEl) progressEl.classList.remove('hidden');
-        if (barEl) barEl.style.width = '0%';
-        if (percentEl) percentEl.textContent = '0%';
-        if (textEl) textEl.textContent = `Téléversement de ${videoSlug}${ext} vers ${propSlug}/...`;
-
-        try {
-            const res = await this.uploadMediaFile(file, 'video', {
-                property_slug: propSlug,
-                video_slug: videoSlug
-            }, (percent, loaded, total) => {
-                if (barEl) barEl.style.width = `${percent}%`;
-                if (percentEl) percentEl.textContent = `${percent}%`;
-                if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
-            });
-
-            if (urlInput) {
-                urlInput.value = res.url;
+        if (this.state.pendingVideoFile) {
+            const file = this.state.pendingVideoFile;
+            if (previewEl) {
+                previewEl.className = 'flex items-center justify-between p-3 rounded-xl bg-gold/10 border border-gold/40 text-xs transition-all';
+                previewEl.classList.remove('hidden');
             }
-
-            if (previewNameEl) previewNameEl.textContent = res.filename;
-            if (previewMetaEl) previewMetaEl.textContent = `${res.size_formatted} • ${res.object_key || res.filename}`;
-            if (previewEl) previewEl.classList.remove('hidden');
             if (dropzoneEl) dropzoneEl.classList.add('hidden');
-
-            this.showToast(`Vidéo téléversée avec succès dans ${propSlug}/ (${res.storage_label}) !`, 'success');
-        } catch (err) {
-            this.showToast(`Échec du téléversement : ${err.message}`, 'error');
-        } finally {
-            if (progressEl) progressEl.classList.add('hidden');
-            const fileInput = document.getElementById('video-file-input');
-            if (fileInput) fileInput.value = '';
+            if (badgeEl) {
+                badgeEl.textContent = '🎬';
+                badgeEl.className = 'text-gold text-base';
+            }
+            if (previewNameEl) {
+                previewNameEl.textContent = file.name;
+                previewNameEl.className = 'text-white font-mono text-xs font-semibold truncate max-w-[220px]';
+            }
+            if (previewMetaEl) {
+                previewMetaEl.textContent = `${this.formatBytes(file.size)} • Sera téléversé à la validation`;
+                previewMetaEl.className = 'text-[10px] text-gold font-medium';
+            }
+            if (playBtn) playBtn.classList.remove('hidden');
+        } else {
+            const urlInput = document.getElementById('video-url');
+            const url = urlInput ? urlInput.value.trim() : '';
+            if (url) {
+                if (previewEl) {
+                    previewEl.className = 'flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all';
+                    previewEl.classList.remove('hidden');
+                }
+                if (dropzoneEl) dropzoneEl.classList.add('hidden');
+                if (badgeEl) {
+                    badgeEl.textContent = '✓';
+                    badgeEl.className = 'text-emerald-400 text-base';
+                }
+                if (previewNameEl) {
+                    const fname = url.split('/').pop().split('?')[0] || 'Vidéo';
+                    previewNameEl.textContent = fname;
+                    previewNameEl.className = 'text-white font-mono text-xs font-semibold truncate max-w-[220px]';
+                }
+                if (previewMetaEl) {
+                    previewMetaEl.textContent = 'Vidéo enregistrée (Cloudflare R2 / URL)';
+                    previewMetaEl.className = 'text-[10px] text-emerald-300';
+                }
+                if (playBtn) playBtn.classList.remove('hidden');
+            } else {
+                if (previewEl) previewEl.classList.add('hidden');
+                if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+            }
         }
     },
 
     onVideoUrlInput() {
+        if (this.state.pendingVideoFile) {
+            this.updateVideoStagedPreview();
+            return;
+        }
         const urlInput = document.getElementById('video-url');
         const url = urlInput ? urlInput.value.trim() : '';
         const previewEl = document.getElementById('preview-video-container');
         const previewNameEl = document.getElementById('preview-filename-video');
         const previewMetaEl = document.getElementById('preview-meta-video');
+        const badgeEl = document.getElementById('preview-badge-video');
         const dropzoneEl = document.getElementById('dropzone-video');
 
         if (url) {
             const fname = url.split('/').pop().split('?')[0] || 'video.mp4';
-            if (previewNameEl) previewNameEl.textContent = fname;
-            if (previewMetaEl) previewMetaEl.textContent = 'URL vidéo configurée';
-            if (previewEl) previewEl.classList.remove('hidden');
+            if (previewNameEl) {
+                previewNameEl.textContent = fname;
+                previewNameEl.className = 'text-white font-mono text-xs font-semibold truncate max-w-[220px]';
+            }
+            if (previewMetaEl) {
+                previewMetaEl.textContent = 'URL directe configurée';
+                previewMetaEl.className = 'text-[10px] text-emerald-300';
+            }
+            if (badgeEl) {
+                badgeEl.textContent = '✓';
+                badgeEl.className = 'text-emerald-400 text-base';
+            }
+            if (previewEl) {
+                previewEl.className = 'flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all';
+                previewEl.classList.remove('hidden');
+            }
             if (dropzoneEl) dropzoneEl.classList.add('hidden');
         } else {
             if (previewEl) previewEl.classList.add('hidden');
@@ -2974,6 +3173,12 @@ const AdminApp = {
             const fileInput = document.getElementById(`property-guide-${lang}-file`);
             if (fileInput) fileInput.value = '';
         } else if (category === 'video') {
+            if (this.state.pendingVideoObjectUrl) {
+                try { URL.revokeObjectURL(this.state.pendingVideoObjectUrl); } catch(e) {}
+                this.state.pendingVideoObjectUrl = null;
+            }
+            this.state.pendingVideoFile = null;
+
             const urlInput = document.getElementById('video-url');
             if (urlInput) urlInput.value = '';
             const previewEl = document.getElementById('preview-video-container');
@@ -2982,14 +3187,20 @@ const AdminApp = {
             if (dropzoneEl) dropzoneEl.classList.remove('hidden');
             const fileInput = document.getElementById('video-file-input');
             if (fileInput) fileInput.value = '';
+            this.updateVideoR2Preview();
         }
     },
 
     previewCurrentVideo() {
-        const urlInput = document.getElementById('video-url');
-        const url = urlInput ? urlInput.value.trim() : '';
+        let url = '';
+        if (this.state.pendingVideoObjectUrl) {
+            url = this.state.pendingVideoObjectUrl;
+        } else {
+            const urlInput = document.getElementById('video-url');
+            url = urlInput ? urlInput.value.trim() : '';
+        }
         if (!url) {
-            this.showToast("Aucune vidéo configurée pour l'instant.", "error");
+            this.showToast("Aucune vidéo sélectionnée ou configurée pour l'instant.", "warning");
             return;
         }
         const titleFr = document.getElementById('video-title-fr')?.value || 'Aperçu vidéo';
@@ -3007,7 +3218,7 @@ const AdminApp = {
             const embed = this.getGoogleDriveEmbedUrl(url);
             container.innerHTML = `<iframe src="${this.escape(embed)}" class="w-full aspect-video border-0" allow="autoplay; fullscreen"></iframe>`;
         } else {
-            container.innerHTML = `<video controls autoplay class="w-full max-h-[70vh] bg-black rounded-xl"><source src="${this.escape(url)}" type="video/mp4">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
+            container.innerHTML = `<video controls autoplay class="w-full max-h-[70vh] bg-black rounded-xl"><source src="${this.escape(url)}">Votre navigateur ne prend pas en charge la balise vidéo.</video>`;
         }
 
         modal.classList.remove('hidden');
