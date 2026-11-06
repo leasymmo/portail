@@ -1880,16 +1880,6 @@ const AdminApp = {
         }
     },
 
-    toggleEnglishBox(boxId) {
-        const box = document.getElementById(boxId);
-        if (box) {
-            box.classList.toggle('hidden');
-            if (!box.classList.contains('hidden')) {
-                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-    },
-
     async previewTranslateGeneral() {
         const data = {
             intro_fr: document.getElementById('parking-intro-fr').value.trim(),

@@ -112,7 +112,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                     <div class="pt-2 border-t border-night-border/50 my-1"></div>
 
-                    <button type="button" onclick="AdminApp.openSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group" title="Configuration (IA, R2 & Stockage)">
+                    <button type="button" onclick="AdminApp.openSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group <?= $currentUser['role'] !== 'superadmin' ? 'hidden' : '' ?>" title="Configuration (IA, R2 & Stockage)">
                         <div class="flex items-center space-x-3 overflow-hidden">
                             <span class="text-base flex-shrink-0 group-hover:scale-110 transition-transform">⚙️</span>
                             <span class="sidebar-text-label text-gold-light group-hover:text-gold font-bold truncate">Configuration</span>
@@ -1245,54 +1245,62 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 9. MODALE CONFIGURATION (INTELLIGENCE ARTIFICIELLE & STOCKAGE R2) -->
-    <div id="modal-ai-settings" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
-        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
+    <div id="modal-ai-settings" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
             <!-- Entête modale -->
-            <div class="flex items-center justify-between border-b border-night-border/80 p-5 sm:p-6 pb-4 bg-night/50">
-                <div class="flex items-center space-x-3">
-                    <span class="w-10 h-10 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-lg shadow-sm shadow-gold/15 flex-shrink-0">⚙️</span>
+            <div class="flex items-center justify-between border-b border-night-border/80 px-6 py-5 bg-night/70">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-11 h-11 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-xl shadow-lg shadow-gold/15 flex-shrink-0">
+                        ⚙️
+                    </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-bold text-white tracking-wide">Configuration Générale</h3>
-                        <p class="text-[11px] text-gray-400">Intelligence Artificielle, Moteurs de Traduction & Stockage Cloudflare R2</p>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-base sm:text-lg font-bold font-serif-luxury text-white tracking-wide">Configuration Générale</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold/15 text-gold border border-gold/30">Superadmin</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5">Moteurs d'IA (FR ⇄ EN) & Infrastructure de stockage Cloudflare R2</p>
                     </div>
                 </div>
-                <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition text-sm" title="Fermer la fenêtre">✕</button>
+                <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition text-sm cursor-pointer" title="Fermer la fenêtre">✕</button>
             </div>
 
-            <!-- Onglets de configuration -->
-            <div class="px-5 sm:px-6 py-3 border-b border-night-border/70 flex space-x-2 bg-night/40">
-                <button type="button" id="settings-tab-btn-ai" onclick="AdminApp.switchSettingsTab('ai')"
-                        class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25">
-                    <span>✨</span>
-                    <span>Traduction IA</span>
-                </button>
-                <button type="button" id="settings-tab-btn-storage" onclick="AdminApp.switchSettingsTab('storage')"
-                        class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2">
-                    <span>☁️</span>
-                    <span>Stockage Cloudflare R2</span>
-                </button>
+            <!-- Onglets de navigation segmented controls -->
+            <div class="px-6 py-3 border-b border-night-border/70 flex items-center justify-between bg-night/40">
+                <div class="inline-flex p-1 rounded-2xl bg-night border border-night-border/80 space-x-1">
+                    <button type="button" id="settings-tab-btn-ai" onclick="AdminApp.switchSettingsTab('ai')"
+                            class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25">
+                        <span>✨</span>
+                        <span>Traduction IA</span>
+                    </button>
+                    <button type="button" id="settings-tab-btn-storage" onclick="AdminApp.switchSettingsTab('storage')"
+                            class="settings-tab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2">
+                        <span>☁️</span>
+                        <span>Stockage Cloudflare R2</span>
+                    </button>
+                </div>
+                <span class="text-[11px] text-gray-500 hidden sm:inline">Changements appliqués immédiatement</span>
             </div>
 
             <!-- Formulaire unifié -->
-            <form id="ai-settings-form" onsubmit="AdminApp.saveAiSettings(event)" class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+            <form id="ai-settings-form" onsubmit="AdminApp.saveAiSettings(event)" class="p-6 overflow-y-auto space-y-5 flex-1">
                 
                 <!-- PANNEAU 1 : TRADUCTION IA -->
                 <div id="settings-panel-ai" class="space-y-4">
                     
-                    <!-- Carte Fournisseur & Clé API -->
-                    <div class="p-4 sm:p-5 rounded-2xl bg-night/60 border border-night-border/70 space-y-4">
-                        <div class="flex items-center justify-between border-b border-night-border/50 pb-2.5">
-                            <span class="text-xs font-bold text-gold flex items-center space-x-1.5">
+                    <!-- Carte 1 : Fournisseur & Clé API -->
+                    <div class="p-5 rounded-2xl bg-night/60 border border-night-border/80 space-y-4 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-night-border/60 pb-3">
+                            <span class="text-xs font-bold text-gold uppercase tracking-wider flex items-center space-x-2">
                                 <span>🤖</span>
                                 <span>Moteur d'Intelligence Artificielle</span>
                             </span>
-                            <span class="text-[10px] text-gray-400">Traduction FR ⇄ EN</span>
+                            <span class="text-[11px] text-gray-400">Traductions bilingues instantanées</span>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1.5">Fournisseur IA actif *</label>
-                            <select id="ai-provider-select" onchange="AdminApp.handleAiProviderChange()" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold font-medium">
-                                <option value="gemini">Google Gemini (Recommandé — Rapide, précis & économique)</option>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1.5">Fournisseur IA sélectionné *</label>
+                            <select id="ai-provider-select" onchange="AdminApp.handleAiProviderChange()" class="w-full p-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold font-semibold transition">
+                                <option value="gemini">Google Gemini (Recommandé — Rapide, précis & haute fidélité)</option>
                                 <option value="openai">ChatGPT / OpenAI (gpt-4o-mini)</option>
                                 <option value="claude">Anthropic Claude (claude-3-5-haiku)</option>
                             </select>
@@ -1308,8 +1316,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 </a>
                             </div>
                             <div class="relative">
-                                <input type="password" id="ai-key-gemini" placeholder="AIzaSy..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                                <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-gemini')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                                <input type="password" id="ai-key-gemini" placeholder="AIzaSy..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                                <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-gemini')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs" title="Afficher/masquer la clé">👁️</button>
                             </div>
                             <p class="text-[11px] text-gray-400">Modèle par défaut : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded font-mono">gemini-2.5-flash</code></p>
                         </div>
@@ -1324,8 +1332,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 </a>
                             </div>
                             <div class="relative">
-                                <input type="password" id="ai-key-openai" placeholder="sk-proj-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                                <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-openai')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                                <input type="password" id="ai-key-openai" placeholder="sk-proj-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                                <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-openai')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs" title="Afficher/masquer la clé">👁️</button>
                             </div>
                             <p class="text-[11px] text-gray-400">Modèle par défaut : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded font-mono">gpt-4o-mini</code></p>
                         </div>
@@ -1340,39 +1348,42 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 </a>
                             </div>
                             <div class="relative">
-                                <input type="password" id="ai-key-claude" placeholder="sk-ant-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                                <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-claude')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                                <input type="password" id="ai-key-claude" placeholder="sk-ant-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                                <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-claude')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs" title="Afficher/masquer la clé">👁️</button>
                             </div>
                             <p class="text-[11px] text-gray-400">Modèle par défaut : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded font-mono">claude-3-5-haiku-latest</code></p>
                         </div>
                     </div>
 
-                    <!-- Carte Sélection dynamique du modèle -->
-                    <div class="p-4 sm:p-5 rounded-2xl bg-night/60 border border-night-border/70 space-y-2.5">
-                        <div class="flex items-center justify-between">
+                    <!-- Carte 2 : Sélection dynamique du modèle -->
+                    <div class="p-5 rounded-2xl bg-night/60 border border-night-border/80 space-y-3 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-night-border/60 pb-2.5">
                             <label class="block text-xs font-semibold text-gray-300">Modèle actif *</label>
                             <button type="button" onclick="AdminApp.refreshAiModels()" class="text-[11px] text-gold hover:text-gold-light flex items-center space-x-1 hover:underline cursor-pointer" title="Interroger l'API pour récupérer les modèles disponibles">
                                 <span id="ai-models-refresh-icon">🔄</span>
-                                <span id="ai-models-refresh-label">Actualiser les modèles</span>
+                                <span id="ai-models-refresh-label">Actualiser la liste</span>
                             </button>
                         </div>
-                        <select id="ai-model-select" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold font-mono">
+                        <select id="ai-model-select" class="w-full p-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold font-mono transition">
                             <option value="">Chargement des modèles disponibles...</option>
                         </select>
-                        <p class="text-[11px] text-gray-400">Les modèles sont interrogés en direct auprès du fournisseur sélectionné.</p>
+                        <p class="text-[11px] text-gray-400 leading-relaxed">Les modèles sont interrogés en direct auprès du fournisseur sélectionné afin de garantir la compatibilité.</p>
                     </div>
 
-                    <!-- Carte Test & Diagnostic IA -->
-                    <div class="p-4 rounded-2xl bg-night/40 border border-night-border/60 space-y-3">
+                    <!-- Carte 3 : Test & Diagnostic IA -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-night/40 border border-night-border/70 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-gray-300">Diagnostic de communication IA</span>
-                            <button type="button" id="btn-test-ai" onclick="AdminApp.testAiConnection()" class="px-4 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                            <div>
+                                <span class="text-xs font-bold text-white block">Diagnostic de communication IA</span>
+                                <span class="text-[11px] text-gray-400">Effectue un appel de test pour valider la clé et la latence.</span>
+                            </div>
+                            <button type="button" id="btn-test-ai" onclick="AdminApp.testAiConnection()" class="px-4 py-2.5 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm cursor-pointer">
                                 <span>⚡</span>
-                                <span>Tester la connexion IA</span>
+                                <span>Tester la connexion</span>
                             </button>
                         </div>
                         <!-- Zone résultat test connexion IA -->
-                        <div id="ai-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+                        <div id="ai-test-result" class="hidden p-3.5 rounded-xl text-xs space-y-1"></div>
                     </div>
                 </div>
 
@@ -1380,30 +1391,30 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <div id="settings-panel-storage" class="space-y-4 hidden">
                     
                     <!-- Bannière informative R2 -->
-                    <div class="p-4 rounded-2xl bg-gradient-to-r from-gold/15 via-gold/5 to-transparent border border-gold/30 flex items-start space-x-3.5 shadow-sm">
-                        <div class="w-9 h-9 rounded-xl bg-gold/20 text-gold border border-gold/30 flex items-center justify-center text-lg flex-shrink-0">
+                    <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-gold/15 via-gold/5 to-transparent border border-gold/30 flex items-start space-x-3.5 shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-gold/20 text-gold border border-gold/30 flex items-center justify-center text-xl flex-shrink-0">
                             ☁️
                         </div>
                         <div class="flex-1">
                             <div class="flex items-center justify-between">
-                                <h4 class="text-xs font-bold text-white">Stockage Exclusif Cloudflare R2</h4>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Actif</span>
+                                <h4 class="text-xs font-bold text-white tracking-wide">Stockage Exclusif Cloudflare R2</h4>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">CDN Mondial Actif</span>
                             </div>
                             <p class="text-[11px] text-gray-300 mt-1 leading-relaxed">
-                                Les livrets d'accueil PDF et les vidéos sont hébergés avec haute vitesse et bande passante mondiale illimitée sur vos sous-domaines dédiés.
+                                Les livrets PDF et les vidéos sont hébergés sur vos sous-domaines dédiés avec bande passante mondiale sans frais d'egress.
                             </p>
                         </div>
                     </div>
 
                     <!-- Carte 1 : Identifiants API S3 -->
-                    <div class="p-4 sm:p-5 rounded-2xl bg-night/60 border border-night-border/70 space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-night-border/50 pb-2.5">
-                            <span class="text-xs font-bold text-gold flex items-center space-x-1.5">
+                    <div class="p-5 rounded-2xl bg-night/60 border border-night-border/80 space-y-3.5 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-night-border/60 pb-2.5">
+                            <span class="text-xs font-bold text-gold uppercase tracking-wider flex items-center space-x-2">
                                 <span>🔑</span>
                                 <span>Identifiants API S3 Cloudflare</span>
                             </span>
                             <a href="https://dash.cloudflare.com/?to=/:account/r2/api-tokens" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline flex items-center space-x-1">
-                                <span>Créer un token R2 S3</span>
+                                <span>Gérer les tokens R2</span>
                                 <span>↗</span>
                             </a>
                         </div>
@@ -1411,95 +1422,103 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <div>
                             <label class="block text-xs font-semibold text-gray-300 mb-1">ID de Compte Cloudflare (Account ID) *</label>
                             <input type="text" id="r2-account-id" placeholder="Ex: 8f2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
-                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Access Key ID *</label>
                                 <input type="text" id="r2-access-key-id" placeholder="Clé d'accès S3 R2"
-                                       class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                       class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-300 mb-1">R2 Secret Access Key *</label>
                                 <div class="relative">
                                     <input type="password" id="r2-secret-access-key" placeholder="Clé secrète S3 R2"
-                                           class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                                    <button type="button" onclick="AdminApp.toggleKeyVisibility('r2-secret-access-key')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                                           class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold">
+                                    <button type="button" onclick="AdminApp.toggleKeyVisibility('r2-secret-access-key')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs" title="Afficher/masquer la clé">👁️</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Carte 2 : Buckets et Domaines Publics -->
-                    <div class="p-4 sm:p-5 rounded-2xl bg-night/60 border border-night-border/70 space-y-3.5">
-                        <div class="flex items-center justify-between border-b border-night-border/50 pb-2.5">
-                            <span class="text-xs font-bold text-gold flex items-center space-x-1.5">
+                    <div class="p-5 rounded-2xl bg-night/60 border border-night-border/80 space-y-4 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-night-border/60 pb-2.5">
+                            <span class="text-xs font-bold text-gold uppercase tracking-wider flex items-center space-x-2">
                                 <span>📁</span>
                                 <span>Buckets & Sous-domaines Publics</span>
                             </span>
-                            <span class="text-[10px] text-gray-400">Routage CDN</span>
+                            <span class="text-[11px] text-gray-400">Routage CDN Custom</span>
                         </div>
 
-                        <!-- Guides PDF -->
-                        <div class="p-3 rounded-xl bg-night/80 border border-night-border/50 space-y-2">
-                            <div class="flex items-center space-x-1.5 text-xs font-bold text-white">
-                                <span>📄</span>
-                                <span>Livrets d'accueil (Guides PDF)</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-400 mb-1">Nom du Bucket R2</label>
-                                    <input type="text" id="r2-bucket-guides" placeholder="carredhotes-guides"
-                                           class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Guides PDF -->
+                            <div class="p-4 rounded-xl bg-night/80 border border-night-border/60 space-y-2.5">
+                                <div class="flex items-center space-x-2 text-xs font-bold text-white border-b border-night-border/40 pb-2">
+                                    <span>📄</span>
+                                    <span>Livrets d'accueil (PDF)</span>
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-400 mb-1">Domaine Public Dédié</label>
-                                    <input type="url" id="r2-domain-guides" placeholder="https://guides.carredhotes.fr"
-                                           class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                <div class="space-y-2">
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-gray-400 mb-1">Nom du Bucket R2</label>
+                                        <input type="text" id="r2-bucket-guides" placeholder="carredhotes-guides"
+                                               class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-gray-400 mb-1">Domaine Public Dédié</label>
+                                        <input type="url" id="r2-domain-guides" placeholder="https://guides.carredhotes.fr"
+                                               class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Vidéos MP4 -->
-                        <div class="p-3 rounded-xl bg-night/80 border border-night-border/50 space-y-2">
-                            <div class="flex items-center space-x-1.5 text-xs font-bold text-white">
-                                <span>🎬</span>
-                                <span>Vidéos & Tutoriels (MP4 / WebM / MOV)</span>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-400 mb-1">Nom du Bucket R2</label>
-                                    <input type="text" id="r2-bucket-videos" placeholder="carredhotes-videos"
-                                           class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                            <!-- Vidéos MP4 -->
+                            <div class="p-4 rounded-xl bg-night/80 border border-night-border/60 space-y-2.5">
+                                <div class="flex items-center space-x-2 text-xs font-bold text-white border-b border-night-border/40 pb-2">
+                                    <span>🎬</span>
+                                    <span>Vidéos Tutoriels (MP4 / MOV)</span>
                                 </div>
-                                <div>
-                                    <label class="block text-[10px] font-semibold text-gray-400 mb-1">Domaine Public Dédié</label>
-                                    <input type="url" id="r2-domain-videos" placeholder="https://videos.carredhotes.fr"
-                                           class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                <div class="space-y-2">
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-gray-400 mb-1">Nom du Bucket R2</label>
+                                        <input type="text" id="r2-bucket-videos" placeholder="carredhotes-videos"
+                                               class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-semibold text-gray-400 mb-1">Domaine Public Dédié</label>
+                                        <input type="url" id="r2-domain-videos" placeholder="https://videos.carredhotes.fr"
+                                               class="w-full p-2 rounded-lg bg-night-card border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Carte Test & Diagnostic R2 -->
-                    <div class="p-4 rounded-2xl bg-night/40 border border-night-border/60 space-y-3">
+                    <!-- Carte 3 : Test & Diagnostic R2 -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-night/40 border border-night-border/70 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-gray-300">Diagnostic de liaison Cloudflare R2</span>
-                            <button type="button" id="btn-test-r2" onclick="AdminApp.testR2Connection()" class="px-4 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                            <div>
+                                <span class="text-xs font-bold text-white block">Diagnostic de liaison Cloudflare R2</span>
+                                <span class="text-[11px] text-gray-400">Vérifie l'existence et l'accès en écriture/lecture aux deux buckets.</span>
+                            </div>
+                            <button type="button" id="btn-test-r2" onclick="AdminApp.testR2Connection()" class="px-4 py-2.5 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm cursor-pointer">
                                 <span>⚡</span>
                                 <span>Tester la connexion R2</span>
                             </button>
                         </div>
                         <!-- Zone résultat test connexion R2 -->
-                        <div id="r2-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+                        <div id="r2-test-result" class="hidden p-3.5 rounded-xl text-xs space-y-1"></div>
                     </div>
                 </div>
 
                 <!-- Footer Modale -->
-                <div class="pt-4 border-t border-night-border flex items-center justify-end space-x-3">
-                    <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 font-semibold transition">Fermer</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/25 transition">Enregistrer la configuration</button>
+                <div class="pt-4 border-t border-night-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <span class="text-[11px] text-gray-500 italic">Tous les identifiants sensibles sont chiffrés et masqués côté client.</span>
+                    <div class="flex items-center space-x-3 self-end sm:self-auto">
+                        <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 font-semibold transition cursor-pointer">Annuler</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold to-gold-light hover:from-gold-dark hover:to-gold text-white font-bold text-xs shadow-lg shadow-gold/25 transition cursor-pointer">Enregistrer la configuration</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1545,6 +1564,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=3.0"></script>
+    <script src="assets/js/admin.js?v=3.1"></script>
 </body>
 </html>

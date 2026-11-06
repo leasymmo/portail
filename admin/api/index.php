@@ -658,6 +658,7 @@ try {
             exit;
 
         case 'test_ai':
+            Auth::requireSuperAdmin(true);
             $provider = $body['provider'] ?? ($_POST['provider'] ?? 'gemini');
             $apiKey = trim((string)($body['api_key'] ?? ($_POST['api_key'] ?? '')));
             $model = !empty($body['model']) ? trim((string)$body['model']) : null;
@@ -777,6 +778,7 @@ try {
             exit;
 
         case 'r2_test':
+            Auth::requireSuperAdmin(true);
             require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
             $savedConfig = \Cdh\Portal\Admin\MediaUploader::getR2Config();
 
@@ -818,6 +820,7 @@ try {
             exit;
     }
 } catch (Throwable $e) {
+    error_log('[CDH Admin API Error] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
     http_response_code(500);
     echo json_encode([
         'ok'    => false,
