@@ -104,6 +104,7 @@ try {
                 ]
             ];
         }
+        $property['parking'] = $parkingData;
 
         echo json_encode([
             'success' => true,

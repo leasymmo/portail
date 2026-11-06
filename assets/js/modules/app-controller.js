@@ -53,7 +53,11 @@ export const AppController = {
             const result = response.data;
             if (result.type === 'property') {
                 const videoList = result.data.videos || result.data.tutorials || [];
-                PropertyRenderer.render(result.data.property, videoList, route);
+                const propertyData = result.data.property;
+                if (result.data.parking && !propertyData.parking) {
+                    propertyData.parking = result.data.parking;
+                }
+                PropertyRenderer.render(propertyData, videoList, route);
             } else if (result.type === 'list') {
                 ScrollManager.unlock();
                 AppState.allProperties = result.data.properties || [];
