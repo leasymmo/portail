@@ -903,6 +903,294 @@ const AdminApp = {
         }
     },
 
+    getTranslationFieldDefinitions(type) {
+        if (type === 'parking_general') {
+            return [
+                {
+                    key: 'intro',
+                    label: 'Message d\'accueil & Introduction',
+                    frId: 'parking-intro-fr',
+                    enId: 'parking-intro-en',
+                    isTextarea: true,
+                    rows: 2
+                },
+                {
+                    key: 'important_rule',
+                    label: 'Alerte impérative / Règle d\'or',
+                    frId: 'parking-rule-fr',
+                    enId: 'parking-rule-en',
+                    isTextarea: true,
+                    rows: 2
+                },
+                {
+                    key: 'free_parking_notes',
+                    label: 'Places de voirie gratuites & Dépose-minute',
+                    frId: 'parking-free-notes-fr',
+                    enId: 'parking-free-notes-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'street_parking_schedule',
+                    label: 'Horaires de la voirie payante',
+                    frId: 'parking-street-sched-fr',
+                    enId: 'parking-street-sched-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'street_parking_info',
+                    label: 'Périmètre voirie payante & Horodateurs',
+                    frId: 'parking-street-info-fr',
+                    enId: 'parking-street-info-en',
+                    isTextarea: true,
+                    rows: 2
+                },
+                {
+                    key: 'street_parking_rates',
+                    label: 'Grille tarifaire de la voirie payante',
+                    frId: 'parking-street-rates-fr',
+                    enId: 'parking-street-rates-en',
+                    isTextarea: true,
+                    rows: 3
+                },
+                {
+                    key: 'tcl_conditions',
+                    label: 'Conditions de gratuité Parc Relais TCL (P+R)',
+                    frId: 'parking-tcl-cond-fr',
+                    enId: 'parking-tcl-cond-en',
+                    isTextarea: true,
+                    rows: 2
+                },
+                {
+                    key: 'tcl_notes',
+                    label: 'Lignes, métros et accès conseillés TCL',
+                    frId: 'parking-tcl-notes-fr',
+                    enId: 'parking-tcl-notes-en',
+                    isTextarea: false
+                }
+            ];
+        } else if (type === 'parking_location') {
+            return [
+                {
+                    key: 'name',
+                    label: 'Nom du parking ou de la rue',
+                    frId: 'location-name-fr',
+                    enId: 'location-name-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'walking_time',
+                    label: 'Temps de marche à pied',
+                    frId: 'location-walking-fr',
+                    enId: 'location-walking-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'transit_time',
+                    label: 'Temps en transports en commun (TCL)',
+                    frId: 'location-transit-fr',
+                    enId: 'location-transit-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'opening_hours',
+                    label: 'Horaires d\'ouverture',
+                    frId: 'location-hours-fr',
+                    enId: 'location-hours-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'rates',
+                    label: 'Tarifs et modalités',
+                    frId: 'location-rates-fr',
+                    enId: 'location-rates-en',
+                    isTextarea: true,
+                    rows: 2
+                },
+                {
+                    key: 'suitable_vehicles',
+                    label: 'Véhicules adaptés',
+                    frId: 'location-vehicles-fr',
+                    enId: 'location-vehicles-en',
+                    isTextarea: false
+                },
+                {
+                    key: 'how_to_reach',
+                    label: 'Itinéraire pour rejoindre le logement',
+                    frId: 'location-reach-fr',
+                    enId: 'location-reach-en',
+                    isTextarea: true,
+                    rows: 2
+                },
+                {
+                    key: 'notes',
+                    label: 'Notes & remarques complémentaires',
+                    frId: 'location-notes-fr',
+                    enId: 'location-notes-en',
+                    isTextarea: false
+                }
+            ];
+        }
+        return [];
+    },
+
+    openTranslationReviewModal(type, overrideEnData = null) {
+        const defs = this.getTranslationFieldDefinitions(type);
+        const container = document.getElementById('review-modal-fields-container');
+        const countEl = document.getElementById('review-fields-count');
+        const badgeEl = document.getElementById('review-modal-provider-badge');
+        const modal = document.getElementById('modal-translation-review');
+        if (!container || !modal) return;
+
+        if (badgeEl) {
+            const p = this.state.settings?.ai_provider || 'gemini';
+            badgeEl.textContent = { gemini: 'Google Gemini', openai: 'ChatGPT', claude: 'Claude' }[p] || p;
+        }
+
+        this.state.translationReview = { type, fields: [] };
+
+        const activeFields = [];
+        defs.forEach(def => {
+            const frInput = document.getElementById(def.frId);
+            const enInput = document.getElementById(def.enId);
+            const frVal = frInput ? frInput.value.trim() : '';
+
+            let enVal = '';
+            if (overrideEnData && overrideEnData[`${def.key}_en`] !== undefined) {
+                enVal = overrideEnData[`${def.key}_en`];
+            } else if (enInput) {
+                enVal = enInput.value.trim();
+            }
+
+            if (frVal || enVal) {
+                activeFields.push({
+                    ...def,
+                    frVal,
+                    enVal
+                });
+            }
+        });
+
+        if (activeFields.length === 0) {
+            this.showToast('Veuillez renseigner au moins un champ en français avant de réviser la traduction.', 'warning');
+            return;
+        }
+
+        this.state.translationReview.fields = activeFields;
+        if (countEl) countEl.textContent = activeFields.length;
+
+        container.innerHTML = activeFields.map(f => `
+            <div class="p-4 sm:p-5 rounded-2xl bg-night border border-night-border/80 hover:border-gold/40 transition space-y-3 shadow-md">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                        <span class="text-gold">●</span>
+                        <span>${this.escape(f.label)}</span>
+                    </label>
+                    <span class="text-[10px] text-gray-400 font-mono">Champ : ${this.escape(f.key)}</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <!-- Colonne 1 : Français (Source) -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-gray-400">
+                            <span class="flex items-center space-x-1.5">
+                                <span>🇫🇷</span>
+                                <span>Français (Source)</span>
+                            </span>
+                            <span class="text-[10px] text-gray-500">Texte d'origine</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-night-card border border-night-border text-xs text-gray-200 min-h-[48px] whitespace-pre-wrap select-all leading-relaxed">
+                            ${f.frVal ? this.escape(f.frVal) : '<span class="text-gray-500 italic">Non renseigné en français</span>'}
+                        </div>
+                    </div>
+
+                    <!-- Colonne 2 : Anglais (Traduction IA éditable) -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-gold-light">
+                            <span class="flex items-center space-x-1.5">
+                                <span>🇬🇧</span>
+                                <span>Anglais (Traduction IA)</span>
+                            </span>
+                            <span class="text-[10px] bg-gold/20 text-gold-light px-2 py-0.5 rounded-full border border-gold/30 font-semibold">Éditable directement</span>
+                        </div>
+                        ${f.isTextarea ? `
+                            <textarea data-review-en-id="${f.enId}" rows="${f.rows || 2}"
+                                      class="w-full p-3 rounded-xl bg-night-card border border-gold/40 text-xs text-white focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition font-sans leading-relaxed"
+                                      placeholder="Traduction anglaise...">${this.escape(f.enVal)}</textarea>
+                        ` : `
+                            <input type="text" data-review-en-id="${f.enId}" value="${this.escape(f.enVal)}"
+                                   class="w-full p-3 rounded-xl bg-night-card border border-gold/40 text-xs text-white focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition font-sans"
+                                   placeholder="Traduction anglaise...">
+                        `}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        modal.classList.remove('hidden');
+    },
+
+    closeTranslationReviewModal() {
+        const modal = document.getElementById('modal-translation-review');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    openDirectReviewModal(type) {
+        this.openTranslationReviewModal(type, null);
+    },
+
+    async applyReviewTranslations(saveDirectly = false) {
+        const reviewState = this.state.translationReview;
+        if (!reviewState || !reviewState.type) return;
+
+        // 1. Reporter toutes les valeurs saisies/éditées dans les inputs du formulaire correspondant
+        document.querySelectorAll('[data-review-en-id]').forEach(input => {
+            const targetId = input.dataset.reviewEnId;
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.value = input.value.trim();
+            }
+        });
+
+        // 2. Si enregistrement direct demandé
+        if (saveDirectly) {
+            const btnSave = document.getElementById('btn-review-save-direct');
+            const iconEl = document.getElementById('btn-review-save-icon');
+            const labelEl = document.getElementById('btn-review-save-label');
+            const origLabel = labelEl ? labelEl.textContent : 'Valider & Enregistrer en base';
+
+            try {
+                if (btnSave) btnSave.disabled = true;
+                if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+                if (labelEl) labelEl.textContent = 'Enregistrement en base...';
+
+                if (reviewState.type === 'parking_general') {
+                    const fakeEvent = { preventDefault: () => {} };
+                    await this.saveParkingGeneral(fakeEvent);
+                } else if (reviewState.type === 'parking_location') {
+                    const fakeEvent = { preventDefault: () => {} };
+                    await this.saveLocation(fakeEvent);
+                }
+
+                this.closeTranslationReviewModal();
+            } catch (err) {
+                this.showToast('Erreur lors de l\'enregistrement : ' + err.message, 'error');
+            } finally {
+                if (btnSave) btnSave.disabled = false;
+                if (iconEl) iconEl.textContent = '💾';
+                if (labelEl) labelEl.textContent = origLabel;
+            }
+        } else {
+            this.closeTranslationReviewModal();
+            this.showToast('Traductions anglaises appliquées au formulaire.', 'info');
+            const boxId = reviewState.type === 'parking_general' ? 'parking-general-en-box' : 'location-en-box';
+            const box = document.getElementById(boxId);
+            if (box) {
+                box.classList.remove('hidden');
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    },
+
     toggleEnglishBox(boxId) {
         const box = document.getElementById(boxId);
         if (box) {
@@ -935,7 +1223,7 @@ const AdminApp = {
         const btnIcon = document.getElementById('btn-preview-general-icon');
         const btnText = document.getElementById('btn-preview-general-text');
         const origIcon = btnIcon ? btnIcon.textContent : '✨';
-        const origText = btnText ? btnText.textContent : 'Traduire en anglais & Vérifier l\'aperçu';
+        const origText = btnText ? btnText.textContent : 'Traduire & Réviser côte-à-côte';
 
         try {
             if (btn) btn.disabled = true;
@@ -958,12 +1246,9 @@ const AdminApp = {
                 if (res.data.tcl_notes_en !== undefined) document.getElementById('parking-tcl-notes-en').value = res.data.tcl_notes_en;
             }
 
-            const box = document.getElementById('parking-general-en-box');
-            if (box) {
-                box.classList.remove('hidden');
-                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            this.showToast('Traduction anglaise générée ! Vous pouvez relire et ajuster les champs ci-dessous.', 'success');
+            // Ouvrir la modale de revue bilingue côte à côte
+            this.openTranslationReviewModal('parking_general', res.data);
+            this.showToast('Traduction générée ! Vérifiez le texte côte à côte avant enregistrement.', 'success');
         } catch (err) {
             this.showToast('Erreur de traduction : ' + err.message, 'error');
         } finally {
@@ -1174,7 +1459,7 @@ const AdminApp = {
         const btnIcon = document.getElementById('btn-preview-loc-icon');
         const btnText = document.getElementById('btn-preview-loc-text');
         const origIcon = btnIcon ? btnIcon.textContent : '✨';
-        const origText = btnText ? btnText.textContent : 'Traduire en anglais & Vérifier l\'aperçu';
+        const origText = btnText ? btnText.textContent : 'Traduire & Réviser côte-à-côte';
 
         try {
             if (btn) btn.disabled = true;
@@ -1197,12 +1482,9 @@ const AdminApp = {
                 if (res.data.notes_en !== undefined) document.getElementById('location-notes-en').value = res.data.notes_en;
             }
 
-            const box = document.getElementById('location-en-box');
-            if (box) {
-                box.classList.remove('hidden');
-                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            this.showToast('Traduction anglaise générée ! Vous pouvez relire et ajuster les champs ci-dessous.', 'success');
+            // Ouvrir la modale de revue bilingue côte-à-côte
+            this.openTranslationReviewModal('parking_location', res.data);
+            this.showToast('Traduction générée ! Vérifiez le texte côte à côte avant enregistrement.', 'success');
         } catch (err) {
             this.showToast('Erreur de traduction : ' + err.message, 'error');
         } finally {

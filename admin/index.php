@@ -500,7 +500,13 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                         <h4 class="text-xs font-bold text-white uppercase tracking-wider">Aperçu & Vérification de la version anglaise (IA)</h4>
                                         <span class="text-[10px] bg-gold/20 text-gold-light px-2 py-0.5 rounded-full border border-gold/30 font-semibold">Modifiable</span>
                                     </div>
-                                    <button type="button" onclick="document.getElementById('parking-general-en-box').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs">Masquer ✕</button>
+                                    <div class="flex items-center space-x-3">
+                                        <button type="button" onclick="AdminApp.openDirectReviewModal('parking_general')" class="text-[11px] text-gold hover:text-gold-light underline font-semibold flex items-center space-x-1">
+                                            <span>⚖️</span>
+                                            <span>Vue côte-à-côte</span>
+                                        </button>
+                                        <button type="button" onclick="document.getElementById('parking-general-en-box').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs">Masquer ✕</button>
+                                    </div>
                                 </div>
                                 <p class="text-[11px] text-gray-300">Vous pouvez relire et ajuster manuellement les textes traduits par l'IA ci-dessous avant d'enregistrer.</p>
 
@@ -544,13 +550,17 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                             <div class="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-night-border/50">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <button type="button" id="btn-preview-translate-general" onclick="AdminApp.previewTranslateGeneral()" class="px-4 py-2.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold-light hover:text-white font-bold text-xs transition flex items-center justify-center space-x-2">
+                                    <button type="button" id="btn-preview-translate-general" onclick="AdminApp.previewTranslateGeneral()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-gold/25 to-gold/15 hover:from-gold/35 hover:to-gold/25 border border-gold/50 text-gold-light hover:text-white font-bold text-xs transition flex items-center justify-center space-x-2 shadow-sm">
                                         <span id="btn-preview-general-icon">✨</span>
-                                        <span id="btn-preview-general-text">Traduire en anglais & Vérifier l'aperçu</span>
+                                        <span id="btn-preview-general-text">Traduire & Réviser côte-à-côte</span>
                                     </button>
-                                    <button type="button" onclick="AdminApp.toggleEnglishBox('parking-general-en-box')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Afficher ou masquer manuellement les champs anglais">
+                                    <button type="button" onclick="AdminApp.openDirectReviewModal('parking_general')" class="px-3.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Ouvrir la vue comparative côte-à-côte">
+                                        <span>⚖️</span>
+                                        <span class="hidden sm:inline">Revue côte-à-côte</span>
+                                    </button>
+                                    <button type="button" onclick="AdminApp.toggleEnglishBox('parking-general-en-box')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-400 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Afficher ou masquer les champs anglais dans ce formulaire">
                                         <span>🇬🇧</span>
-                                        <span class="hidden sm:inline">Aperçu EN</span>
+                                        <span class="hidden sm:inline">Champs EN</span>
                                     </button>
                                 </div>
                                 <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center justify-center space-x-2">
@@ -950,7 +960,13 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             <h4 class="text-xs font-bold text-white uppercase tracking-wider">Aperçu & Vérification en anglais (IA)</h4>
                             <span class="text-[10px] bg-gold/20 text-gold-light px-2 py-0.5 rounded-full border border-gold/30 font-semibold">Modifiable</span>
                         </div>
-                        <button type="button" onclick="document.getElementById('location-en-box').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs">Masquer ✕</button>
+                        <div class="flex items-center space-x-3">
+                            <button type="button" onclick="AdminApp.openDirectReviewModal('parking_location')" class="text-[11px] text-gold hover:text-gold-light underline font-semibold flex items-center space-x-1">
+                                <span>⚖️</span>
+                                <span>Vue côte-à-côte</span>
+                            </button>
+                            <button type="button" onclick="document.getElementById('location-en-box').classList.add('hidden')" class="text-gray-400 hover:text-white text-xs">Masquer ✕</button>
+                        </div>
                     </div>
                     <p class="text-[11px] text-gray-300">Modifiez les textes traduits par l'IA si nécessaire avant d'enregistrer.</p>
 
@@ -1005,13 +1021,17 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                 <div class="pt-4 border-t border-night-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" id="btn-preview-translate-loc" onclick="AdminApp.previewTranslateLocation()" class="px-3.5 py-2.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/40 text-gold-light hover:text-white font-bold text-xs transition flex items-center justify-center space-x-1.5">
+                        <button type="button" id="btn-preview-translate-loc" onclick="AdminApp.previewTranslateLocation()" class="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-gold/25 to-gold/15 hover:from-gold/35 hover:to-gold/25 border border-gold/50 text-gold-light hover:text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm">
                             <span id="btn-preview-loc-icon">✨</span>
-                            <span id="btn-preview-loc-text">Traduire en anglais & Vérifier l'aperçu</span>
+                            <span id="btn-preview-loc-text">Traduire & Réviser côte-à-côte</span>
                         </button>
-                        <button type="button" onclick="AdminApp.toggleEnglishBox('location-en-box')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Afficher ou masquer manuellement les champs anglais">
+                        <button type="button" onclick="AdminApp.openDirectReviewModal('parking_location')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Ouvrir la vue comparative côte-à-côte">
+                            <span>⚖️</span>
+                            <span class="hidden sm:inline">Revue côte-à-côte</span>
+                        </button>
+                        <button type="button" onclick="AdminApp.toggleEnglishBox('location-en-box')" class="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-400 hover:text-white border border-night-border transition flex items-center space-x-1.5" title="Afficher ou masquer les champs anglais dans ce formulaire">
                             <span>🇬🇧</span>
-                            <span class="hidden sm:inline">Aperçu EN</span>
+                            <span class="hidden sm:inline">Champs EN</span>
                         </button>
                     </div>
                     <div class="flex items-center space-x-2 justify-end">
@@ -1235,10 +1255,59 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         </div>
     </div>
 
+    <!-- 10. MODALE DE REVUE BILINGUE & VALIDATION IMMÉDIATE -->
+    <div id="modal-translation-review" class="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 md:p-6 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl relative my-auto overflow-hidden">
+            
+            <!-- Header de la modale de revue -->
+            <div class="p-5 sm:p-6 border-b border-night-border flex items-center justify-between bg-night/60 flex-shrink-0">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-xl shadow-md shadow-gold/10 flex-shrink-0">
+                        🇬🇧
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-base font-bold text-white tracking-wide">Revue & Validation Bilingue (IA)</h3>
+                            <span id="review-modal-provider-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/20 text-gold-light border border-gold/40 font-semibold">Gemini</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-0.5">Comparez les versions française et anglaise côte à côte. Vous pouvez ajuster directement les textes anglais avant validation.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="AdminApp.closeTranslationReviewModal()" class="text-gray-400 hover:text-white text-lg p-2 rounded-xl hover:bg-white/5 transition" title="Fermer la revue">✕</button>
+            </div>
+
+            <!-- Corps défilable de la modale de revue : Grille côte à côte -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4" id="review-modal-fields-container">
+                <!-- Rempli dynamiquement avec les paires de champs FR vs EN -->
+            </div>
+
+            <!-- Pied de page avec actions claires -->
+            <div class="p-4 sm:p-5 border-t border-night-border bg-night/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 flex-shrink-0">
+                <div class="flex items-center space-x-2 text-xs text-gray-400">
+                    <span id="review-fields-count" class="font-bold text-white px-2 py-0.5 rounded-md bg-white/10">0</span>
+                    <span>champ(s) bilingues comparés et prêts</span>
+                </div>
+                <div class="flex flex-wrap items-center space-x-2 justify-end">
+                    <button type="button" onclick="AdminApp.closeTranslationReviewModal()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">
+                        Annuler
+                    </button>
+                    <button type="button" id="btn-review-apply-only" onclick="AdminApp.applyReviewTranslations(false)" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-white border border-white/10 transition" title="Injecte les traductions dans le formulaire sans enregistrer en base immédiatement">
+                        <span>✏️</span>
+                        <span>Conserver dans le formulaire</span>
+                    </button>
+                    <button type="button" id="btn-review-save-direct" onclick="AdminApp.applyReviewTranslations(true)" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold to-gold-light hover:from-gold-dark hover:to-gold text-white font-bold text-xs shadow-lg shadow-gold/25 transition flex items-center space-x-2">
+                        <span id="btn-review-save-icon">💾</span>
+                        <span id="btn-review-save-label">Valider & Enregistrer en base</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CONTENEUR DES TOASTS DE NOTIFICATION -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.4"></script>
+    <script src="assets/js/admin.js?v=1.5"></script>
 </body>
 </html>
