@@ -337,6 +337,65 @@ INSERT INTO parking_locations (property_id, category, name_fr, name_en, address,
 INSERT INTO parking_locations (property_id, category, name_fr, name_en, address, walking_time_fr, walking_time_en, walking_minutes, transit_time_fr, transit_time_en, max_height, capacity, opening_hours_fr, opening_hours_en, rates_fr, rates_en, suitable_vehicles_fr, suitable_vehicles_en, how_to_reach_fr, how_to_reach_en, operator, booking_url, notes_fr, notes_en, display_order, active) VALUES (@prop_id, 'tcl_pr', 'Parking Relais TCL - Laurent Bonnevay', 'TCL Park & Ride - Laurent Bonnevay', '419 cours Émile-Zola, 69100 Villeurbanne', NULL, NULL, NULL, 'Environ 10 à 15 min en Métro A', 'Approx. 10 to 15 min by Metro A', NULL, '655 places', 'Lun-Jeu : 4h30-1h · Ven-Sam : 4h30-3h (Fermé dimanche & fériés)', 'Mon-Thu: 4:30am-1am · Fri-Sat: 4:30am-3am (Closed Sun & holidays)', NULL, NULL, NULL, NULL, 'Prendre le Métro A direction Perrache jusqu''à la station Flachet - Alain Gilles, puis 2 min à pied jusqu''au logement.', 'Take Metro A towards Perrache to Flachet - Alain Gilles station, then 2 min walk to apartment.', 'TCL', 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures', NULL, NULL, 1, 1);
 INSERT INTO parking_locations (property_id, category, name_fr, name_en, address, walking_time_fr, walking_time_en, walking_minutes, transit_time_fr, transit_time_en, max_height, capacity, opening_hours_fr, opening_hours_en, rates_fr, rates_en, suitable_vehicles_fr, suitable_vehicles_en, how_to_reach_fr, how_to_reach_en, operator, booking_url, notes_fr, notes_en, display_order, active) VALUES (@prop_id, 'tcl_pr', 'Parking Relais TCL - Vaulx-en-Velin La Soie', 'TCL Park & Ride - Vaulx-en-Velin La Soie', '3 rue Maurice-Moissonner, 69120 Vaulx-en-Velin', NULL, NULL, NULL, 'Environ 10 à 15 min en Métro A', 'Approx. 10 to 15 min by Metro A', NULL, '474 places', 'Lun-Jeu & Dim : 4h30-1h · Ven-Sam : 4h30-3h (Fermé 1er mai)', 'Mon-Thu & Sun: 4:30am-1am · Fri-Sat: 4:30am-3am (Closed May 1)', NULL, NULL, NULL, NULL, 'Prendre le Métro A direction Perrache jusqu''à Flachet - Alain Gilles, puis 2 min à pied.', 'Take Metro A towards Perrache to Flachet - Alain Gilles station, then 2 min walk.', 'TCL', 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures', NULL, NULL, 2, 1);
 
+-- ------------------------------------------------------------------------------
+-- 3. TABLES D'ADMINISTRATION & SÉCURITÉ (BACK-OFFICE)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `admin_users` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `email` VARCHAR(191) NOT NULL UNIQUE,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(100) NOT NULL,
+    `role` ENUM('superadmin', 'admin', 'editor') NOT NULL DEFAULT 'admin',
+    `avatar_url` VARCHAR(500) DEFAULT NULL,
+    `failed_login_attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `locked_until` DATETIME DEFAULT NULL,
+    `last_login_at` DATETIME DEFAULT NULL,
+    `last_login_ip` VARCHAR(45) DEFAULT NULL,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_admin_users_email_active` (`email`, `active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `admin_sessions` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `session_token` VARCHAR(128) NOT NULL UNIQUE,
+    `ip_address` VARCHAR(45) DEFAULT NULL,
+    `user_agent` TEXT DEFAULT NULL,
+    `expires_at` DATETIME NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_admin_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE CASCADE,
+    INDEX `idx_admin_sessions_token` (`session_token`),
+    INDEX `idx_admin_sessions_expires` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `admin_activity_logs` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED DEFAULT NULL,
+    `action` ENUM('login', 'logout', 'create', 'update', 'delete', 'toggle') NOT NULL,
+    `entity_type` VARCHAR(50) NOT NULL,
+    `entity_id` INT UNSIGNED DEFAULT NULL,
+    `entity_label` VARCHAR(255) DEFAULT NULL,
+    `details` JSON DEFAULT NULL,
+    `ip_address` VARCHAR(45) DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_admin_logs_user` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL,
+    INDEX `idx_admin_logs_user_date` (`user_id`, `created_at`),
+    INDEX `idx_admin_logs_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. COMPTE SUPERADMIN INITIAL
+INSERT INTO `admin_users` (`email`, `password_hash`, `name`, `role`, `active`)
+VALUES (
+    'admin@carredhotes.fr',
+    '$2y$12$9Ez4.NRo2swrilvYXlC9g.x/KObSyToWQcMe8xo/NXwp150kZjIhq',
+    'Administrateur Carré d\'Hôtes',
+    'superadmin',
+    1
+)
+ON DUPLICATE KEY UPDATE `email` = `email`;
+
 -- ----------------------------------------------------------------------
 -- Stationnement : studio-cosy-de-paul
 -- ----------------------------------------------------------------------
@@ -353,3 +412,62 @@ INSERT INTO parking_locations (property_id, category, name_fr, name_en, address,
 INSERT INTO parking_locations (property_id, category, name_fr, name_en, address, walking_time_fr, walking_time_en, walking_minutes, transit_time_fr, transit_time_en, max_height, capacity, opening_hours_fr, opening_hours_en, rates_fr, rates_en, suitable_vehicles_fr, suitable_vehicles_en, how_to_reach_fr, how_to_reach_en, operator, booking_url, notes_fr, notes_en, display_order, active) VALUES (@prop_id, 'private_parking', 'Parking Zenpark - Cusset', 'Zenpark Car Park - Cusset', '2 rue Victor-Subit, 69100 Villeurbanne', 'Environ 5 min à pied (2 min vélo)', 'Approx. 5 min walk (2 min bike)', 5, NULL, NULL, '1,90 m', NULL, '24h/24 (sur réservation)', '24/7 (reservation required)', 'Forfait mensuel : 101 € / mois', 'Monthly package: €101 / month', NULL, NULL, NULL, NULL, 'Zenpark', 'https://zenpark.com', 'Parking sécurisé avec accès 24h/24 via l''application Zenpark.', 'Secured parking with 24/7 smartphone access via Zenpark.', 3, 1);
 INSERT INTO parking_locations (property_id, category, name_fr, name_en, address, walking_time_fr, walking_time_en, walking_minutes, transit_time_fr, transit_time_en, max_height, capacity, opening_hours_fr, opening_hours_en, rates_fr, rates_en, suitable_vehicles_fr, suitable_vehicles_en, how_to_reach_fr, how_to_reach_en, operator, booking_url, notes_fr, notes_en, display_order, active) VALUES (@prop_id, 'tcl_pr', 'Parking Relais TCL - Laurent Bonnevay', 'TCL Park & Ride - Laurent Bonnevay', '419 cours Émile-Zola, 69100 Villeurbanne', NULL, NULL, NULL, 'Environ 10 à 15 min en Métro A', 'Approx. 10 to 15 min by Metro A', NULL, '655 places', 'Lun-Jeu : 4h30-1h · Ven-Sam : 4h30-3h (Fermé dimanche & fériés)', 'Mon-Thu: 4:30am-1am · Fri-Sat: 4:30am-3am (Closed Sun & holidays)', NULL, NULL, NULL, NULL, 'Prendre le Métro A direction Perrache jusqu''à la station Flachet - Alain Gilles, puis 2 min à pied jusqu''au logement.', 'Take Metro A towards Perrache to Flachet - Alain Gilles station, then 2 min walk to apartment.', 'TCL', 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures', NULL, NULL, 1, 1);
 INSERT INTO parking_locations (property_id, category, name_fr, name_en, address, walking_time_fr, walking_time_en, walking_minutes, transit_time_fr, transit_time_en, max_height, capacity, opening_hours_fr, opening_hours_en, rates_fr, rates_en, suitable_vehicles_fr, suitable_vehicles_en, how_to_reach_fr, how_to_reach_en, operator, booking_url, notes_fr, notes_en, display_order, active) VALUES (@prop_id, 'tcl_pr', 'Parking Relais TCL - Vaulx-en-Velin La Soie', 'TCL Park & Ride - Vaulx-en-Velin La Soie', '3 rue Maurice-Moissonner, 69120 Vaulx-en-Velin', NULL, NULL, NULL, 'Environ 10 à 15 min en Métro A', 'Approx. 10 to 15 min by Metro A', NULL, '474 places', 'Lun-Jeu & Dim : 4h30-1h · Ven-Sam : 4h30-3h (Fermé 1er mai)', 'Mon-Thu & Sun: 4:30am-1am · Fri-Sat: 4:30am-3am (Closed May 1)', NULL, NULL, NULL, NULL, 'Prendre le Métro A direction Perrache jusqu''à Flachet - Alain Gilles, puis 2 min à pied.', 'Take Metro A towards Perrache to Flachet - Alain Gilles station, then 2 min walk.', 'TCL', 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures', NULL, NULL, 2, 1);
+
+-- ------------------------------------------------------------------------------
+-- 3. TABLES D'ADMINISTRATION & SÉCURITÉ (BACK-OFFICE)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `admin_users` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `email` VARCHAR(191) NOT NULL UNIQUE,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(100) NOT NULL,
+    `role` ENUM('superadmin', 'admin', 'editor') NOT NULL DEFAULT 'admin',
+    `avatar_url` VARCHAR(500) DEFAULT NULL,
+    `failed_login_attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `locked_until` DATETIME DEFAULT NULL,
+    `last_login_at` DATETIME DEFAULT NULL,
+    `last_login_ip` VARCHAR(45) DEFAULT NULL,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_admin_users_email_active` (`email`, `active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `admin_sessions` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED NOT NULL,
+    `session_token` VARCHAR(128) NOT NULL UNIQUE,
+    `ip_address` VARCHAR(45) DEFAULT NULL,
+    `user_agent` TEXT DEFAULT NULL,
+    `expires_at` DATETIME NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_admin_sessions_user` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE CASCADE,
+    INDEX `idx_admin_sessions_token` (`session_token`),
+    INDEX `idx_admin_sessions_expires` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `admin_activity_logs` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `user_id` INT UNSIGNED DEFAULT NULL,
+    `action` ENUM('login', 'logout', 'create', 'update', 'delete', 'toggle') NOT NULL,
+    `entity_type` VARCHAR(50) NOT NULL,
+    `entity_id` INT UNSIGNED DEFAULT NULL,
+    `entity_label` VARCHAR(255) DEFAULT NULL,
+    `details` JSON DEFAULT NULL,
+    `ip_address` VARCHAR(45) DEFAULT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_admin_logs_user` FOREIGN KEY (`user_id`) REFERENCES `admin_users` (`id`) ON DELETE SET NULL,
+    INDEX `idx_admin_logs_user_date` (`user_id`, `created_at`),
+    INDEX `idx_admin_logs_entity` (`entity_type`, `entity_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. COMPTE SUPERADMIN INITIAL
+INSERT INTO `admin_users` (`email`, `password_hash`, `name`, `role`, `active`)
+VALUES (
+    'admin@carredhotes.fr',
+    '$2y$12$9Ez4.NRo2swrilvYXlC9g.x/KObSyToWQcMe8xo/NXwp150kZjIhq',
+    'Administrateur Carré d\'Hôtes',
+    'superadmin',
+    1
+)
+ON DUPLICATE KEY UPDATE `email` = `email`;
