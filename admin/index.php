@@ -685,7 +685,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Slug URL unique *</label>
-                        <input type="text" id="property-slug" required placeholder="bataille"
+                        <input type="text" id="property-slug" required oninput="AdminApp.onPropertySlugInput(this.value)" placeholder="bataille"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                     </div>
                 </div>
@@ -716,7 +716,16 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             <span>📄</span>
                             <span>Livrets d'accueil (Guides PDF)</span>
                         </label>
-                        <span class="text-[10px] text-gray-400">PDF direct ou Cloudflare R2</span>
+                        <span class="text-[10px] text-gray-400">PDF sur Cloudflare R2</span>
+                    </div>
+
+                    <!-- Prévisualisation emplacement Cloudflare R2 -->
+                    <div class="px-3 py-2 rounded-xl bg-night border border-gold/30 text-[11px] text-gray-300 flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5 min-w-0">
+                            <span class="text-gold">📁</span>
+                            <span class="flex-shrink-0 text-gray-400">Dossier Cloudflare R2 :</span>
+                            <span id="property-r2-dest-preview" class="font-mono text-gold font-bold truncate">carredhotes-guides/[slug-logement]/guide-fr.pdf</span>
+                        </div>
                     </div>
 
                     <!-- Guide FR -->
@@ -862,7 +871,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Titre (Français) *</label>
-                        <input type="text" id="video-title-fr" required placeholder="Machine à café"
+                        <input type="text" id="video-title-fr" required oninput="AdminApp.onVideoTitleInput(this.value)" placeholder="Machine à café"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                     <div>
@@ -873,8 +882,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Slug URL unique</label>
-                    <input type="text" id="video-slug" placeholder="machine-a-cafe"
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Slug URL unique *</label>
+                    <input type="text" id="video-slug" required oninput="AdminApp.onVideoSlugInput(this.value)" placeholder="machine-a-cafe"
                            class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                 </div>
 
@@ -888,6 +897,15 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <button type="button" onclick="AdminApp.toggleManualUrl('video-url-manual')" class="text-[11px] text-gold hover:underline">
                             URL directe ▾
                         </button>
+                    </div>
+
+                    <!-- Prévisualisation emplacement Cloudflare R2 -->
+                    <div class="px-3 py-2 rounded-xl bg-night border border-gold/30 text-[11px] text-gray-300 flex items-center justify-between">
+                        <div class="flex items-center space-x-1.5 min-w-0">
+                            <span class="text-gold">📁</span>
+                            <span class="flex-shrink-0 text-gray-400">Emplacement Cloudflare R2 :</span>
+                            <span id="video-r2-dest-preview" class="font-mono text-gold font-bold truncate">carredhotes-videos/[slug-logement]/[slug-vidéo].mp4</span>
+                        </div>
                     </div>
 
                     <!-- Dropzone Vidéo -->
@@ -1558,6 +1576,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.8"></script>
+    <script src="assets/js/admin.js?v=1.9"></script>
 </body>
 </html>

@@ -12,8 +12,9 @@ use Throwable;
  * SERVICE DE TÉLÉVERSEMENT DE MÉDIAS (GUIDES PDF & VIDÉOS)
  * Conciergerie Carré d'Hôtes - Administration
  * ==============================================================================
- * Téléversement exclusif vers Cloudflare R2 (API S3 compatible SigV4)
- * pour un hébergement rapide, sécurisé et haute performance.
+ * Téléversement exclusif vers Cloudflare R2 (API S3 SigV4) avec arborescence :
+ * - Guides PDF : carredhotes-guides/[slug-logement]/guide-fr.pdf (ou guide-en.pdf)
+ * - Vidéos     : carredhotes-videos/[slug-logement]/[slug-vidéo].mp4 (ou .webm / .mov)
  */
 class MediaUploader
 {
@@ -37,7 +38,7 @@ class MediaUploader
      *
      * @param array $file Élément de $_FILES
      * @param string $category 'guide' ou 'video'
-     * @param array $params Paramètres contextuels (property_slug, lang, video_slug)
+     * @param array $params Paramètres contextuels (property_slug, video_slug, lang)
      * @return array Résultat complet du téléversement
      */
     public static function handleUpload(array $file, string $category, array $params = []): array
@@ -98,8 +99,26 @@ class MediaUploader
             throw new RuntimeException("Catégorie de média inconnue : {$category}.");
         }
 
-        // 4. Génération d'un nom de fichier propre et standardisé
-        $filename = self::generateFilename($category, $ext, $params, $originalName);
+        // 4. Validation impérative des slugs et détermination de l'arborescence
+        $propSlug = self::sanitizeSlug((string)($params['property_slug'] ?? ''));
+        if ($propSlug === '') {
+            throw new RuntimeException("Le slug du logement est obligatoire pour définir son dossier sur Cloudflare R2.");
+        }
+
+        if ($category === 'guide') {
+            $lang = (!empty($params['lang']) && strtolower((string)$params['lang']) === 'en') ? 'en' : 'fr';
+            // Destination R2 : carredhotes-guides/[slug-logement]/guide-fr.pdf (ou guide-en.pdf)
+            $folder = $propSlug;
+            $filename = "guide-{$lang}.pdf";
+        } elseif ($category === 'video') {
+            $videoSlug = self::sanitizeSlug((string)($params['video_slug'] ?? ''));
+            if ($videoSlug === '') {
+                throw new RuntimeException("Le slug de la vidéo est obligatoire pour nommer le fichier sur Cloudflare R2.");
+            }
+            // Destination R2 : carredhotes-videos/[slug-logement]/[slug-vidéo].ext
+            $folder = $propSlug;
+            $filename = "{$videoSlug}.{$ext}";
+        }
 
         // 5. Vérifier la configuration Cloudflare R2
         $r2Config = self::getR2Config();
@@ -111,52 +130,68 @@ class MediaUploader
             );
         }
 
-        // 6. Téléversement exclusif vers Cloudflare R2
-        return self::uploadToCloudflareR2($tmpPath, $category, $filename, $mimeType, $fileSize, $r2Config);
+        // 6. Téléversement exclusif vers Cloudflare R2 (avec création automatique du dossier si inexistant)
+        return self::uploadToCloudflareR2($tmpPath, $category, $folder, $filename, $mimeType, $fileSize, $r2Config);
     }
 
     /**
-     * Génère un nom de fichier standardisé et sécurisé
+     * Nettoie et normalise un slug (minuscules, chiffres, tirets uniquement)
      */
-    private static function generateFilename(string $category, string $ext, array $params, string $originalName): string
+    public static function sanitizeSlug(string $str): string
     {
-        $cleanSlug = function (string $str): string {
-            $str = preg_replace('~[^\pL\d]+~u', '-', $str);
-            $str = iconv('utf-8', 'us-ascii//TRANSLIT', (string)$str);
-            $str = preg_replace('~[^-\w]+~', '', (string)$str);
-            $str = trim((string)$str, '-');
-            $str = preg_replace('~-+~', '-', (string)$str);
-            return strtolower((string)$str);
-        };
-
-        if ($category === 'guide') {
-            $propSlug = !empty($params['property_slug']) ? $cleanSlug((string)$params['property_slug']) : 'logement';
-            $lang = !empty($params['lang']) && strtolower((string)$params['lang']) === 'en' ? 'en' : 'fr';
-            return "{$propSlug}-guide-{$lang}.pdf";
-        }
-
-        if ($category === 'video') {
-            $propSlug = !empty($params['property_slug']) ? $cleanSlug((string)$params['property_slug']) : 'general';
-            $videoSlug = !empty($params['video_slug']) ? $cleanSlug((string)$params['video_slug']) : '';
-            if (empty($videoSlug)) {
-                $base = pathinfo($originalName, PATHINFO_FILENAME);
-                $videoSlug = $cleanSlug($base);
-                if (empty($videoSlug)) {
-                    $videoSlug = 'tutoriel-' . time();
-                }
-            }
-            return "{$propSlug}-{$videoSlug}.{$ext}";
-        }
-
-        return time() . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+        $str = preg_replace('~[^\pL\d]+~u', '-', $str);
+        $str = iconv('utf-8', 'us-ascii//TRANSLIT', (string)$str);
+        $str = preg_replace('~[^-\w]+~', '', (string)$str);
+        $str = trim((string)$str, '-');
+        $str = preg_replace('~-+~', '-', (string)$str);
+        return strtolower((string)$str);
     }
 
     /**
-     * Envoie le fichier directement dans Cloudflare R2 via AWS S3 SigV4
+     * S'assure que le dossier de l'hébergement existe dans le bucket Cloudflare R2
+     * S'il n'existe pas, crée un marqueur de dossier explicite ([slug-logement]/)
+     */
+    public static function ensureR2FolderExists(
+        string $accountId,
+        string $accessKey,
+        string $secretKey,
+        string $bucket,
+        string $folder
+    ): void {
+        $folder = trim($folder, '/');
+        if ($folder === '') {
+            return;
+        }
+
+        $folderKey = "{$folder}/";
+
+        // 1. Vérifie si le marqueur de dossier existe déjà (HEAD /bucket/folder/)
+        $headRes = self::sendR2Request('HEAD', $accountId, $accessKey, $secretKey, $bucket, $folderKey);
+        if ($headRes['http_code'] === 200) {
+            return; // Dossier déjà existant
+        }
+
+        // 2. Si non trouvé (HTTP 404), on crée le dossier via un PUT de 0 octet
+        self::sendR2Request(
+            'PUT',
+            $accountId,
+            $accessKey,
+            $secretKey,
+            $bucket,
+            $folderKey,
+            '',
+            '',
+            'application/x-directory'
+        );
+    }
+
+    /**
+     * Envoie le fichier dans Cloudflare R2 dans son dossier dédié ([slug-logement]/[filename])
      */
     public static function uploadToCloudflareR2(
         string $tmpPath,
         string $category,
+        string $folder,
         string $filename,
         string $mimeType,
         int $fileSize,
@@ -174,7 +209,11 @@ class MediaUploader
             ? (!empty($config['domain_guides']) ? $config['domain_guides'] : 'https://guides.carredhotes.fr')
             : (!empty($config['domain_videos']) ? $config['domain_videos'] : 'https://videos.carredhotes.fr');
 
-        $objectKey = $filename;
+        // Création du dossier [slug-logement]/ dans Cloudflare R2 s'il n'existe pas encore
+        self::ensureR2FolderExists($accountId, $accessKey, $secretKey, $bucket, $folder);
+
+        // Clé S3 de destination : [slug-logement]/[filename]
+        $objectKey = rtrim($folder, '/') . '/' . ltrim($filename, '/');
 
         $body = file_get_contents($tmpPath);
         if ($body === false) {
@@ -208,6 +247,8 @@ class MediaUploader
             'ok'             => true,
             'url'            => $publicUrl,
             'relative_url'   => $publicUrl,
+            'object_key'     => $objectKey,
+            'folder'         => $folder,
             'filename'       => $filename,
             'size'           => $fileSize,
             'size_formatted' => self::formatBytes($fileSize),
@@ -418,7 +459,9 @@ class MediaUploader
             CURLOPT_SSL_VERIFYPEER => true,
         ]);
 
-        if ($method === 'PUT' && $body !== '') {
+        if ($method === 'HEAD') {
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+        } elseif ($method === 'PUT') {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         }
 

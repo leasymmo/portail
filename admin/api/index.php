@@ -505,7 +505,7 @@ try {
                 'upload', 
                 $category, 
                 null, 
-                "Téléversement {$category} vers Cloudflare R2 : {$uploadResult['filename']} ({$uploadResult['size_formatted']})"
+                "Téléversement {$category} vers Cloudflare R2 : {$uploadResult['object_key']} ({$uploadResult['size_formatted']})"
             );
 
             echo json_encode($uploadResult, JSON_UNESCAPED_UNICODE);

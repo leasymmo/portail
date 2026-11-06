@@ -451,6 +451,7 @@ const AdminApp = {
         // Met à jour l'affichage des prévisualisations et dropzones des guides
         this.onGuideUrlInput('fr');
         this.onGuideUrlInput('en');
+        this.updateGuideR2Previews();
 
         modal.classList.remove('hidden');
     },
@@ -466,6 +467,32 @@ const AdminApp = {
         // Génère le slug automatiquement lors de la création
         if (id == 0 && slugInput) {
             slugInput.value = this.slugify(val);
+        }
+        this.updateGuideR2Previews();
+    },
+
+    onPropertySlugInput(val) {
+        this.updateGuideR2Previews();
+    },
+
+    updateGuideR2Previews() {
+        const slugInput = document.getElementById('property-slug');
+        let slug = slugInput ? slugInput.value.trim() : '';
+        if (!slug) {
+            const nameInput = document.getElementById('property-name');
+            if (nameInput && nameInput.value.trim()) {
+                slug = this.slugify(nameInput.value.trim());
+            }
+        }
+        const previewEl = document.getElementById('property-r2-dest-preview');
+        if (previewEl) {
+            if (slug) {
+                previewEl.textContent = `carredhotes-guides/${slug}/guide-fr.pdf`;
+                previewEl.className = 'font-mono text-gold font-bold truncate';
+            } else {
+                previewEl.textContent = 'carredhotes-guides/[slug-logement]/guide-fr.pdf (saisir le nom d\'abord)';
+                previewEl.className = 'font-mono text-gray-400 font-semibold truncate italic';
+            }
         }
     },
 
@@ -680,8 +707,46 @@ const AdminApp = {
 
         // Met à jour l'affichage de la prévisualisation et dropzone vidéo
         this.onVideoUrlInput();
+        this.updateVideoR2Preview();
 
         modal.classList.remove('hidden');
+    },
+
+    onVideoTitleInput(val) {
+        const id = document.getElementById('video-id')?.value;
+        const slugInput = document.getElementById('video-slug');
+        if (slugInput && (id == 0 || !slugInput.value.trim())) {
+            slugInput.value = this.slugify(val);
+        }
+        this.updateVideoR2Preview();
+    },
+
+    onVideoSlugInput(val) {
+        this.updateVideoR2Preview();
+    },
+
+    updateVideoR2Preview() {
+        const currentProp = this.state.properties.find(p => p.id == this.state.currentPropertyId);
+        const propSlug = currentProp ? currentProp.slug : '[slug-logement]';
+        const slugInput = document.getElementById('video-slug');
+        let videoSlug = slugInput ? slugInput.value.trim() : '';
+        if (!videoSlug) {
+            const titleInput = document.getElementById('video-title-fr');
+            if (titleInput && titleInput.value.trim()) {
+                videoSlug = this.slugify(titleInput.value.trim());
+            }
+        }
+
+        const previewEl = document.getElementById('video-r2-dest-preview');
+        if (previewEl) {
+            if (videoSlug) {
+                previewEl.textContent = `carredhotes-videos/${propSlug}/${videoSlug}.mp4`;
+                previewEl.className = 'font-mono text-gold font-bold truncate';
+            } else {
+                previewEl.textContent = `carredhotes-videos/${propSlug}/[slug-vidéo].mp4 (saisir le titre d'abord)`;
+                previewEl.className = 'font-mono text-gray-400 font-semibold truncate italic';
+            }
+        }
     },
 
     closeVideoModal() {
@@ -2526,6 +2591,31 @@ const AdminApp = {
             return;
         }
 
+        // Vérification impérative du slug logement avant l'upload
+        let slug = (document.getElementById('property-slug')?.value || '').trim();
+        if (!slug) {
+            const nameVal = (document.getElementById('property-name')?.value || '').trim();
+            if (nameVal) {
+                slug = this.slugify(nameVal);
+                const slugInput = document.getElementById('property-slug');
+                if (slugInput) slugInput.value = slug;
+                this.updateGuideR2Previews();
+            }
+        }
+
+        if (!slug) {
+            this.showToast("Veuillez d'abord renseigner le nom ou le slug du logement afin de créer son dossier sur Cloudflare R2.", "warning");
+            const nameInput = document.getElementById('property-name');
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.classList.add('border-gold', 'ring-2', 'ring-gold/50');
+                setTimeout(() => nameInput.classList.remove('border-gold', 'ring-2', 'ring-gold/50'), 2500);
+            }
+            const fileInput = document.getElementById(`property-guide-${lang}-file`);
+            if (fileInput) fileInput.value = '';
+            return;
+        }
+
         const progressEl = document.getElementById(`progress-guide-${lang}`);
         const barEl = document.getElementById(`progress-bar-guide-${lang}`);
         const percentEl = document.getElementById(`progress-percent-guide-${lang}`);
@@ -2539,13 +2629,7 @@ const AdminApp = {
         if (progressEl) progressEl.classList.remove('hidden');
         if (barEl) barEl.style.width = '0%';
         if (percentEl) percentEl.textContent = '0%';
-        if (textEl) textEl.textContent = `Téléversement de ${file.name}...`;
-
-        let slug = (document.getElementById('property-slug')?.value || '').trim();
-        if (!slug) {
-            const nameVal = (document.getElementById('property-name')?.value || '').trim();
-            slug = this.slugify(nameVal) || 'logement';
-        }
+        if (textEl) textEl.textContent = `Téléversement de guide-${lang}.pdf vers ${slug}/...`;
 
         try {
             const res = await this.uploadMediaFile(file, 'guide', {
@@ -2566,7 +2650,7 @@ const AdminApp = {
             if (previewEl) previewEl.classList.remove('hidden');
             if (dropzoneEl) dropzoneEl.classList.add('hidden');
 
-            this.showToast(`Guide PDF (${lang.toUpperCase()}) téléversé avec succès (${res.storage_label}) !`, 'success');
+            this.showToast(`Guide PDF (${lang.toUpperCase()}) téléversé dans ${slug}/ (${res.storage_label}) !`, 'success');
         } catch (err) {
             this.showToast(`Échec du téléversement : ${err.message}`, 'error');
         } finally {
@@ -2615,6 +2699,41 @@ const AdminApp = {
             return;
         }
 
+        // 1. Vérification impérative du logement associé
+        const currentProp = this.state.properties.find(p => p.id == this.state.currentPropertyId);
+        const propSlug = currentProp ? currentProp.slug : '';
+        if (!propSlug) {
+            this.showToast("Veuillez d'abord sélectionner un hébergement pour associer cette vidéo.", "warning");
+            const fileInput = document.getElementById('video-file-input');
+            if (fileInput) fileInput.value = '';
+            return;
+        }
+
+        // 2. Vérification impérative du slug vidéo avant l'upload
+        let videoSlug = (document.getElementById('video-slug')?.value || '').trim();
+        if (!videoSlug) {
+            const titleFr = (document.getElementById('video-title-fr')?.value || '').trim();
+            if (titleFr) {
+                videoSlug = this.slugify(titleFr);
+                const slugInput = document.getElementById('video-slug');
+                if (slugInput) slugInput.value = videoSlug;
+                this.updateVideoR2Preview();
+            }
+        }
+
+        if (!videoSlug) {
+            this.showToast("Veuillez d'abord renseigner le titre ou le slug de la vidéo pour nommer le fichier sur Cloudflare R2.", "warning");
+            const titleInput = document.getElementById('video-title-fr');
+            if (titleInput) {
+                titleInput.focus();
+                titleInput.classList.add('border-gold', 'ring-2', 'ring-gold/50');
+                setTimeout(() => titleInput.classList.remove('border-gold', 'ring-2', 'ring-gold/50'), 2500);
+            }
+            const fileInput = document.getElementById('video-file-input');
+            if (fileInput) fileInput.value = '';
+            return;
+        }
+
         const progressEl = document.getElementById('progress-video');
         const barEl = document.getElementById('progress-bar-video');
         const percentEl = document.getElementById('progress-percent-video');
@@ -2628,17 +2747,7 @@ const AdminApp = {
         if (progressEl) progressEl.classList.remove('hidden');
         if (barEl) barEl.style.width = '0%';
         if (percentEl) percentEl.textContent = '0%';
-        if (textEl) textEl.textContent = `Téléversement de ${file.name}...`;
-
-        const currentProp = this.state.properties.find(p => p.id == this.state.currentPropertyId);
-        const propSlug = currentProp ? currentProp.slug : 'general';
-        let videoSlug = (document.getElementById('video-slug')?.value || '').trim();
-        if (!videoSlug) {
-            const titleFr = (document.getElementById('video-title-fr')?.value || '').trim();
-            videoSlug = this.slugify(titleFr) || 'tutoriel';
-            const slugInput = document.getElementById('video-slug');
-            if (slugInput) slugInput.value = videoSlug;
-        }
+        if (textEl) textEl.textContent = `Téléversement de ${videoSlug}${ext} vers ${propSlug}/...`;
 
         try {
             const res = await this.uploadMediaFile(file, 'video', {
@@ -2655,11 +2764,11 @@ const AdminApp = {
             }
 
             if (previewNameEl) previewNameEl.textContent = res.filename;
-            if (previewMetaEl) previewMetaEl.textContent = `${res.size_formatted} • ${res.storage_label}`;
+            if (previewMetaEl) previewMetaEl.textContent = `${res.size_formatted} • ${res.object_key || res.filename}`;
             if (previewEl) previewEl.classList.remove('hidden');
             if (dropzoneEl) dropzoneEl.classList.add('hidden');
 
-            this.showToast(`Vidéo tutoriel téléversée avec succès (${res.storage_label}) !`, 'success');
+            this.showToast(`Vidéo téléversée avec succès dans ${propSlug}/ (${res.storage_label}) !`, 'success');
         } catch (err) {
             this.showToast(`Échec du téléversement : ${err.message}`, 'error');
         } finally {
