@@ -74,7 +74,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=10.5">
+    <link rel="stylesheet" href="assets/css/custom.css?v=10.6">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -345,7 +345,32 @@
                             </div>
                         </div>
 
-                        <!-- Carte 2 : Wi-Fi (avec bouton de Copie Express direct en 1 clic) -->
+                        <!-- Carte 2 : Stationnement & Parkings (après le Guide de bienvenue) -->
+                        <div id="card-parking-active" onclick="openParkingModal()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openParkingModal();}"
+                             aria-label="Consulter les informations et solutions de stationnement"
+                             class="hidden card-interactive cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group border border-[#e2e4e6] dark:border-[#38455d]">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3.5 sm:mr-4 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold" aria-hidden="true">
+                                    <svg aria-hidden="true" class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect width="18" height="18" x="3" y="3" rx="4"/>
+                                        <path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-nowrap min-w-0">
+                                        <span id="parking-card-title" data-i18n="parking_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Stationnement</span>
+                                        <span id="parking-card-badge" data-i18n="parking_badge" class="inline-flex items-center text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gold/15 text-gold-text dark:text-gold border border-gold/30 flex-shrink-0 whitespace-nowrap">Gratuit & Payant</span>
+                                    </div>
+                                    <p id="parking-card-desc" data-i18n="parking_card_desc" class="text-xs text-ink-soft dark:text-gray-300 truncate mt-0.5">Rues gratuites, parkings & P+R</p>
+                                </div>
+                            </div>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs" aria-hidden="true">
+                                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </div>
+                        </div>
+
+                        <!-- Carte 3 : Wi-Fi (avec bouton de Copie Express direct en 1 clic) -->
                         <div id="prop-wifi-card" onclick="openWifiModal()" role="button" tabindex="0"
                              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openWifiModal();}"
                              aria-label="Informations et paramètres de connexion Wi-Fi"
@@ -796,6 +821,39 @@
     </div>
 
     <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET : STATIONNEMENT & PARKINGS AVEC ACCORDÉON      -->
+    <!-- =================================================================== -->
+    <div id="modal-parking" class="modal-overlay" onclick="onModalBackdropClick(event, 'parking')" role="dialog" aria-modal="true" aria-labelledby="parking-modal-title">
+        <div class="modal-sheet-parking flex flex-col" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle flex-shrink-0" aria-hidden="true"></div>
+
+            <!-- Barre supérieure de la modale Stationnement -->
+            <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2.5 truncate pr-2">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
+                        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="18" height="18" x="3" y="3" rx="4"/>
+                            <path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>
+                        </svg>
+                    </div>
+                    <div class="truncate">
+                        <h3 id="parking-modal-title" data-i18n="parking_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Stationnement</h3>
+                        <p id="parking-modal-subtitle" data-i18n="parking_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Toutes les solutions pour vous garer</p>
+                    </div>
+                </div>
+                <button onclick="closeParkingModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Contenu défilant : Accordéon et détails -->
+            <div id="parking-modal-body" class="p-4 sm:p-5 overflow-y-auto space-y-3">
+                <!-- Rendu dynamique par PropertyRenderer.renderParkingContent() -->
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================== -->
     <!-- MODALE BOTTOM-SHEET 5 : AVIS GOOGLE MY BUSINESS COMPACTE            -->
     <!-- =================================================================== -->
     <div id="modal-review" class="modal-overlay" onclick="onModalBackdropClick(event, 'review')" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
@@ -1060,6 +1118,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=10.5"></script>
+    <script type="module" src="assets/js/app.js?v=10.6"></script>
 </body>
 </html>

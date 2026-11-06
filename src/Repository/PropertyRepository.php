@@ -57,6 +57,45 @@ class PropertyRepository
     }
 
     /**
+     * Récupère la configuration générale du stationnement d'un logement
+     */
+    public static function findParkingByPropertyId(int $propertyId): ?array
+    {
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->prepare("
+                SELECT * FROM property_parkings 
+                WHERE property_id = :property_id 
+                LIMIT 1
+            ");
+            $stmt->execute([':property_id' => $propertyId]);
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (\PDOException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Récupère la liste des emplacements de stationnement (rues, garages, P+R)
+     */
+    public static function findParkingLocationsByPropertyId(int $propertyId): array
+    {
+        try {
+            $pdo = Database::getConnection();
+            $stmt = $pdo->prepare("
+                SELECT * FROM parking_locations 
+                WHERE property_id = :property_id AND active = 1 
+                ORDER BY display_order ASC, walking_minutes ASC, id ASC
+            ");
+            $stmt->execute([':property_id' => $propertyId]);
+            return $stmt->fetchAll();
+        } catch (\PDOException $e) {
+            return [];
+        }
+    }
+
+    /**
      * Récupère la liste de tous les logements actifs avec décompte des tutoriels
      */
     public static function findAllActive(): array

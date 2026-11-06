@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.5';
-import { Utils } from './utils.js?v=10.5';
-import { I18n } from './i18n.js?v=10.5';
-import { ScrollManager } from './scroll.js?v=10.5';
-import { Router, BASE_PATH } from './router.js?v=10.5';
-import { ModalManager } from './modals.js?v=10.5';
-import { PdfViewer } from './pdf-viewer.js?v=10.5';
+import { AppState } from './state.js?v=10.6';
+import { Utils } from './utils.js?v=10.6';
+import { I18n } from './i18n.js?v=10.6';
+import { ScrollManager } from './scroll.js?v=10.6';
+import { Router, BASE_PATH } from './router.js?v=10.6';
+import { ModalManager } from './modals.js?v=10.6';
+import { PdfViewer } from './pdf-viewer.js?v=10.6';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -46,6 +46,7 @@ export const PropertyRenderer = {
 
         // Bloc Wi-Fi & Animation en cascade décalée des cartes principales
         const guideCard = document.getElementById('card-guide-active');
+        const parkingCard = document.getElementById('card-parking-active');
         const wifiCard = document.getElementById('prop-wifi-card');
         const bookingCard = document.getElementById('card-booking-active');
         const reviewCard = document.getElementById('card-review-active');
@@ -57,6 +58,20 @@ export const PropertyRenderer = {
             guideCard.style.animationDelay = '0.04s';
         }
 
+        const hasParking = prop.parking && (prop.parking.general || (prop.parking.locations && prop.parking.locations.all && prop.parking.locations.all.length > 0));
+        if (hasParking) {
+            if (parkingCard) {
+                parkingCard.classList.remove('hidden');
+                parkingCard.classList.add('cascade-item');
+                parkingCard.style.animationDelay = '0.08s';
+            }
+            this.renderParkingContent(prop.parking);
+        } else {
+            if (parkingCard) {
+                parkingCard.classList.add('hidden');
+            }
+        }
+
         if (prop.wifi_ssid) {
             const modalSsid = document.getElementById('wifi-modal-ssid');
             const modalPwd = document.getElementById('wifi-modal-password');
@@ -66,7 +81,7 @@ export const PropertyRenderer = {
             if (wifiCard) {
                 wifiCard.classList.remove('hidden');
                 wifiCard.classList.add('cascade-item');
-                wifiCard.style.animationDelay = '0.08s';
+                wifiCard.style.animationDelay = hasParking ? '0.12s' : '0.08s';
             }
         } else {
             if (wifiCard) {
@@ -76,15 +91,15 @@ export const PropertyRenderer = {
 
         if (bookingCard) {
             bookingCard.classList.add('cascade-item');
-            bookingCard.style.animationDelay = prop.wifi_ssid ? '0.12s' : '0.08s';
+            bookingCard.style.animationDelay = '0.16s';
         }
         if (reviewCard) {
             reviewCard.classList.add('cascade-item');
-            reviewCard.style.animationDelay = prop.wifi_ssid ? '0.16s' : '0.12s';
+            reviewCard.style.animationDelay = '0.20s';
         }
         if (contactCard) {
             contactCard.classList.add('cascade-item');
-            contactCard.style.animationDelay = prop.wifi_ssid ? '0.20s' : '0.16s';
+            contactCard.style.animationDelay = '0.24s';
         }
 
         if (infoGrid) {
@@ -188,6 +203,23 @@ export const PropertyRenderer = {
             descEl.textContent = I18n.t('booklet_desc');
         }
 
+        // 2a. Carte Stationnement
+        const cardParking = document.getElementById('card-parking-active');
+        const parkingTitleEl = document.getElementById('parking-card-title');
+        const parkingDescEl = document.getElementById('parking-card-desc');
+        const parkingBadgeEl = document.getElementById('parking-card-badge');
+        if (parkingTitleEl) parkingTitleEl.textContent = I18n.t('parking_card_title');
+        if (parkingDescEl) parkingDescEl.textContent = I18n.t('parking_card_desc');
+        if (parkingBadgeEl) parkingBadgeEl.textContent = I18n.t('parking_badge');
+        const parkingModalTitleEl = document.getElementById('parking-modal-title');
+        const parkingModalSubEl = document.getElementById('parking-modal-subtitle');
+        if (parkingModalTitleEl) parkingModalTitleEl.textContent = I18n.t('parking_modal_title');
+        if (parkingModalSubEl) parkingModalSubEl.textContent = I18n.t('parking_modal_subtitle');
+
+        if (prop.parking) {
+            this.renderParkingContent(prop.parking);
+        }
+
         // 2b. Carte Réservez votre prochain séjour
         const cardBooking = document.getElementById('card-booking-active');
         if (cardBooking) {
@@ -269,6 +301,345 @@ export const PropertyRenderer = {
             targetLang = 'en';
         }
         ModalManager.openPdf(targetLang);
+    },
+
+    toggleParkingSection(id) {
+        const content = document.getElementById(`parking-acc-content-${id}`);
+        const trigger = document.getElementById(`parking-acc-trigger-${id}`);
+        if (!content || !trigger) return;
+        const isHidden = content.classList.contains('hidden');
+        content.classList.toggle('hidden', !isHidden);
+        const chevron = trigger.querySelector('.acc-chevron');
+        if (chevron) {
+            chevron.classList.toggle('rotate-180', isHidden);
+        }
+    },
+
+    renderParkingContent(parking) {
+        const container = document.getElementById('parking-modal-body');
+        if (!container || !parking) return;
+        const isEn = I18n.currentLang === 'en';
+        const gen = parking.general || {};
+        const locs = parking.locations || {};
+        const freeStreets = locs.free_street || [];
+        const freeSpots = locs.free_spot || [];
+        const privateParkings = locs.private_parking || [];
+        const tclPrs = locs.tcl_pr || [];
+
+        let html = '';
+
+        // 1. Règle d'or / Avertissement primordial
+        const ruleText = isEn ? (gen.important_rule_en || gen.important_rule_fr) : (gen.important_rule_fr || gen.important_rule_en);
+        if (ruleText) {
+            html += `
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-3">
+                    <span class="text-base flex-shrink-0">⚠️</span>
+                    <div class="flex-1 min-w-0">
+                        <span class="font-bold uppercase tracking-wider text-[10px] block text-amber-800 dark:text-amber-300 mb-0.5">${I18n.t('parking_rule_label')}</span>
+                        <p class="leading-relaxed font-medium">${Utils.escapeHtml(ruleText)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Introduction concise
+        const introText = isEn ? (gen.intro_en || gen.intro_fr) : (gen.intro_fr || gen.intro_en);
+        if (introText) {
+            html += `
+                <p class="text-xs text-ink-soft dark:text-gray-300 px-1 leading-relaxed">
+                    ${Utils.escapeHtml(introText)}
+                </p>
+            `;
+        }
+
+        // 2. ACCORDÉON - SECTION 1 : Stationnement gratuit (free_street & free_spot)
+        const totalFree = freeStreets.length + freeSpots.length;
+        if (totalFree > 0) {
+            let freeCards = '';
+
+            // Arrêt minute gratuit (ex: Super U)
+            freeSpots.forEach(spot => {
+                const name = isEn ? (spot.name_en || spot.name_fr) : spot.name_fr;
+                const walk = isEn ? (spot.walking_time_en || spot.walking_time_fr) : spot.walking_time_fr;
+                const notes = isEn ? (spot.notes_en || spot.notes_fr) : spot.notes_fr;
+                freeCards += `
+                    <div class="p-3 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 space-y-1.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-xs sm:text-sm text-emerald-800 dark:text-emerald-300">${Utils.escapeHtml(name)}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white flex-shrink-0">${I18n.t('parking_free_tag')}</span>
+                        </div>
+                        <p class="text-[11px] text-ink-soft dark:text-gray-300">📍 ${Utils.escapeHtml(spot.address || '')}</p>
+                        ${walk ? `<p class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">🚶 ${Utils.escapeHtml(walk)}</p>` : ''}
+                        ${notes ? `<p class="text-[11px] text-ink-faint dark:text-gray-400 italic">${Utils.escapeHtml(notes)}</p>` : ''}
+                    </div>
+                `;
+            });
+
+            // Rues gratuites
+            if (freeStreets.length > 0) {
+                freeCards += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
+                freeStreets.forEach(street => {
+                    const name = isEn ? (street.name_en || street.name_fr) : street.name_fr;
+                    const walk = isEn ? (street.walking_time_en || street.walking_time_fr) : street.walking_time_fr;
+                    const notes = isEn ? (street.notes_en || street.notes_fr) : street.notes_fr;
+                    const mapsQuery = encodeURIComponent((street.address || street.name_fr) + ' Lyon');
+                    freeCards += `
+                        <div class="p-2.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between gap-2">
+                            <div class="min-w-0 pr-1">
+                                <h5 class="text-xs font-bold text-ink dark:text-white truncate">${Utils.escapeHtml(name)}</h5>
+                                ${walk ? `<p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate mt-0.5">🚶 ${Utils.escapeHtml(walk)}</p>` : ''}
+                                ${notes ? `<p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">${Utils.escapeHtml(notes)}</p>` : ''}
+                            </div>
+                            <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer"
+                               class="w-7 h-7 rounded-lg bg-gold/10 hover:bg-gold hover:text-white text-gold flex items-center justify-center flex-shrink-0 transition text-xs"
+                               title="${I18n.t('parking_maps_btn')}">
+                                📍
+                            </a>
+                        </div>
+                    `;
+                });
+                freeCards += `</div>`;
+            }
+
+            const freeNotes = isEn ? (gen.free_parking_notes_en || gen.free_parking_notes_fr) : gen.free_parking_notes_fr;
+            if (freeNotes) {
+                freeCards += `<p class="text-[10px] text-ink-faint dark:text-gray-400 italic px-1 pt-1">${Utils.escapeHtml(freeNotes)}</p>`;
+            }
+
+            html += `
+                <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
+                    <button type="button" id="parking-acc-trigger-free" onclick="toggleParkingSection('free')"
+                            class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 text-sm">
+                                🟢
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">${I18n.t('parking_sec_free_title')}</h4>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex-shrink-0">${totalFree} ${isEn ? 'spots' : 'options'}</span>
+                                </div>
+                                <p class="text-[11px] text-ink-soft dark:text-gray-400 truncate mt-0.5">${I18n.t('parking_sec_free_desc')}</p>
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-ink-faint dark:text-gray-400 transform transition-transform duration-200 acc-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="parking-acc-content-free" class="p-3.5 space-y-2.5 border-t border-[#e2e4e6] dark:border-[#38455d]">
+                        ${freeCards}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 3. ACCORDÉON - SECTION 2 : Stationnement payant dans la rue (EasyPark)
+        const streetSched = isEn ? (gen.street_parking_schedule_en || gen.street_parking_schedule_fr) : (gen.street_parking_schedule_fr || gen.street_parking_schedule_en);
+        const streetRates = isEn ? (gen.street_parking_rates_en || gen.street_parking_rates_fr) : (gen.street_parking_rates_fr || gen.street_parking_rates_en);
+        const streetInfo = isEn ? (gen.street_parking_info_en || gen.street_parking_info_fr) : (gen.street_parking_info_fr || gen.street_parking_info_en);
+
+        if (streetSched || streetRates) {
+            html += `
+                <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
+                    <button type="button" id="parking-acc-trigger-street" onclick="toggleParkingSection('street')"
+                            class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-sm">
+                                🅿️
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">${I18n.t('parking_sec_street_title')}</h4>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex-shrink-0">EasyPark</span>
+                                </div>
+                                <p class="text-[11px] text-ink-soft dark:text-gray-400 truncate mt-0.5">${I18n.t('parking_sec_street_desc')}</p>
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-ink-faint dark:text-gray-400 transform transition-transform duration-200 acc-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="parking-acc-content-street" class="p-3.5 space-y-3 border-t border-[#e2e4e6] dark:border-[#38455d] hidden">
+                        ${streetInfo ? `<p class="text-xs text-ink-soft dark:text-gray-300 leading-relaxed">${Utils.escapeHtml(streetInfo)}</p>` : ''}
+                        
+                        ${streetSched ? `
+                            <div class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                                <span class="text-[10px] font-bold text-gold uppercase tracking-wider block mb-1">🕒 ${I18n.t('parking_street_schedule_title')}</span>
+                                <p class="text-xs font-medium text-ink dark:text-white leading-relaxed">${Utils.escapeHtml(streetSched)}</p>
+                            </div>
+                        ` : ''}
+
+                        ${streetRates ? `
+                            <div class="p-3 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                                <span class="text-[10px] font-bold text-gold uppercase tracking-wider block mb-1">💶 ${I18n.t('parking_street_rates_title')}</span>
+                                <div class="text-xs text-ink dark:text-white space-y-1 font-mono">${Utils.escapeHtml(streetRates).replace(/\n/g, '<br>')}</div>
+                            </div>
+                        ` : ''}
+
+                        <a href="https://www.easypark.com" target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold transition shadow-xs">
+                            <span>🅿️</span> ${I18n.t('parking_easypark_btn')} ↗
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 4. ACCORDÉON - SECTION 3 : Parkings privés & couverts
+        if (privateParkings.length > 0) {
+            let privCards = '';
+            privateParkings.forEach(p => {
+                const name = isEn ? (p.name_en || p.name_fr) : p.name_fr;
+                const walk = isEn ? (p.walking_time_en || p.walking_time_fr) : p.walking_time_fr;
+                const rates = isEn ? (p.rates_en || p.rates_fr) : p.rates_fr;
+                const hours = isEn ? (p.opening_hours_en || p.opening_hours_fr) : p.opening_hours_fr;
+                const vehicles = isEn ? (p.suitable_vehicles_en || p.suitable_vehicles_fr) : p.suitable_vehicles_fr;
+                const notes = isEn ? (p.notes_en || p.notes_fr) : p.notes_fr;
+                const mapsQuery = encodeURIComponent(p.address || name);
+
+                privCards += `
+                    <div class="p-3 sm:p-3.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold text-ink dark:text-white">${Utils.escapeHtml(name)}</h5>
+                                <p class="text-[11px] text-ink-faint dark:text-gray-400 mt-0.5">📍 ${Utils.escapeHtml(p.address || '')}</p>
+                            </div>
+                            ${p.operator ? `<span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gold/15 text-gold-text dark:text-gold border border-gold/30 flex-shrink-0 whitespace-nowrap">${Utils.escapeHtml(p.operator)}</span>` : ''}
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 text-[10px]">
+                            ${walk ? `<span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300 font-medium">🚶 ${Utils.escapeHtml(walk)}</span>` : ''}
+                            ${p.max_height ? `<span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold">↕️ Max ${Utils.escapeHtml(p.max_height)}</span>` : ''}
+                            ${hours ? `<span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300">🕒 ${Utils.escapeHtml(hours)}</span>` : ''}
+                        </div>
+
+                        ${rates ? `<p class="text-xs font-semibold text-gold-text dark:text-gold bg-gold/10 dark:bg-gold/15 p-2 rounded-lg">💶 ${Utils.escapeHtml(rates)}</p>` : ''}
+                        ${vehicles ? `<p class="text-[11px] text-ink-soft dark:text-gray-300">🚗 ${Utils.escapeHtml(vehicles)}</p>` : ''}
+                        ${notes ? `<p class="text-[10px] text-ink-faint dark:text-gray-400 italic">${Utils.escapeHtml(notes)}</p>` : ''}
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer"
+                               class="flex-1 py-1.5 px-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gold hover:text-white dark:hover:bg-gold text-ink dark:text-white text-xs font-semibold text-center transition">
+                                📍 ${I18n.t('parking_maps_btn')}
+                            </a>
+                            ${p.booking_url ? `
+                                <a href="${p.booking_url}" target="_blank" rel="noopener noreferrer"
+                                   class="flex-1 py-1.5 px-3 rounded-lg bg-gold hover:bg-[#a38234] text-white text-xs font-bold text-center transition shadow-xs">
+                                    🎫 ${I18n.t('parking_book_btn')} ↗
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
+                    <button type="button" id="parking-acc-trigger-private" onclick="toggleParkingSection('private')"
+                            class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0 text-sm">
+                                🏢
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">${I18n.t('parking_sec_private_title')}</h4>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex-shrink-0">${privateParkings.length} ${isEn ? 'lots' : 'parkings'}</span>
+                                </div>
+                                <p class="text-[11px] text-ink-soft dark:text-gray-400 truncate mt-0.5">${I18n.t('parking_sec_private_desc')}</p>
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-ink-faint dark:text-gray-400 transform transition-transform duration-200 acc-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="parking-acc-content-private" class="p-3.5 space-y-2.5 border-t border-[#e2e4e6] dark:border-[#38455d] hidden">
+                        ${privCards}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 5. ACCORDÉON - SECTION 4 : Parkings Relais TCL (P+R)
+        if (tclPrs.length > 0) {
+            let tclCards = '';
+            const tclCond = isEn ? (gen.tcl_conditions_en || gen.tcl_conditions_fr) : (gen.tcl_conditions_fr || gen.tcl_conditions_en);
+
+            if (tclCond) {
+                tclCards += `
+                    <div class="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs leading-relaxed font-medium">
+                        <span class="font-bold text-[10px] uppercase tracking-wider block text-amber-800 dark:text-amber-300 mb-0.5">🚇 ${I18n.t('parking_tcl_rule_title')}</span>
+                        ${Utils.escapeHtml(tclCond)}
+                    </div>
+                `;
+            }
+
+            tclPrs.forEach(pr => {
+                const name = isEn ? (pr.name_en || pr.name_fr) : pr.name_fr;
+                const hours = isEn ? (pr.opening_hours_en || pr.opening_hours_fr) : pr.opening_hours_fr;
+                const transit = isEn ? (pr.transit_time_en || pr.transit_time_fr) : pr.transit_time_fr;
+                const reach = isEn ? (pr.how_to_reach_en || pr.how_to_reach_fr) : pr.how_to_reach_fr;
+                const notes = isEn ? (pr.notes_en || pr.notes_fr) : pr.notes_fr;
+                const mapsQuery = encodeURIComponent(pr.address || name);
+
+                tclCards += `
+                    <div class="p-3 sm:p-3.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h5 class="text-xs sm:text-sm font-bold text-ink dark:text-white">${Utils.escapeHtml(name)}</h5>
+                                <p class="text-[11px] text-ink-faint dark:text-gray-400 mt-0.5">📍 ${Utils.escapeHtml(pr.address || '')}</p>
+                            </div>
+                            ${pr.capacity ? `<span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex-shrink-0">${Utils.escapeHtml(pr.capacity)}</span>` : ''}
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 text-[10px]">
+                            ${transit ? `<span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 font-semibold">⏱️ ${Utils.escapeHtml(transit)}</span>` : ''}
+                            ${hours ? `<span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300">🕒 ${Utils.escapeHtml(hours)}</span>` : ''}
+                        </div>
+
+                        ${reach ? `
+                            <div class="p-2.5 rounded-lg bg-blue-50/70 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                                <span class="font-bold block text-[10px] uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-0.5">${I18n.t('parking_how_to_reach')} :</span>
+                                ${Utils.escapeHtml(reach)}
+                            </div>
+                        ` : ''}
+
+                        ${notes ? `<p class="text-[10px] text-ink-faint dark:text-gray-400 italic">${Utils.escapeHtml(notes)}</p>` : ''}
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer"
+                               class="flex-1 py-1.5 px-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gold hover:text-white text-ink dark:text-white text-xs font-semibold text-center transition">
+                                📍 ${I18n.t('parking_maps_btn')}
+                            </a>
+                            <a href="https://www.tcl.fr" target="_blank" rel="noopener noreferrer"
+                               class="flex-1 py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold text-center transition shadow-xs">
+                                🚇 ${I18n.t('parking_tcl_btn')} ↗
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
+                    <button type="button" id="parking-acc-trigger-tcl" onclick="toggleParkingSection('tcl')"
+                            class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
+                        <div class="flex items-center space-x-3 min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center flex-shrink-0 text-sm">
+                                🚇
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">${I18n.t('parking_sec_tcl_title')}</h4>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">TCL P+R</span>
+                                </div>
+                                <p class="text-[11px] text-ink-soft dark:text-gray-400 truncate mt-0.5">${I18n.t('parking_sec_tcl_desc')}</p>
+                            </div>
+                        </div>
+                        <svg class="w-4 h-4 text-ink-faint dark:text-gray-400 transform transition-transform duration-200 acc-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="parking-acc-content-tcl" class="p-3.5 space-y-2.5 border-t border-[#e2e4e6] dark:border-[#38455d] hidden">
+                        ${tclCards}
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
     },
 
     renderVideos(videos) {

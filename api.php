@@ -88,6 +88,22 @@ try {
         }
 
         $videos = get_videos_by_property_id($property['id']);
+        $parkingGeneral = get_parking_by_property_id($property['id']);
+        $parkingLocations = get_parking_locations_by_property_id($property['id']);
+
+        $parkingData = null;
+        if ($parkingGeneral !== null || !empty($parkingLocations)) {
+            $parkingData = [
+                'general' => $parkingGeneral,
+                'locations' => [
+                    'free_street' => array_values(array_filter($parkingLocations, fn($l) => $l['category'] === 'free_street')),
+                    'free_spot' => array_values(array_filter($parkingLocations, fn($l) => $l['category'] === 'free_spot')),
+                    'private_parking' => array_values(array_filter($parkingLocations, fn($l) => $l['category'] === 'private_parking')),
+                    'tcl_pr' => array_values(array_filter($parkingLocations, fn($l) => $l['category'] === 'tcl_pr')),
+                    'all' => $parkingLocations
+                ]
+            ];
+        }
 
         echo json_encode([
             'success' => true,
@@ -95,7 +111,8 @@ try {
             'data' => [
                 'property' => $property,
                 'videos' => $videos,
-                'tutorials' => $videos // Rétrocompatibilité
+                'tutorials' => $videos, // Rétrocompatibilité
+                'parking' => $parkingData
             ]
         ], JSON_UNESCAPED_UNICODE);
         exit;

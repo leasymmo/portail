@@ -259,6 +259,23 @@ try {
             logline($config, $dbId, 'delete', $table . ' x' . $n);
             respond(['ok' => true, 'deleted' => $n]);
 
+        case 'migrate':
+            if (empty($config['writes_enabled'])) {
+                fail('Écritures désactivées dans la configuration', 403);
+            }
+            $sql = trim((string) ($body['sql'] ?? ''));
+            if ($sql === '') {
+                fail('sql est obligatoire');
+            }
+            try {
+                $pdo->exec($sql);
+            } catch (PDOException $e) {
+                logline($config, $dbId, 'migrate_error', $e->getMessage());
+                fail('Erreur migration: ' . $e->getMessage(), 500);
+            }
+            logline($config, $dbId, 'migrate', 'migration executee avec succes');
+            respond(['ok' => true, 'message' => 'Migration exécutée avec succès']);
+
         default:
             fail('Action inconnue : ' . $action);
     }

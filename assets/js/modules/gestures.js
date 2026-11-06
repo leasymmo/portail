@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.5';
+import { AppState } from './state.js?v=10.6';
 
 export const SheetGestureController = {
     init() {
@@ -15,7 +15,8 @@ export const SheetGestureController = {
             { id: 'modal-booking', close: (immediate) => window.ModalManager && window.ModalManager.closeBooking(immediate) },
             { id: 'modal-wifi', close: (immediate) => window.ModalManager && window.ModalManager.closeWifi(immediate) },
             { id: 'modal-review', close: (immediate) => window.ModalManager && window.ModalManager.closeReview(immediate) },
-            { id: 'modal-contact-anthony', close: (immediate) => window.ModalManager && window.ModalManager.closeContact(immediate) }
+            { id: 'modal-contact-anthony', close: (immediate) => window.ModalManager && window.ModalManager.closeContact(immediate) },
+            { id: 'modal-parking', close: (immediate) => window.ModalManager && window.ModalManager.closeParking(immediate) }
         ];
 
         modals.forEach(({ id, close }) => {

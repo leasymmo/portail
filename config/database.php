@@ -79,6 +79,24 @@ if (!function_exists('get_tutorials_by_property_id')) {
 }
 
 /**
+ * Récupère les données générales de stationnement
+ */
+if (!function_exists('get_parking_by_property_id')) {
+    function get_parking_by_property_id(int $propertyId): ?array {
+        return PropertyRepository::findParkingByPropertyId($propertyId);
+    }
+}
+
+/**
+ * Récupère les emplacements de stationnement détaillés
+ */
+if (!function_exists('get_parking_locations_by_property_id')) {
+    function get_parking_locations_by_property_id(int $propertyId): array {
+        return PropertyRepository::findParkingLocationsByPropertyId($propertyId);
+    }
+}
+
+/**
  * Liste l'ensemble des logements actifs
  */
 if (!function_exists('get_all_active_properties')) {

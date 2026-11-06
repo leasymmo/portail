@@ -6,7 +6,7 @@
  * - API (api.php) : Network-First avec fallback Cache (consultation hors-ligne des guides)
  */
 
-const CACHE_VERSION = 'cdh-portail-v3.0.5';
+const CACHE_VERSION = 'cdh-portail-v3.0.6';
 const CACHE_NAME_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_NAME_API = `${CACHE_VERSION}-api`;
 
@@ -18,21 +18,21 @@ const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/?$/, '/'
 const PRECACHE_ASSETS = [
     SCOPE_PATH,
     SCOPE_PATH + 'index.html',
-    SCOPE_PATH + 'assets/css/custom.css?v=10.5',
-    SCOPE_PATH + 'assets/js/app.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/state.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/utils.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/i18n.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/theme.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/scroll.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/router.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/api.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/gestures.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/pdf-viewer.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/modals.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/renderer.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/pwa.js?v=10.5',
-    SCOPE_PATH + 'assets/js/modules/app-controller.js?v=10.5',
+    SCOPE_PATH + 'assets/css/custom.css?v=10.6',
+    SCOPE_PATH + 'assets/js/app.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/state.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/utils.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/i18n.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/theme.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/scroll.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/router.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/api.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/gestures.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/pdf-viewer.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/modals.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/renderer.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/pwa.js?v=10.6',
+    SCOPE_PATH + 'assets/js/modules/app-controller.js?v=10.6',
     SCOPE_PATH + 'assets/images/antho.jpg',
     SCOPE_PATH + 'assets/icons/icon-192.png',
     SCOPE_PATH + 'assets/icons/icon-512.png',

@@ -9,6 +9,7 @@
 // Recherche et chargement automatique du fichier .env
 $envCandidates = [
     dirname(__DIR__) . '/.env',
+    dirname(dirname(__DIR__)) . '/.env',
     dirname(__DIR__) . '/portail/.env',
     __DIR__ . '/.env'
 ];
@@ -54,7 +55,7 @@ return [
             'name'         => $envVars['DB_NAME'] ?? '',
             'user'         => $envVars['DB_USER'] ?? '',
             'pass'         => $envVars['DB_PASS'] ?? '',
-            'write_tables' => ['properties', 'videos'],
+            'write_tables' => ['properties', 'videos', 'property_parkings', 'parking_locations'],
         ],
     ],
 ];

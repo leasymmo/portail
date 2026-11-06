@@ -690,12 +690,14 @@ body.modal-open {
 
 .modal-overlay.open .modal-sheet:not(.is-dragging),
 .modal-overlay.open .modal-sheet-video:not(.is-dragging),
+.modal-overlay.open .modal-sheet-parking:not(.is-dragging),
 .modal-overlay.open .modal-sheet-compact:not(.is-dragging) {
     transform: translateY(0);
 }
 
 .modal-overlay.is-closing .modal-sheet,
 .modal-overlay.is-closing .modal-sheet-video,
+.modal-overlay.is-closing .modal-sheet-parking,
 .modal-overlay.is-closing .modal-sheet-compact {
     transform: translateY(100%);
     transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
@@ -704,12 +706,52 @@ body.modal-open {
 /* État actif lors du glissement gestuel vers le bas (Swipe-to-dismiss) */
 .modal-sheet.is-dragging,
 .modal-sheet-video.is-dragging,
+.modal-sheet-parking.is-dragging,
 .modal-sheet-compact.is-dragging {
     transition: none !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     touch-action: none !important;
     will-change: transform;
+}
+
+/* Modale Stationnement */
+.modal-sheet-parking {
+    width: 100% !important;
+    max-width: 580px !important;
+    height: auto !important;
+    max-height: 88vh !important;
+    max-height: 88dvh !important;
+    background-color: var(--bg-card);
+    border-top-left-radius: 26px !important;
+    border-top-right-radius: 26px !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top: 1px solid var(--line) !important;
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.45) !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation !important;
+    pointer-events: auto !important;
+    will-change: transform;
+    margin-bottom: 0 !important;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+    .modal-sheet-parking {
+        border-radius: 26px !important;
+        border: 1px solid var(--line) !important;
+        box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.4) !important;
+        margin: auto !important;
+        max-height: 85vh !important;
+        max-height: 85dvh !important;
+    }
 }
 
 /* Modale Compacte Wi-Fi (hauteur naturelle sans monter jusqu'en haut) */

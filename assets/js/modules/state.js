@@ -16,5 +16,6 @@ export const AppState = {
     isWifiModalOpen: false,
     isReviewModalOpen: false,
     isContactModalOpen: false,
+    isParkingModalOpen: false,
     isOffline: !navigator.onLine
 };

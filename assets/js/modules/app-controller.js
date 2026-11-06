@@ -5,17 +5,17 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.5';
-import { Utils } from './utils.js?v=10.5';
-import { I18n } from './i18n.js?v=10.5';
-import { Router } from './router.js?v=10.5';
-import { ApiService } from './api.js?v=10.5';
-import { PropertyRenderer, ListRenderer } from './renderer.js?v=10.5';
-import { ModalManager } from './modals.js?v=10.5';
-import { ScrollManager } from './scroll.js?v=10.5';
-import { PdfViewer } from './pdf-viewer.js?v=10.5';
-import { SheetGestureController, TabGestureController } from './gestures.js?v=10.5';
-import { PwaManager } from './pwa.js?v=10.5';
+import { AppState } from './state.js?v=10.6';
+import { Utils } from './utils.js?v=10.6';
+import { I18n } from './i18n.js?v=10.6';
+import { Router } from './router.js?v=10.6';
+import { ApiService } from './api.js?v=10.6';
+import { PropertyRenderer, ListRenderer } from './renderer.js?v=10.6';
+import { ModalManager } from './modals.js?v=10.6';
+import { ScrollManager } from './scroll.js?v=10.6';
+import { PdfViewer } from './pdf-viewer.js?v=10.6';
+import { SheetGestureController, TabGestureController } from './gestures.js?v=10.6';
+import { PwaManager } from './pwa.js?v=10.6';
 
 export const AppController = {
     async load() {
@@ -186,6 +186,7 @@ export const AppController = {
                 if (AppState.isWifiModalOpen) ModalManager.closeWifi();
                 if (AppState.isReviewModalOpen) ModalManager.closeReview();
                 if (AppState.isContactModalOpen) ModalManager.closeContact();
+                if (AppState.isParkingModalOpen) ModalManager.closeParking();
                 const pwaBanner = document.getElementById('pwa-install-banner');
                 if (pwaBanner && pwaBanner.classList.contains('show')) {
                     PwaManager.dismissPrompt();
@@ -216,6 +217,10 @@ export const AppController = {
             }
             if (AppState.isContactModalOpen) {
                 ModalManager.closeContact(true);
+                return;
+            }
+            if (AppState.isParkingModalOpen) {
+                ModalManager.closeParking(true);
                 return;
             }
             this.load();

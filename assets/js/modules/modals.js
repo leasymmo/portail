@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.5';
-import { Utils } from './utils.js?v=10.5';
-import { I18n } from './i18n.js?v=10.5';
-import { ScrollManager } from './scroll.js?v=10.5';
-import { Router } from './router.js?v=10.5';
-import { PdfViewer } from './pdf-viewer.js?v=10.5';
+import { AppState } from './state.js?v=10.6';
+import { Utils } from './utils.js?v=10.6';
+import { I18n } from './i18n.js?v=10.6';
+import { ScrollManager } from './scroll.js?v=10.6';
+import { Router } from './router.js?v=10.6';
+import { PdfViewer } from './pdf-viewer.js?v=10.6';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -669,7 +669,67 @@ export const ModalManager = {
             if (type === 'wifi') this.closeWifi();
             if (type === 'review') this.closeReview();
             if (type === 'contact') this.closeContact();
+            if (type === 'parking') this.closeParking();
         }
+    },
+
+    // --- MODALE STATIONNEMENT & PARKINGS ---
+    openParking() {
+        if (!AppState.currentProperty || !AppState.currentProperty.parking) return;
+        const modal = document.getElementById('modal-parking');
+        if (!modal) return;
+
+        modal.classList.remove('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact, .modal-sheet');
+        if (sheet) {
+            sheet.style.transform = '';
+            sheet.style.transition = '';
+        }
+        modal.style.opacity = '';
+        modal.style.backgroundColor = '';
+
+        modal.classList.add('is-active');
+        void modal.offsetHeight;
+
+        requestAnimationFrame(() => {
+            modal.classList.add('open');
+            modal.classList.remove('is-active');
+            modal.setAttribute('aria-hidden', 'false');
+        });
+
+        AppState.isParkingModalOpen = true;
+        ScrollManager.lock();
+    },
+
+    closeParking(immediate = false) {
+        const modal = document.getElementById('modal-parking');
+        if (!modal) return;
+
+        AppState.isParkingModalOpen = false;
+        ScrollManager.unlock();
+
+        if (immediate || !modal.classList.contains('open')) {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            return;
+        }
+
+        modal.classList.add('is-closing');
+        const sheet = modal.querySelector('.modal-sheet-compact, .modal-sheet');
+        if (sheet) {
+            sheet.style.transform = 'translateY(100%)';
+        }
+        modal.style.opacity = '0';
+
+        setTimeout(() => {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
+        }, 340);
     }
 };
 
