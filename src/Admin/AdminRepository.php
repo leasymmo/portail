@@ -736,7 +736,7 @@ class AdminRepository
 
         return [
             'ai_provider' => $provider,
-            'ai_model_gemini' => $raw['ai_model_gemini'] ?? 'gemini-2.5-flash',
+            'ai_model_gemini' => $raw['ai_model_gemini'] ?? 'gemini-3.5-flash',
             'ai_model_openai' => $raw['ai_model_openai'] ?? 'gpt-4o-mini',
             'ai_model_claude' => $raw['ai_model_claude'] ?? 'claude-3-5-haiku-latest',
             'has_key_gemini' => !empty($raw['ai_api_key_gemini']),

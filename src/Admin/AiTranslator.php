@@ -18,7 +18,7 @@ class AiTranslator
     public const PROVIDER_CLAUDE = 'claude';
 
     public const DEFAULT_MODELS = [
-        self::PROVIDER_GEMINI => 'gemini-2.5-flash',
+        self::PROVIDER_GEMINI => 'gemini-3.5-flash',
         self::PROVIDER_OPENAI => 'gpt-4o-mini',
         self::PROVIDER_CLAUDE => 'claude-3-5-haiku-latest',
     ];
@@ -228,31 +228,39 @@ class AiTranslator
             ]
         ];
 
-        // Tentative avec le modèle demandé
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . urlencode($model) . ':generateContent?key=' . urlencode($apiKey);
-        $res = self::httpPostJson($url, $payload, ['Content-Type: application/json']);
+        // Modèles Gemini à tester par ordre de priorité (avec replis successifs)
+        $modelsToTry = array_unique([
+            $model,
+            'gemini-3.5-flash',
+            'gemini-3-flash-preview',
+            'gemini-3.8-flash',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash'
+        ]);
 
-        // Si erreur 404 sur 2.5-flash, repli automatique sur 1.5-flash
-        if ($res['http_code'] === 404 && $model !== 'gemini-1.5-flash') {
-            $fallbackUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey);
-            $res = self::httpPostJson($fallbackUrl, $payload, ['Content-Type: application/json']);
+        $lastError = '';
+        foreach ($modelsToTry as $m) {
+            if (empty($m)) continue;
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . urlencode($m) . ':generateContent?key=' . urlencode($apiKey);
+            try {
+                $res = self::httpPostJson($url, $payload, ['Content-Type: application/json']);
+                if ($res['http_code'] === 200) {
+                    $data = json_decode($res['body'], true);
+                    $rawText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                    $decoded = self::cleanAndDecodeJson($rawText);
+                    if ($decoded) {
+                        return $decoded;
+                    }
+                } else {
+                    $errBody = json_decode($res['body'] ?? '', true);
+                    $lastError = $errBody['error']['message'] ?? ('Erreur HTTP Gemini ' . $res['http_code']);
+                }
+            } catch (Throwable $e) {
+                $lastError = $e->getMessage();
+            }
         }
 
-        if ($res['http_code'] !== 200) {
-            $errBody = json_decode($res['body'] ?? '', true);
-            $errMsg = $errBody['error']['message'] ?? ('Erreur HTTP Gemini ' . $res['http_code']);
-            throw new \RuntimeException("Gemini API : " . $errMsg);
-        }
-
-        $data = json_decode($res['body'], true);
-        $rawText = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
-        $decoded = self::cleanAndDecodeJson($rawText);
-
-        if (!$decoded) {
-            throw new \RuntimeException("Gemini : La réponse n'est pas un JSON valide.");
-        }
-
-        return $decoded;
+        throw new \RuntimeException("Gemini API : " . ($lastError ?: 'Impossible de générer la traduction.'));
     }
 
     /**

@@ -1057,7 +1057,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <input type="password" id="ai-key-gemini" placeholder="AIzaSy..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                         <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-gemini')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
                     </div>
-                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-2.5-flash</code> (repli auto sur <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-1.5-flash</code>)</p>
+                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-3.5-flash</code> (repli auto sur <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-3-flash-preview</code>)</p>
                 </div>
 
                 <!-- Section Clé API OpenAI -->

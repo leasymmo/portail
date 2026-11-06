@@ -18,7 +18,7 @@ VALUES
     ('ai_api_key_gemini', NULL),
     ('ai_api_key_openai', NULL),
     ('ai_api_key_claude', NULL),
-    ('ai_model_gemini', 'gemini-2.5-flash'),
+    ('ai_model_gemini', 'gemini-3.5-flash'),
     ('ai_model_openai', 'gpt-4o-mini'),
     ('ai_model_claude', 'claude-3-5-haiku-latest')
 ON DUPLICATE KEY UPDATE `setting_key` = `setting_key`;
