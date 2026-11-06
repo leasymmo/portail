@@ -1135,9 +1135,8 @@ const AdminApp = {
     },
 
     onVideoTitleInput(val) {
-        const id = document.getElementById('video-id')?.value;
         const slugInput = document.getElementById('video-slug');
-        if (slugInput && (id == 0 || !slugInput.value.trim())) {
+        if (slugInput) {
             slugInput.value = this.slugify(val);
         }
         this.updateVideoR2Preview();
@@ -1374,19 +1373,39 @@ const AdminApp = {
     },
 
     confirmDeleteVideo(id, title) {
+        const video = (this.state.currentVideos || []).find(v => v.id == id);
+        const hasR2 = video && video.video_url && this.isR2VideoUrl(video.video_url);
+
+        const extraHtml = hasR2 ? `
+            <label class="flex items-start space-x-2.5 cursor-pointer select-none">
+                <input type="checkbox" id="confirm-delete-r2-checkbox" checked class="mt-0.5 rounded border-gray-600 text-red-500 focus:ring-red-400 bg-night-card">
+                <div class="text-xs">
+                    <span class="font-bold text-white">Supprimer également la vidéo sur Cloudflare R2</span>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Le fichier vidéo hébergé dans <span class="font-mono text-gold">${this.escape(video.video_url.split('/').slice(-2).join('/'))}</span> sera définitivement effacé du stockage Cloudflare.</p>
+                </div>
+            </label>
+        ` : '';
+
         this.confirmAction(
             `Supprimer ${title} ?`,
             `Le tutoriel vidéo sera définitivement retiré du portail voyageur pour cet hébergement.`,
             async () => {
+                const deleteR2Checkbox = document.getElementById('confirm-delete-r2-checkbox');
+                const deleteR2 = deleteR2Checkbox ? (deleteR2Checkbox.checked ? 1 : 0) : 0;
+
                 try {
-                    await this.apiRequest('api/index.php?action=video_delete', 'POST', { id });
-                    this.showToast(`Vidéo ${title} supprimée.`);
+                    const res = await this.apiRequest('api/index.php?action=video_delete', 'POST', {
+                        id,
+                        delete_r2: deleteR2
+                    });
+                    this.showToast(res.message || `Vidéo ${title} supprimée.`);
                     await this.fetchAndRenderVideos(this.state.currentPropertyId);
                     await this.loadInitialData();
                 } catch (err) {
                     this.showToast(err.message, 'error');
                 }
-            }
+            },
+            extraHtml
         );
     },
 
@@ -2683,10 +2702,11 @@ const AdminApp = {
         }, 4000);
     },
 
-    confirmAction(title, message, onConfirm) {
+    confirmAction(title, message, onConfirm, extraHtml = '') {
         const modal = document.getElementById('modal-confirmation');
         const titleEl = document.getElementById('confirm-title');
         const msgEl = document.getElementById('confirm-message');
+        const extraEl = document.getElementById('confirm-extra');
         const btnConfirm = document.getElementById('confirm-btn-yes');
 
         if (!modal || !btnConfirm) {
@@ -2697,8 +2717,22 @@ const AdminApp = {
         titleEl.textContent = title;
         msgEl.textContent = message;
 
+        if (extraEl) {
+            if (extraHtml) {
+                extraEl.innerHTML = extraHtml;
+                extraEl.classList.remove('hidden');
+            } else {
+                extraEl.innerHTML = '';
+                extraEl.classList.add('hidden');
+            }
+        }
+
         btnConfirm.onclick = () => {
             modal.classList.add('hidden');
+            if (extraEl) {
+                extraEl.innerHTML = '';
+                extraEl.classList.add('hidden');
+            }
             onConfirm();
         };
 
@@ -2707,6 +2741,11 @@ const AdminApp = {
 
     closeConfirmModal() {
         const modal = document.getElementById('modal-confirmation');
+        const extraEl = document.getElementById('confirm-extra');
+        if (extraEl) {
+            extraEl.innerHTML = '';
+            extraEl.classList.add('hidden');
+        }
         if (modal) modal.classList.add('hidden');
     },
 
@@ -3380,6 +3419,15 @@ const AdminApp = {
         this.stageVideoFile(file);
     },
 
+    isR2VideoUrl(url) {
+        if (!url || typeof url !== 'string') return false;
+        const u = url.toLowerCase();
+        return u.includes('videos.carredhotes.fr') ||
+               u.includes('r2.cloudflarestorage.com') ||
+               u.includes('r2.dev') ||
+               (this.state.settings && this.state.settings.r2_domain_videos && u.includes(this.state.settings.r2_domain_videos.toLowerCase()));
+    },
+
     updateVideoStagedPreview() {
         const dropzoneEl = document.getElementById('dropzone-video');
         const previewEl = document.getElementById('preview-video-container');
@@ -3387,6 +3435,7 @@ const AdminApp = {
         const previewMetaEl = document.getElementById('preview-meta-video');
         const badgeEl = document.getElementById('preview-badge-video');
         const playBtn = document.getElementById('preview-btn-play-video');
+        const actionBtn = document.getElementById('preview-btn-action-video');
 
         if (this.state.pendingVideoFile) {
             const file = this.state.pendingVideoFile;
@@ -3408,18 +3457,26 @@ const AdminApp = {
                 previewMetaEl.className = 'text-[10px] text-gold font-medium';
             }
             if (playBtn) playBtn.classList.remove('hidden');
+            if (actionBtn) {
+                actionBtn.textContent = 'Retirer';
+                actionBtn.className = 'px-2.5 py-1 rounded-lg bg-gray-500/15 text-gray-300 hover:bg-gray-500/30 text-[11px] font-semibold transition';
+                actionBtn.title = 'Annuler la sélection de ce fichier local';
+            }
         } else {
             const urlInput = document.getElementById('video-url');
             const url = urlInput ? urlInput.value.trim() : '';
             if (url) {
+                const isR2 = this.isR2VideoUrl(url);
                 if (previewEl) {
-                    previewEl.className = 'flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all';
+                    previewEl.className = isR2
+                        ? 'flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all'
+                        : 'flex items-center justify-between p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs transition-all';
                     previewEl.classList.remove('hidden');
                 }
                 if (dropzoneEl) dropzoneEl.classList.add('hidden');
                 if (badgeEl) {
-                    badgeEl.textContent = '✓';
-                    badgeEl.className = 'text-emerald-400 text-base';
+                    badgeEl.textContent = isR2 ? '☁️' : '🔗';
+                    badgeEl.className = isR2 ? 'text-emerald-400 text-base' : 'text-blue-400 text-base';
                 }
                 if (previewNameEl) {
                     const fname = url.split('/').pop().split('?')[0] || 'Vidéo';
@@ -3427,15 +3484,78 @@ const AdminApp = {
                     previewNameEl.className = 'text-white font-mono text-xs font-semibold truncate max-w-[220px]';
                 }
                 if (previewMetaEl) {
-                    previewMetaEl.textContent = 'Vidéo enregistrée (Cloudflare R2 / URL)';
-                    previewMetaEl.className = 'text-[10px] text-emerald-300';
+                    previewMetaEl.textContent = isR2 ? 'Hébergé sur Cloudflare R2' : 'Lien externe configuré';
+                    previewMetaEl.className = isR2 ? 'text-[10px] text-emerald-300 font-medium' : 'text-[10px] text-blue-300 font-medium';
                 }
                 if (playBtn) playBtn.classList.remove('hidden');
+                if (actionBtn) {
+                    if (isR2) {
+                        actionBtn.textContent = 'Supprimer';
+                        actionBtn.className = 'px-2.5 py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 text-[11px] font-bold transition flex items-center space-x-1';
+                        actionBtn.title = 'Supprimer définitivement cette vidéo sur Cloudflare R2';
+                    } else {
+                        actionBtn.textContent = 'Retirer';
+                        actionBtn.className = 'px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold transition';
+                        actionBtn.title = 'Retirer le lien externe';
+                    }
+                }
             } else {
                 if (previewEl) previewEl.classList.add('hidden');
                 if (dropzoneEl) dropzoneEl.classList.remove('hidden');
             }
         }
+    },
+
+    handleVideoFileAction() {
+        if (this.state.pendingVideoFile) {
+            // Fichier local en attente : on l'enlève simplement sans toucher à Cloudflare
+            this.clearUploadedMedia('video');
+            return;
+        }
+
+        const urlInput = document.getElementById('video-url');
+        const url = urlInput ? urlInput.value.trim() : '';
+        if (url && this.isR2VideoUrl(url)) {
+            // Vidéo déjà uploadée sur Cloudflare : confirmation avec avertissement explicite
+            this.confirmDeleteVideoFileFromR2(url);
+        } else {
+            this.clearUploadedMedia('video');
+        }
+    },
+
+    confirmDeleteVideoFileFromR2(url) {
+        const id = parseInt(document.getElementById('video-id')?.value || '0', 10);
+        const propertyId = parseInt(document.getElementById('video-property-id')?.value || '0', 10);
+        const fname = url.split('/').pop().split('?')[0] || 'cette vidéo';
+
+        this.confirmAction(
+            "Supprimer la vidéo sur Cloudflare ?",
+            `Attention : cette vidéo (${fname}) sera immédiatement et définitivement supprimée sur Cloudflare R2 dans le dossier de cet hébergement. Cette action est irréversible.`,
+            async () => {
+                try {
+                    this.showLoading(true);
+                    const res = await this.apiRequest('api/index.php?action=video_delete_cloudflare_file', 'POST', {
+                        id,
+                        video_url: url,
+                        property_id: propertyId
+                    });
+
+                    this.showToast(res.message || "Vidéo supprimée de Cloudflare R2 avec succès.");
+
+                    // Vider le champ URL et restaurer le dropzone
+                    this.clearUploadedMedia('video');
+
+                    // Si nous modifions un enregistrement existant, rafraîchir la liste en arrière-plan
+                    if (id > 0) {
+                        await this.fetchAndRenderVideos(this.state.currentPropertyId);
+                    }
+                } catch (err) {
+                    this.showToast(`Échec de la suppression sur Cloudflare : ${err.message}`, "error");
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+        );
     },
 
     onVideoUrlInput() {

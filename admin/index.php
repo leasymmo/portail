@@ -900,7 +900,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </div>
                         <div class="flex items-center space-x-2 flex-shrink-0">
                             <button type="button" id="preview-btn-play-video" onclick="AdminApp.previewCurrentVideo()" class="px-2.5 py-1 rounded-lg bg-gold/20 text-gold hover:bg-gold/30 text-[11px] font-bold">▶ Tester</button>
-                            <button type="button" onclick="AdminApp.clearUploadedMedia('video')" class="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold">Changer</button>
+                            <button type="button" id="preview-btn-action-video" onclick="AdminApp.handleVideoFileAction()" class="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold">Changer</button>
                         </div>
                     </div>
 
@@ -1236,6 +1236,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             </div>
             <h4 id="confirm-title" class="text-base font-bold text-white">Êtes-vous sûr ?</h4>
             <p id="confirm-message" class="text-xs text-gray-400 leading-relaxed"></p>
+            <div id="confirm-extra" class="hidden text-left bg-night p-3.5 rounded-xl border border-night-border/80 text-xs"></div>
             <div class="pt-3 flex justify-center space-x-3">
                 <button type="button" onclick="AdminApp.closeConfirmModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 font-semibold transition">
                     Annuler
@@ -1489,6 +1490,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=2.6"></script>
+    <script src="assets/js/admin.js?v=2.7"></script>
 </body>
 </html>

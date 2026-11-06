@@ -255,12 +255,92 @@ try {
                 exit;
             }
 
+            // GESTION DU RENOMMAGE CLOUDFLARE R2 SI LE SLUG EST MODIFIÉ EN ÉDITION D'UNE VIDÉO EXISTANTE
+            if ($id > 0) {
+                $oldVideo = $repo->findVideoById($id);
+                if ($oldVideo && !empty($oldVideo['slug']) && !empty($oldVideo['video_url'])) {
+                    $oldSlug = $oldVideo['slug'];
+                    $newSlug = $data['slug'];
+
+                    // Si le slug a changé et que l'URL n'a pas été remplacée par un nouvel upload
+                    $isR2 = \Cdh\Portal\Admin\MediaUploader::isR2Url($oldVideo['video_url']);
+                    if ($oldSlug !== $newSlug && $isR2 && $videoUrl === $oldVideo['video_url']) {
+                        $prop = $repo->findPropertyById($propertyId);
+                        $propSlug = $prop ? $prop['slug'] : '';
+                        if (empty($propSlug)) {
+                            http_response_code(400);
+                            echo json_encode(['ok' => false, 'error' => "Hébergement introuvable."], JSON_UNESCAPED_UNICODE);
+                            exit;
+                        }
+
+                        $r2Config = \Cdh\Portal\Admin\MediaUploader::getR2Config();
+                        $bucketVideos = !empty($r2Config['bucket_videos']) ? $r2Config['bucket_videos'] : 'carredhotes-videos';
+
+                        // Détermination de l'extension du fichier vidéo
+                        $ext = strtolower(pathinfo(parse_url($oldVideo['video_url'], PHP_URL_PATH), PATHINFO_EXTENSION)) ?: 'mp4';
+                        $oldObjectKey = \Cdh\Portal\Admin\MediaUploader::extractObjectKeyFromUrl($oldVideo['video_url'], $bucketVideos);
+                        if (empty($oldObjectKey)) {
+                            $oldObjectKey = "{$propSlug}/{$oldSlug}.{$ext}";
+                        }
+                        $newFilename = "{$newSlug}.{$ext}";
+                        $newObjectKey = "{$propSlug}/{$newFilename}";
+
+                        // Règle 1 : Vérifier si le nouveau nom existe déjà dans le dossier de l'hébergement
+                        $exists = \Cdh\Portal\Admin\MediaUploader::checkObjectExists($bucketVideos, $newObjectKey, $r2Config);
+                        if ($exists) {
+                            http_response_code(400);
+                            echo json_encode([
+                                'ok'    => false,
+                                'error' => "Le fichier « {$newFilename} » existe déjà dans le dossier de cet hébergement sur Cloudflare R2. Veuillez modifier le slug ou le titre pour éviter d'écraser une vidéo existante."
+                            ], JSON_UNESCAPED_UNICODE);
+                            exit;
+                        }
+
+                        // Sinon, renommer le fichier sur Cloudflare R2 (Copie + Suppression)
+                        $renameResult = \Cdh\Portal\Admin\MediaUploader::renameObject($bucketVideos, $oldObjectKey, $newObjectKey, $r2Config);
+                        if (!$renameResult['ok']) {
+                            http_response_code(500);
+                            echo json_encode([
+                                'ok'    => false,
+                                'error' => "Erreur lors du renommage du fichier sur Cloudflare R2 : " . ($renameResult['error'] ?? 'Inconnue')
+                            ], JSON_UNESCAPED_UNICODE);
+                            exit;
+                        }
+
+                        // Mise à jour de la nouvelle URL publique vidéo
+                        $customDomain = !empty($r2Config['domain_videos']) ? $r2Config['domain_videos'] : 'https://videos.carredhotes.fr';
+                        $data['video_url'] = rtrim($customDomain, '/') . '/' . $newObjectKey;
+                        $videoUrl = $data['video_url'];
+
+                        \Cdh\Portal\Admin\ActivityLogger::log(
+                            'update',
+                            'video',
+                            $id,
+                            $titleFr,
+                            "Fichier vidéo Cloudflare R2 renommé : {$oldObjectKey} -> {$newObjectKey}"
+                        );
+                    }
+                }
+            }
+
             if ($id > 0) {
                 $ok = $repo->updateVideo($id, $data);
-                echo json_encode(['ok' => $ok, 'id' => $id, 'message' => 'Tutoriel vidéo mis à jour avec succès.'], JSON_UNESCAPED_UNICODE);
+                echo json_encode([
+                    'ok'        => $ok,
+                    'id'        => $id,
+                    'video_url' => $videoUrl,
+                    'slug'      => $data['slug'],
+                    'message'   => 'Tutoriel vidéo mis à jour avec succès.'
+                ], JSON_UNESCAPED_UNICODE);
             } else {
                 $newId = $repo->createVideo($data);
-                echo json_encode(['ok' => true, 'id' => $newId, 'message' => 'Tutoriel vidéo ajouté avec succès.'], JSON_UNESCAPED_UNICODE);
+                echo json_encode([
+                    'ok'        => true,
+                    'id'        => $newId,
+                    'video_url' => $videoUrl,
+                    'slug'      => $data['slug'],
+                    'message'   => 'Tutoriel vidéo ajouté avec succès.'
+                ], JSON_UNESCAPED_UNICODE);
             }
             exit;
 
@@ -281,6 +361,74 @@ try {
             echo json_encode(['ok' => $ok]);
             exit;
 
+        case 'video_delete_cloudflare_file':
+            if ($currentUser['role'] === 'editor') {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'Action non autorisée pour le rôle éditeur.']);
+                exit;
+            }
+
+            $id = (int)($body['id'] ?? ($_POST['id'] ?? 0));
+            $videoUrl = trim((string)($body['video_url'] ?? ($_POST['video_url'] ?? '')));
+            $propertyId = (int)($body['property_id'] ?? ($_POST['property_id'] ?? 0));
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+            $r2Config = \Cdh\Portal\Admin\MediaUploader::getR2Config();
+            $bucketVideos = !empty($r2Config['bucket_videos']) ? $r2Config['bucket_videos'] : 'carredhotes-videos';
+
+            // Si l'URL n'est pas fournie mais l'ID existe, la retrouver
+            if (empty($videoUrl) && $id > 0) {
+                $video = $repo->findVideoById($id);
+                if ($video) {
+                    $videoUrl = $video['video_url'];
+                    if ($propertyId <= 0) $propertyId = (int)$video['property_id'];
+                }
+            }
+
+            if (empty($videoUrl)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Aucune URL de vidéo fournie.']);
+                exit;
+            }
+
+            $objectKey = \Cdh\Portal\Admin\MediaUploader::extractObjectKeyFromUrl($videoUrl, $bucketVideos);
+            if (empty($objectKey)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Impossible de déterminer la clé du fichier Cloudflare R2.']);
+                exit;
+            }
+
+            $delResult = \Cdh\Portal\Admin\MediaUploader::deleteObject($bucketVideos, $objectKey, $r2Config);
+            if (!$delResult['ok']) {
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'error' => $delResult['error']]);
+                exit;
+            }
+
+            // Si c'est un enregistrement existant en BDD, on vide également le champ video_url
+            if ($id > 0) {
+                $video = $repo->findVideoById($id);
+                if ($video) {
+                    $updateData = $video;
+                    $updateData['video_url'] = '';
+                    $repo->updateVideo($id, $updateData);
+                }
+            }
+
+            \Cdh\Portal\Admin\ActivityLogger::log(
+                'delete',
+                'video_file',
+                $id > 0 ? $id : null,
+                "Suppression fichier vidéo Cloudflare R2 : {$objectKey}"
+            );
+
+            echo json_encode([
+                'ok'         => true,
+                'object_key' => $objectKey,
+                'message'    => "Vidéo supprimée de Cloudflare R2 avec succès."
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+
         case 'video_delete':
             if ($currentUser['role'] === 'editor') {
                 http_response_code(403);
@@ -288,8 +436,42 @@ try {
                 exit;
             }
             $id = (int)($body['id'] ?? ($_POST['id'] ?? 0));
+            $deleteR2 = !empty($body['delete_r2']) || !empty($_POST['delete_r2']);
+
+            $video = $repo->findVideoById($id);
+            if (!$video) {
+                http_response_code(404);
+                echo json_encode(['ok' => false, 'error' => 'Tutoriel vidéo introuvable.']);
+                exit;
+            }
+
+            // Règle 3 : Si demandé, supprimer également le fichier hébergé sur Cloudflare R2
+            $r2Deleted = false;
+            if ($deleteR2 && !empty($video['video_url'])) {
+                require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+                $r2Config = \Cdh\Portal\Admin\MediaUploader::getR2Config();
+                $bucketVideos = !empty($r2Config['bucket_videos']) ? $r2Config['bucket_videos'] : 'carredhotes-videos';
+
+                if (\Cdh\Portal\Admin\MediaUploader::isR2Url($video['video_url'], $r2Config)) {
+                    $objectKey = \Cdh\Portal\Admin\MediaUploader::extractObjectKeyFromUrl($video['video_url'], $bucketVideos);
+                    if (!empty($objectKey)) {
+                        $delRes = \Cdh\Portal\Admin\MediaUploader::deleteObject($bucketVideos, $objectKey, $r2Config);
+                        if ($delRes['ok']) {
+                            $r2Deleted = true;
+                            \Cdh\Portal\Admin\ActivityLogger::log(
+                                'delete',
+                                'video_file',
+                                $id,
+                                "Suppression fichier Cloudflare R2 lors de la suppression du tutoriel : {$objectKey}"
+                            );
+                        }
+                    }
+                }
+            }
+
             $ok = $repo->deleteVideo($id);
-            echo json_encode(['ok' => $ok, 'message' => 'Vidéo supprimée.']);
+            $msg = 'Tutoriel vidéo supprimé' . ($r2Deleted ? ' ainsi que son fichier vidéo sur Cloudflare R2.' : '.');
+            echo json_encode(['ok' => $ok, 'message' => $msg, 'r2_deleted' => $r2Deleted], JSON_UNESCAPED_UNICODE);
             exit;
 
         // ----------------------------------------------------------------------

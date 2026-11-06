@@ -368,6 +368,176 @@ class MediaUploader
     }
 
     /**
+     * Vérifie si un objet existe sur Cloudflare R2 (requête HEAD)
+     */
+    public static function checkObjectExists(string $bucket, string $objectKey, ?array $config = null): bool
+    {
+        $cfg = $config ?? self::getR2Config();
+        $accountId = trim((string)($cfg['account_id'] ?? ''));
+        $accessKey = trim((string)($cfg['access_key_id'] ?? ''));
+        $secretKey = trim((string)($cfg['secret_access_key'] ?? ''));
+
+        if (empty($accountId) || empty($accessKey) || empty($secretKey)) {
+            return false;
+        }
+
+        $res = self::sendR2Request('HEAD', $accountId, $accessKey, $secretKey, $bucket, ltrim($objectKey, '/'));
+        return ($res['http_code'] === 200);
+    }
+
+    /**
+     * Supprime un objet sur Cloudflare R2 (requête DELETE)
+     */
+    public static function deleteObject(string $bucket, string $objectKey, ?array $config = null): array
+    {
+        $cfg = $config ?? self::getR2Config();
+        $accountId = trim((string)($cfg['account_id'] ?? ''));
+        $accessKey = trim((string)($cfg['access_key_id'] ?? ''));
+        $secretKey = trim((string)($cfg['secret_access_key'] ?? ''));
+
+        if (empty($accountId) || empty($accessKey) || empty($secretKey)) {
+            return [
+                'ok'    => false,
+                'error' => "Configuration Cloudflare R2 manquante ou incomplète."
+            ];
+        }
+
+        $cleanKey = ltrim($objectKey, '/');
+        $res = self::sendR2Request('DELETE', $accountId, $accessKey, $secretKey, $bucket, $cleanKey);
+
+        if ($res['error']) {
+            return [
+                'ok'    => false,
+                'error' => "Erreur réseau lors de la suppression sur Cloudflare R2 : {$res['error']}"
+            ];
+        }
+
+        if (!in_array($res['http_code'], [200, 204], true)) {
+            $detail = self::parseR2ErrorDetail($res['response']);
+            return [
+                'ok'    => false,
+                'error' => "Erreur HTTP {$res['http_code']} lors de la suppression sur Cloudflare R2" . ($detail ? " ({$detail})" : "")
+            ];
+        }
+
+        return [
+            'ok'      => true,
+            'message' => "Objet « {$cleanKey} » supprimé de Cloudflare R2 avec succès."
+        ];
+    }
+
+    /**
+     * Renomme (Copie puis Suppression) un objet sur Cloudflare R2
+     */
+    public static function renameObject(string $bucket, string $oldObjectKey, string $newObjectKey, ?array $config = null): array
+    {
+        $cfg = $config ?? self::getR2Config();
+        $accountId = trim((string)($cfg['account_id'] ?? ''));
+        $accessKey = trim((string)($cfg['access_key_id'] ?? ''));
+        $secretKey = trim((string)($cfg['secret_access_key'] ?? ''));
+
+        if (empty($accountId) || empty($accessKey) || empty($secretKey)) {
+            return [
+                'ok'    => false,
+                'error' => "Configuration Cloudflare R2 incomplète pour le renommage."
+            ];
+        }
+
+        $oldKey = ltrim($oldObjectKey, '/');
+        $newKey = ltrim($newObjectKey, '/');
+
+        if ($oldKey === $newKey) {
+            return ['ok' => true, 'object_key' => $newKey];
+        }
+
+        // 1. S'assurer que le dossier cible existe si besoin
+        $folder = dirname($newKey);
+        if ($folder !== '.' && $folder !== '') {
+            self::ensureR2FolderExists($accountId, $accessKey, $secretKey, $bucket, $folder);
+        }
+
+        // 2. Copier l'objet vers la nouvelle clé via PUT + x-amz-copy-source
+        $encodedOldKey = implode('/', array_map('rawurlencode', explode('/', $oldKey)));
+        $copySource = rawurlencode($bucket) . '/' . $encodedOldKey;
+
+        $copyRes = self::sendR2Request(
+            'PUT',
+            $accountId,
+            $accessKey,
+            $secretKey,
+            $bucket,
+            $newKey,
+            '',
+            '',
+            '',
+            ['x-amz-copy-source' => $copySource]
+        );
+
+        if ($copyRes['error']) {
+            return [
+                'ok'    => false,
+                'error' => "Erreur réseau lors de la copie sur Cloudflare R2 : {$copyRes['error']}"
+            ];
+        }
+
+        if (!in_array($copyRes['http_code'], [200, 204], true)) {
+            $detail = self::parseR2ErrorDetail($copyRes['response']);
+            return [
+                'ok'    => false,
+                'error' => "Échec de la duplication sur Cloudflare R2 (HTTP {$copyRes['http_code']})" . ($detail ? " : {$detail}" : "")
+            ];
+        }
+
+        // 3. Supprimer l'ancien objet
+        self::sendR2Request('DELETE', $accountId, $accessKey, $secretKey, $bucket, $oldKey);
+
+        return [
+            'ok'         => true,
+            'object_key' => $newKey,
+            'old_key'    => $oldKey
+        ];
+    }
+
+    /**
+     * Vérifie si une URL pointe vers le stockage Cloudflare R2
+     */
+    public static function isR2Url(string $url, ?array $config = null): bool
+    {
+        $url = trim($url);
+        if ($url === '') return false;
+        $host = strtolower((string)parse_url($url, PHP_URL_HOST));
+        if ($host === '') return false;
+
+        if (str_contains($host, 'r2.cloudflarestorage.com') || str_contains($host, 'r2.dev')) {
+            return true;
+        }
+        if (str_contains($host, 'videos.carredhotes.fr') || str_contains($host, 'guides.carredhotes.fr')) {
+            return true;
+        }
+
+        $cfg = $config ?? self::getR2Config();
+        $domainVideos = strtolower((string)parse_url($cfg['domain_videos'] ?? '', PHP_URL_HOST));
+        $domainGuides = strtolower((string)parse_url($cfg['domain_guides'] ?? '', PHP_URL_HOST));
+
+        if ($domainVideos !== '' && $host === $domainVideos) return true;
+        if ($domainGuides !== '' && $host === $domainGuides) return true;
+
+        return false;
+    }
+
+    /**
+     * Extrait la clé d'objet R2 (ex: "bataille/machine-a-cafe.mp4") depuis une URL complète
+     */
+    public static function extractObjectKeyFromUrl(string $url, string $bucket = ''): string
+    {
+        $path = ltrim((string)parse_url($url, PHP_URL_PATH), '/');
+        if ($bucket !== '' && str_starts_with($path, $bucket . '/')) {
+            $path = substr($path, strlen($bucket) + 1);
+        }
+        return urldecode($path);
+    }
+
+    /**
      * Effectue une requête S3 SigV4 vers Cloudflare R2
      */
     private static function sendR2Request(
@@ -379,7 +549,8 @@ class MediaUploader
         string $objectKey = '',
         string $queryString = '',
         string $body = '',
-        string $contentType = ''
+        string $contentType = '',
+        array $extraHeaders = []
     ): array {
         $host = "{$accountId}.r2.cloudflarestorage.com";
         $path = '/' . $bucket;
@@ -409,6 +580,10 @@ class MediaUploader
         $headersMap['host'] = $host;
         $headersMap['x-amz-content-sha256'] = $payloadHash;
         $headersMap['x-amz-date'] = $isoDate;
+
+        foreach ($extraHeaders as $k => $v) {
+            $headersMap[strtolower(trim($k))] = trim((string)$v);
+        }
 
         ksort($headersMap);
 
