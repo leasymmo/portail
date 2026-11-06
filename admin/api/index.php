@@ -453,6 +453,7 @@ try {
 
             // Règle 3 : Si demandé, supprimer également le fichier hébergé sur Cloudflare R2
             $r2Deleted = false;
+            $r2Error = null;
             if ($deleteR2 && !empty($video['video_url'])) {
                 require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
                 $r2Config = \Cdh\Portal\Admin\MediaUploader::getR2Config();
@@ -471,14 +472,36 @@ try {
                                 "Suppression vidéo Cloudflare R2",
                                 ['object_key' => $objectKey, 'context' => 'video_delete']
                             );
+                        } else {
+                            $r2Error = $delRes['error'] ?? 'Échec inconnu lors de la suppression sur Cloudflare R2';
+                            \Cdh\Portal\Admin\ActivityLogger::log(
+                                'delete_error',
+                                'video_file',
+                                $id,
+                                "Échec suppression vidéo Cloudflare R2",
+                                ['object_key' => $objectKey, 'error' => $r2Error]
+                            );
                         }
+                    } else {
+                        $r2Error = "Clé d'objet R2 introuvable dans l'URL de la vidéo.";
                     }
+                } else {
+                    $r2Error = "L'URL de la vidéo ne pointe pas vers le stockage Cloudflare R2 configuré.";
                 }
             }
 
             $ok = $repo->deleteVideo($id);
-            $msg = 'Tutoriel vidéo supprimé' . ($r2Deleted ? ' ainsi que son fichier vidéo sur Cloudflare R2.' : '.');
-            echo json_encode(['ok' => $ok, 'message' => $msg, 'r2_deleted' => $r2Deleted], JSON_UNESCAPED_UNICODE);
+            if ($deleteR2 && $r2Error) {
+                $msg = "Tutoriel vidéo supprimé de la base de données, mais le fichier Cloudflare R2 n'a pu être supprimé ({$r2Error}).";
+            } else {
+                $msg = 'Tutoriel vidéo supprimé' . ($r2Deleted ? ' ainsi que son fichier vidéo sur Cloudflare R2.' : '.');
+            }
+            echo json_encode([
+                'ok'         => $ok,
+                'message'    => $msg,
+                'r2_deleted' => $r2Deleted,
+                'r2_error'   => $r2Error
+            ], JSON_UNESCAPED_UNICODE);
             exit;
 
         // ----------------------------------------------------------------------

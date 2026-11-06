@@ -1375,10 +1375,13 @@ const AdminApp = {
     confirmDeleteVideo(id, title) {
         const video = (this.state.currentVideos || []).find(v => v.id == id);
         const hasR2 = video && video.video_url && this.isR2VideoUrl(video.video_url);
+        window.__deleteR2Selected = hasR2 ? 1 : 0;
 
         const extraHtml = hasR2 ? `
             <label class="flex items-start space-x-2.5 cursor-pointer select-none">
-                <input type="checkbox" id="confirm-delete-r2-checkbox" checked class="mt-0.5 rounded border-gray-600 text-red-500 focus:ring-red-400 bg-night-card">
+                <input type="checkbox" id="confirm-delete-r2-checkbox" checked 
+                       onchange="window.__deleteR2Selected = this.checked ? 1 : 0"
+                       class="mt-0.5 rounded border-gray-600 text-red-500 focus:ring-red-400 bg-night-card">
                 <div class="text-xs">
                     <span class="font-bold text-white">Supprimer également la vidéo sur Cloudflare R2</span>
                     <p class="text-[11px] text-gray-400 mt-0.5">Le fichier vidéo hébergé dans <span class="font-mono text-gold">${this.escape(video.video_url.split('/').slice(-2).join('/'))}</span> sera définitivement effacé du stockage Cloudflare.</p>
@@ -1390,8 +1393,8 @@ const AdminApp = {
             `Supprimer ${title} ?`,
             `Le tutoriel vidéo sera définitivement retiré du portail voyageur pour cet hébergement.`,
             async () => {
-                const deleteR2Checkbox = document.getElementById('confirm-delete-r2-checkbox');
-                const deleteR2 = deleteR2Checkbox ? (deleteR2Checkbox.checked ? 1 : 0) : 0;
+                const cb = document.getElementById('confirm-delete-r2-checkbox');
+                const deleteR2 = (cb !== null) ? (cb.checked ? 1 : 0) : (window.__deleteR2Selected ?? (hasR2 ? 1 : 0));
 
                 try {
                     const res = await this.apiRequest('api/index.php?action=video_delete', 'POST', {
@@ -2728,12 +2731,17 @@ const AdminApp = {
         }
 
         btnConfirm.onclick = () => {
-            modal.classList.add('hidden');
-            if (extraEl) {
-                extraEl.innerHTML = '';
-                extraEl.classList.add('hidden');
+            try {
+                onConfirm();
+            } finally {
+                modal.classList.add('hidden');
+                setTimeout(() => {
+                    if (extraEl) {
+                        extraEl.innerHTML = '';
+                        extraEl.classList.add('hidden');
+                    }
+                }, 100);
             }
-            onConfirm();
         };
 
         modal.classList.remove('hidden');
