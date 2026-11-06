@@ -495,8 +495,10 @@ const AdminApp = {
         }
 
         container.innerHTML = list.map(p => {
-            const hasFrGuide = Boolean(p.guide_pdf_url_fr && p.guide_pdf_url_fr.trim());
-            const hasEnGuide = Boolean(p.guide_pdf_url_en && p.guide_pdf_url_en.trim());
+            const guideFrUrl = (p.guide_fr_url || p.guide_pdf_url_fr || '').trim();
+            const guideEnUrl = (p.guide_en_url || p.guide_pdf_url_en || '').trim();
+            const hasFrGuide = Boolean(guideFrUrl);
+            const hasEnGuide = Boolean(guideEnUrl);
             return `
             <div class="rounded-2xl bg-night-card border border-night-border hover:border-gold/40 p-4 sm:p-5 transition flex flex-col justify-between group shadow-lg">
                 <div>
@@ -534,28 +536,26 @@ const AdminApp = {
                             </span>
                             <div class="flex items-center space-x-1.5">
                                 ${hasFrGuide ? `
-                                    <a href="${this.escape(p.guide_pdf_url_fr)}" target="_blank" rel="noopener noreferrer" 
-                                       class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition inline-flex items-center space-x-1 shadow-sm" title="Consulter le guide PDF français (nouvel onglet)">
-                                        <span>FR</span>
-                                        <span class="text-[10px]">👁️</span>
+                                    <a href="${this.escape(guideFrUrl)}" target="_blank" rel="noopener noreferrer" 
+                                       class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition inline-flex items-center shadow-sm" title="Ouvrir le guide PDF français (nouvel onglet)">
+                                        FR
                                     </a>
                                 ` : `
                                     <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" 
-                                            class="px-2 py-1 rounded-lg text-xs font-semibold bg-night border border-night-border text-gray-500 hover:border-gold/40 hover:text-gray-300 transition" title="Ajouter le guide PDF français">
-                                        <span>FR —</span>
+                                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-night border border-night-border text-gray-500 hover:border-gold/40 hover:text-gray-300 transition" title="Aucun guide FR configuré — Cliquer pour en ajouter un">
+                                        FR
                                     </button>
                                 `}
 
                                 ${hasEnGuide ? `
-                                    <a href="${this.escape(p.guide_pdf_url_en)}" target="_blank" rel="noopener noreferrer" 
-                                       class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition inline-flex items-center space-x-1 shadow-sm" title="Consulter le guide PDF anglais (nouvel onglet)">
-                                        <span>EN</span>
-                                        <span class="text-[10px]">👁️</span>
+                                    <a href="${this.escape(guideEnUrl)}" target="_blank" rel="noopener noreferrer" 
+                                       class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition inline-flex items-center shadow-sm" title="Ouvrir le guide PDF anglais (nouvel onglet)">
+                                        EN
                                     </a>
                                 ` : `
                                     <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" 
-                                            class="px-2 py-1 rounded-lg text-xs font-semibold bg-night border border-night-border text-gray-500 hover:border-gold/40 hover:text-gray-300 transition" title="Ajouter le guide PDF anglais">
-                                        <span>EN —</span>
+                                            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-night border border-night-border text-gray-500 hover:border-gold/40 hover:text-gray-300 transition" title="Aucun guide EN configuré — Cliquer pour en ajouter un">
+                                        EN
                                     </button>
                                 `}
                             </div>
