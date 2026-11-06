@@ -28,7 +28,8 @@ const AdminApp = {
     async init() {
         this.state.isDev = window.location.pathname.includes('/portail/dev');
         
-        // Initialisation de la navigation
+        // Initialisation de la barre latérale et navigation
+        this.initSidebarState();
         this.setupNavigation();
         this.setupMobileMenu();
 
@@ -138,6 +139,40 @@ const AdminApp = {
             toggleBtn.addEventListener('click', toggle);
             overlay.addEventListener('click', toggle);
         }
+    },
+
+    closeMobileMenu() {
+        const sidebar = document.getElementById('admin-sidebar');
+        const overlay = document.getElementById('mobile-menu-overlay');
+        if (sidebar) sidebar.classList.add('-translate-x-full');
+        if (overlay) overlay.classList.add('hidden');
+    },
+
+    toggleSidebarCollapse() {
+        const sidebar = document.getElementById('admin-sidebar');
+        if (!sidebar) return;
+        const isCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+        try {
+            localStorage.setItem('cdh_admin_sidebar_collapsed', isCollapsed ? '1' : '0');
+        } catch (e) {}
+    },
+
+    initSidebarState() {
+        try {
+            if (localStorage.getItem('cdh_admin_sidebar_collapsed') === '1') {
+                const sidebar = document.getElementById('admin-sidebar');
+                if (sidebar) sidebar.classList.add('sidebar-collapsed');
+            }
+        } catch (e) {}
+
+        // Raccourci clavier Ctrl+B / Cmd+B pour basculer la sidebar sur ordinateur
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+                e.preventDefault();
+                this.toggleSidebarCollapse();
+            }
+        });
     },
 
     switchTab(tabName) {
@@ -510,7 +545,22 @@ const AdminApp = {
         const container = document.getElementById('videos-list-container');
         if (!container) return;
 
-        container.innerHTML = '<div class="py-8 text-center text-gray-400">Chargement des vidéos...</div>';
+        const property = this.state.properties.find(p => p.id == propertyId);
+        const propName = property ? property.name : '';
+
+        container.innerHTML = `
+            <div class="rounded-2xl bg-night-card border border-night-border/80 p-12 text-center space-y-4 shadow-xl">
+                <div class="relative w-14 h-14 mx-auto">
+                    <div class="absolute inset-0 rounded-full border-2 border-gold/20"></div>
+                    <div class="absolute inset-0 rounded-full border-2 border-gold border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-xl">🎬</div>
+                </div>
+                <div class="space-y-1">
+                    <h4 class="text-sm font-bold text-white tracking-wide">Chargement des vidéos...</h4>
+                    <p class="text-xs text-gray-400">Récupération des tutoriels pour « ${this.escape(propName)} »</p>
+                </div>
+            </div>
+        `;
 
         try {
             const res = await this.apiRequest(`api/index.php?action=videos_get&property_id=${propertyId}`);
@@ -739,12 +789,30 @@ const AdminApp = {
             await this.fetchAndRenderParking(pid);
         });
 
+        // Initialiser l'état du sous-onglet actif
+        this.switchParkingSubtab(this.state.parkingSubtab || 'general');
+
         if (this.state.currentPropertyId) {
             await this.fetchAndRenderParking(this.state.currentPropertyId);
         }
     },
 
     async fetchAndRenderParking(propertyId) {
+        const loadingState = document.getElementById('parking-loading-state');
+        const contentWrapper = document.getElementById('parking-subtabs-wrapper');
+        const propLabel = document.getElementById('parking-loading-property-label');
+
+        const property = this.state.properties.find(p => p.id == propertyId);
+        if (propLabel && property) {
+            propLabel.textContent = `Actualisation des règles et emplacements pour « ${property.name} »...`;
+        }
+
+        // Afficher immédiatement l'état de chargement et masquer les données précédentes
+        if (loadingState && contentWrapper) {
+            loadingState.classList.remove('hidden');
+            contentWrapper.classList.add('hidden');
+        }
+
         try {
             const res = await this.apiRequest(`api/index.php?action=parking_get&property_id=${propertyId}`);
             this.state.currentParkingGeneral = res.general || null;
@@ -752,8 +820,55 @@ const AdminApp = {
 
             this.fillParkingGeneralForm();
             this.renderParkingLocationsList();
+            this.updateParkingLocationsBadge();
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (loadingState && contentWrapper) {
+                loadingState.classList.add('hidden');
+                contentWrapper.classList.remove('hidden');
+            }
+        }
+    },
+
+    switchParkingSubtab(subtab) {
+        this.state.parkingSubtab = subtab;
+        const btnGeneral = document.getElementById('parking-subtab-btn-general');
+        const btnLocations = document.getElementById('parking-subtab-btn-locations');
+        const tabGeneral = document.getElementById('parking-subtab-general');
+        const tabLocations = document.getElementById('parking-subtab-locations');
+
+        if (subtab === 'general') {
+            if (tabGeneral) tabGeneral.classList.remove('hidden');
+            if (tabLocations) tabLocations.classList.add('hidden');
+
+            if (btnGeneral) {
+                btnGeneral.className = 'parking-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25';
+            }
+            if (btnLocations) {
+                btnLocations.className = 'parking-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2';
+            }
+        } else {
+            if (tabGeneral) tabGeneral.classList.add('hidden');
+            if (tabLocations) tabLocations.classList.remove('hidden');
+
+            if (btnGeneral) {
+                btnGeneral.className = 'parking-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2';
+            }
+            if (btnLocations) {
+                btnLocations.className = 'parking-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25';
+            }
+        }
+    },
+
+    updateParkingLocationsBadge() {
+        const badge = document.getElementById('parking-subtab-locations-badge');
+        if (badge) {
+            const count = (this.state.currentParkingLocations || []).length;
+            badge.textContent = count;
+            badge.className = count > 0
+                ? 'px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-bold'
+                : 'px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold';
         }
     },
 

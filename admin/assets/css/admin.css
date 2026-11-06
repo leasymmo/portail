@@ -78,3 +78,47 @@ body {
 .toggle-checkbox:checked + .toggle-label {
     background-color: #ba9641;
 }
+
+/* ==============================================================================
+   BARRE LATÉRALE RÉDUITE (COLLAPSED DESKTOP)
+   ============================================================================== */
+@media (min-width: 768px) {
+    #admin-sidebar {
+        transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    #admin-sidebar.sidebar-collapsed {
+        width: 4.75rem !important; /* ~76px */
+    }
+    
+    #admin-sidebar.sidebar-collapsed .sidebar-text-label,
+    #admin-sidebar.sidebar-collapsed .sidebar-badge {
+        display: none !important;
+    }
+    
+    #admin-sidebar.sidebar-collapsed .nav-tab-btn {
+        justify-content: center;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    #admin-sidebar.sidebar-collapsed .nav-tab-btn span.text-base {
+        margin: 0 !important;
+    }
+    
+    #admin-sidebar.sidebar-collapsed #sidebar-collapse-icon {
+        transform: rotate(180deg);
+    }
+    
+    #admin-sidebar.sidebar-collapsed #sidebar-logo-container {
+        justify-content: center;
+    }
+    
+    #admin-sidebar.sidebar-collapsed #user-footer-wrapper {
+        justify-content: center;
+    }
+    
+    #admin-sidebar.sidebar-collapsed #user-actions-wrapper {
+        display: none;
+    }
+}

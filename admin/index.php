@@ -39,92 +39,102 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             }
         };
     </script>
-    <link rel="stylesheet" href="assets/css/admin.css?v=1.0">
+    <link rel="stylesheet" href="assets/css/admin.css?v=1.1">
 </head>
-<body class="bg-night text-gray-100 min-h-screen flex flex-col antialiased selection:bg-gold selection:text-white">
+<body class="bg-night text-gray-100 h-screen max-h-screen flex flex-col antialiased selection:bg-gold selection:text-white overflow-hidden">
 
     <!-- CONTENEUR GLOBAL APP -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex min-h-0 overflow-hidden">
 
         <!-- =============================================================== -->
         <!-- SIDEBAR LATÉRALE                                                -->
         <!-- =============================================================== -->
-        <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-night-card border-r border-night-border flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out md:static flex-shrink-0">
+        <aside id="admin-sidebar" class="fixed inset-y-0 left-0 z-40 w-64 md:w-64 bg-night-card border-r border-night-border flex flex-col justify-between transform -translate-x-full md:translate-x-0 transition-all duration-300 ease-in-out md:static flex-shrink-0 h-full max-h-screen overflow-y-auto select-none">
             <!-- Haut de la Sidebar -->
             <div>
-                <!-- Logo & Titre -->
-                <div class="p-5 border-b border-night-border/70 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shadow-md shadow-gold/10">
+                <!-- Logo & Titre & Bouton Réduire -->
+                <div class="p-4 sm:p-5 border-b border-night-border/70 flex items-center justify-between">
+                    <div id="sidebar-logo-container" class="flex items-center space-x-3 overflow-hidden">
+                        <div class="w-9 h-9 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold shadow-md shadow-gold/10 flex-shrink-0">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect width="18" height="18" x="3" y="3" rx="4"/>
                                 <path d="m9 9 6 6m0-6-6 6"/>
                             </svg>
                         </div>
-                        <div>
-                            <span class="font-serif-luxury font-bold text-white text-base tracking-wide block">Carré d'Hôtes</span>
-                            <span class="text-[10px] uppercase tracking-widest text-gold font-semibold block">Administration</span>
+                        <div class="sidebar-text-label transition-opacity duration-200">
+                            <span class="font-serif-luxury font-bold text-white text-base tracking-wide block truncate">Carré d'Hôtes</span>
+                            <span class="text-[10px] uppercase tracking-widest text-gold font-semibold block truncate">Administration</span>
                         </div>
                     </div>
+
+                    <!-- Bouton Réduire sur Bureau -->
+                    <button type="button" id="sidebar-collapse-toggle" onclick="AdminApp.toggleSidebarCollapse()" class="hidden md:flex p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition flex-shrink-0" title="Réduire / Agrandir la barre latérale (ou Ctrl+B)">
+                        <svg id="sidebar-collapse-icon" class="w-4 h-4 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                    </button>
+
+                    <!-- Bouton Fermer sur Mobile -->
+                    <button type="button" onclick="AdminApp.closeMobileMenu()" class="md:hidden p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition flex-shrink-0" title="Fermer le menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
 
                 <!-- Navigation principale -->
-                <nav class="p-3.5 space-y-1.5" aria-label="Menu principal">
-                    <button type="button" data-tab="dashboard" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition">
-                        <span class="text-base">📊</span>
-                        <span>Tableau de bord</span>
+                <nav class="p-3 space-y-1.5" aria-label="Menu principal">
+                    <button type="button" data-tab="dashboard" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition" title="Tableau de bord">
+                        <span class="text-base flex-shrink-0">📊</span>
+                        <span class="sidebar-text-label truncate">Tableau de bord</span>
                     </button>
 
-                    <button type="button" data-tab="properties" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition">
-                        <span class="text-base">🏠</span>
-                        <span>Hébergements</span>
+                    <button type="button" data-tab="properties" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition" title="Hébergements">
+                        <span class="text-base flex-shrink-0">🏠</span>
+                        <span class="sidebar-text-label truncate">Hébergements</span>
                     </button>
 
-                    <button type="button" data-tab="videos" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition">
-                        <span class="text-base">🎬</span>
-                        <span>Vidéos & Tutoriels</span>
+                    <button type="button" data-tab="videos" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition" title="Vidéos & Tutoriels">
+                        <span class="text-base flex-shrink-0">🎬</span>
+                        <span class="sidebar-text-label truncate">Vidéos & Tutoriels</span>
                     </button>
 
-                    <button type="button" data-tab="parking" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition">
-                        <span class="text-base">🅿️</span>
-                        <span>Stationnement</span>
+                    <button type="button" data-tab="parking" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition" title="Stationnement & Parkings">
+                        <span class="text-base flex-shrink-0">🅿️</span>
+                        <span class="sidebar-text-label truncate">Stationnement</span>
                     </button>
 
-                    <button type="button" data-tab="logs" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition">
-                        <span class="text-base">📜</span>
-                        <span>Journal d'audit</span>
+                    <button type="button" data-tab="logs" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition" title="Journal d'audit">
+                        <span class="text-base flex-shrink-0">📜</span>
+                        <span class="sidebar-text-label truncate">Journal d'audit</span>
                     </button>
 
-                    <button type="button" id="nav-item-users" data-tab="users" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition <?= $currentUser['role'] !== 'superadmin' ? 'hidden' : '' ?>">
-                        <span class="text-base">👥</span>
-                        <span>Administrateurs</span>
+                    <button type="button" id="nav-item-users" data-tab="users" class="nav-tab-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent transition <?= $currentUser['role'] !== 'superadmin' ? 'hidden' : '' ?>" title="Administrateurs">
+                        <span class="text-base flex-shrink-0">👥</span>
+                        <span class="sidebar-text-label truncate">Administrateurs</span>
                     </button>
 
                     <div class="pt-2 border-t border-night-border/50 my-1"></div>
 
-                    <button type="button" onclick="AdminApp.openAiSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group">
-                        <div class="flex items-center space-x-3">
-                            <span class="text-base group-hover:scale-110 transition-transform">✨</span>
-                            <span class="text-gold-light group-hover:text-gold font-bold">Traduction IA</span>
+                    <button type="button" onclick="AdminApp.openAiSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group" title="Configuration IA (Gemini, ChatGPT, Claude)">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <span class="text-base flex-shrink-0 group-hover:scale-110 transition-transform">✨</span>
+                            <span class="sidebar-text-label text-gold-light group-hover:text-gold font-bold truncate">Traduction IA</span>
                         </div>
-                        <span id="nav-ai-provider-badge" class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-md bg-gold/15 text-gold border border-gold/30">Gemini</span>
+                        <span id="nav-ai-provider-badge" class="sidebar-badge text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-md bg-gold/15 text-gold border border-gold/30 flex-shrink-0">Gemini</span>
                     </button>
                 </nav>
             </div>
 
             <!-- Bas de la Sidebar : Profil & Déconnexion -->
-            <div class="p-4 border-t border-night-border/70 bg-night/30">
-                <div class="flex items-center justify-between">
+            <div class="p-3.5 sm:p-4 border-t border-night-border/70 bg-night/30">
+                <div id="user-footer-wrapper" class="flex items-center justify-between gap-2">
                     <div class="flex items-center space-x-2.5 min-w-0">
-                        <div id="user-display-avatar" class="w-8 h-8 rounded-full bg-gold/20 text-gold border border-gold/40 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        <div id="user-display-avatar" class="w-8 h-8 rounded-full bg-gold/20 text-gold border border-gold/40 flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm" title="<?= htmlspecialchars($currentUser['name']) ?>">
                             AD
                         </div>
-                        <div class="min-w-0">
+                        <div class="sidebar-text-label min-w-0">
                             <p id="user-display-name" class="text-xs font-bold text-white truncate"><?= htmlspecialchars($currentUser['name']) ?></p>
-                            <p id="user-display-role" class="text-[10px] text-gray-400 capitalize"><?= htmlspecialchars($currentUser['role']) ?></p>
+                            <p id="user-display-role" class="text-[10px] text-gray-400 capitalize truncate"><?= htmlspecialchars($currentUser['role']) ?></p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-1">
+                    <div id="user-actions-wrapper" class="flex items-center space-x-1 flex-shrink-0">
                         <button type="button" onclick="AdminApp.openProfileModal()" class="p-1.5 rounded-lg text-gray-400 hover:text-gold hover:bg-white/5 transition" title="Modifier mon mot de passe">
                             ⚙️
                         </button>
@@ -142,17 +152,17 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         <!-- =============================================================== -->
         <!-- ZONE PRINCIPALE DE CONTENU                                      -->
         <!-- =============================================================== -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div id="main-content-scrollable" class="flex-1 flex flex-col min-w-0 h-full max-h-screen overflow-y-auto">
 
             <!-- Barre supérieure (Header) -->
             <header class="sticky top-0 z-20 bg-night/80 backdrop-blur-md border-b border-night-border/80 px-4 sm:px-6 py-3.5 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 sm:space-x-3">
                     <button type="button" id="mobile-menu-toggle" class="md:hidden p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition" aria-label="Menu">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold <?= $isDev ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' ?>">
                         <span class="w-1.5 h-1.5 rounded-full <?= $isDev ? 'bg-amber-400' : 'bg-emerald-400' ?> mr-1.5 animate-pulse"></span>
-                        <?= $isDev ? 'Environnement DEV (Staging)' : 'Environnement PRODUCTION' ?>
+                        <span class="hidden sm:inline">Environnement </span><?= $isDev ? 'DEV (Staging)' : 'PRODUCTION' ?>
                     </span>
                     <span id="global-loading-indicator" class="hidden text-xs text-gold flex items-center space-x-1.5 font-medium animate-pulse">
                         <span>Actualisation...</span>
@@ -367,20 +377,49 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </select>
                     </div>
 
-                    <!-- Sous-onglets Stationnement -->
-                    <div class="border-b border-night-border flex space-x-4">
-                        <button type="button" onclick="document.getElementById('parking-subtab-general').classList.remove('hidden'); document.getElementById('parking-subtab-locations').classList.add('hidden'); this.classList.add('border-gold', 'text-gold'); this.nextElementSibling.classList.remove('border-gold', 'text-gold'); this.nextElementSibling.classList.add('text-gray-400');"
-                                class="py-2.5 px-3 border-b-2 border-gold text-gold font-bold text-xs uppercase tracking-wider transition">
-                            📋 Règles Générales & Voirie
-                        </button>
-                        <button type="button" onclick="document.getElementById('parking-subtab-locations').classList.remove('hidden'); document.getElementById('parking-subtab-general').classList.add('hidden'); this.classList.add('border-gold', 'text-gold'); this.previousElementSibling.classList.remove('border-gold', 'text-gold'); this.previousElementSibling.classList.add('text-gray-400');"
-                                class="py-2.5 px-3 border-b-2 border-transparent text-gray-400 hover:text-white font-bold text-xs uppercase tracking-wider transition">
-                            📍 Emplacements & Garages
-                        </button>
+                    <!-- Sous-onglets Stationnement (Navigation segmented controls claire et intuitive) -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-night-border/70">
+                        <div class="inline-flex p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner">
+                            <button type="button" id="parking-subtab-btn-general" onclick="AdminApp.switchParkingSubtab('general')"
+                                    class="parking-subtab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-gold text-white shadow-md shadow-gold/25"
+                                    title="Informations générales, consignes, voirie et conditions TCL">
+                                <span>📋</span>
+                                <span>Règles Générales & Voirie</span>
+                            </button>
+                            <button type="button" id="parking-subtab-btn-locations" onclick="AdminApp.switchParkingSubtab('locations')"
+                                    class="parking-subtab-btn px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center space-x-2"
+                                    title="Rues gratuites, dépose-minute, parkings couverts privés et P+R">
+                                <span>📍</span>
+                                <span>Emplacements & Garages</span>
+                                <span id="parking-subtab-locations-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-300 font-bold">0</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
+                                <span>➕</span>
+                                <span>Ajouter un emplacement</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- SOUS-ONGLET A : RÈGLES GÉNÉRALES -->
-                    <div id="parking-subtab-general" class="space-y-4">
+                    <!-- ÉTAT DE CHARGEMENT ÉLÉGANT (Affiché lors du changement d'hébergement) -->
+                    <div id="parking-loading-state" class="hidden rounded-2xl bg-night-card border border-gold/30 p-12 text-center space-y-4 shadow-xl">
+                        <div class="relative w-14 h-14 mx-auto">
+                            <div class="absolute inset-0 rounded-full border-2 border-gold/20"></div>
+                            <div class="absolute inset-0 rounded-full border-2 border-gold border-t-transparent animate-spin"></div>
+                            <div class="absolute inset-0 flex items-center justify-center text-xl">🅿️</div>
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="text-sm font-bold text-white tracking-wide">Chargement des données de stationnement...</h4>
+                            <p id="parking-loading-property-label" class="text-xs text-gray-400">Actualisation des règles et emplacements pour le logement sélectionné</p>
+                        </div>
+                    </div>
+
+                    <!-- CONTENEUR DES SOUS-ONGLETS -->
+                    <div id="parking-subtabs-wrapper" class="space-y-4">
+                        <!-- SOUS-ONGLET A : RÈGLES GÉNÉRALES -->
+                        <div id="parking-subtab-general" class="space-y-4">
                         <form id="parking-general-form" onsubmit="AdminApp.saveParkingGeneral(event)" class="rounded-2xl bg-night-card border border-night-border p-5 sm:p-6 space-y-5 shadow-lg">
                             
                             <!-- Bannière information IA & Traduction automatique -->
@@ -544,7 +583,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             <div class="py-8 text-center text-gray-400">Chargement des emplacements...</div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
                 <!-- ----------------------------------------------------------- -->
                 <!-- SECTION 5 : JOURNAL D'AUDIT (LOGS)                          -->
@@ -984,8 +1024,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 5. MODALE UTILISATEUR ADMINISTRATEUR -->
-    <div id="modal-user-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-user-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <h3 id="modal-user-title" class="text-base font-bold text-white">Ajouter un administrateur</h3>
                 <button type="button" onclick="AdminApp.closeUserModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1036,8 +1076,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 6. MODALE PROFIL (CHANGEMENT DE MOT DE PASSE) -->
-    <div id="modal-profile" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
-        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-profile" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <h3 class="text-base font-bold text-white">Mon Profil & Mot de passe</h3>
                 <button type="button" onclick="AdminApp.closeProfileModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
@@ -1101,8 +1141,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     </div>
 
     <!-- 9. MODALE CONFIGURATION INTELLIGENCE ARTIFICIELLE (IA) -->
-    <div id="modal-ai-settings" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
-        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative my-auto">
+    <div id="modal-ai-settings" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <div class="flex items-center space-x-2.5">
                     <span class="w-8 h-8 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-base">✨</span>
@@ -1199,6 +1239,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.3"></script>
+    <script src="assets/js/admin.js?v=1.4"></script>
 </body>
 </html>
