@@ -140,9 +140,26 @@ try {
             $data = $body['property'] ?? $_POST;
             $id = isset($data['id']) ? (int)$data['id'] : 0;
 
-            if (empty($data['name']) || empty($data['slug'])) {
+            $name = trim((string)($data['name'] ?? ''));
+            $slug = trim((string)($data['slug'] ?? ''));
+
+            if (empty($name)) {
                 http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => 'Le nom et le slug sont obligatoires.']);
+                echo json_encode(['ok' => false, 'error' => 'Le nom du logement est obligatoire.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            if (empty($slug)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Le slug unique du logement est obligatoire pour valider le formulaire.'], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/MediaUploader.php';
+            $data['slug'] = \Cdh\Portal\Admin\MediaUploader::sanitizeSlug($slug);
+            if (empty($data['slug'])) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Le format du slug est invalide (doit contenir des caractères alphanumériques ou tirets).'], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
@@ -150,16 +167,16 @@ try {
             $existing = $repo->findPropertyBySlug($data['slug']);
             if ($existing && (int)$existing['id'] !== $id) {
                 http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => "Le slug '{$data['slug']}' est déjà utilisé par un autre hébergement."]);
+                echo json_encode(['ok' => false, 'error' => "Le slug '{$data['slug']}' est déjà utilisé par un autre hébergement."], JSON_UNESCAPED_UNICODE);
                 exit;
             }
 
             if ($id > 0) {
                 $ok = $repo->updateProperty($id, $data);
-                echo json_encode(['ok' => $ok, 'id' => $id, 'message' => 'Hébergement mis à jour avec succès.']);
+                echo json_encode(['ok' => $ok, 'id' => $id, 'message' => 'Hébergement mis à jour avec succès.'], JSON_UNESCAPED_UNICODE);
             } else {
                 $newId = $repo->createProperty($data);
-                echo json_encode(['ok' => true, 'id' => $newId, 'message' => 'Hébergement créé avec succès.']);
+                echo json_encode(['ok' => true, 'id' => $newId, 'message' => 'Hébergement créé avec succès.'], JSON_UNESCAPED_UNICODE);
             }
             exit;
 

@@ -628,7 +628,10 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Slug URL unique *</label>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-gray-300">Slug URL unique *</label>
+                            <span class="text-[10px] text-gold font-mono">Dossier Cloudflare R2</span>
+                        </div>
                         <input type="text" id="property-slug" required oninput="AdminApp.onPropertySlugInput(this.value)" placeholder="bataille"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                     </div>
@@ -694,8 +697,9 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             <input type="file" id="property-guide-fr-file" accept="application/pdf,.pdf" class="hidden" onchange="AdminApp.handleGuideFileUpload(this, 'fr')">
                             <div class="flex items-center justify-center space-x-2 text-xs text-gray-300">
                                 <span class="text-base group-hover:scale-110 transition-transform">📤</span>
-                                <span><strong class="text-gold">Téléverser</strong> ou glisser le PDF (FR)</span>
+                                <span><strong class="text-gold">Choisir le PDF (FR)</strong> ou glisser le fichier</span>
                             </div>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Le téléversement s'effectue à l'enregistrement (guide-fr.pdf)</p>
                         </div>
 
                         <!-- Barre de progression FR -->
@@ -710,14 +714,14 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </div>
 
                         <!-- Carte aperçu FR -->
-                        <div id="preview-guide-fr" class="hidden items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                        <div id="preview-guide-fr" class="hidden items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all">
                             <div class="flex items-center space-x-2 min-w-0">
-                                <span class="text-emerald-400">✓</span>
+                                <span id="preview-badge-guide-fr" class="text-emerald-400 text-sm">✓</span>
                                 <span id="preview-filename-guide-fr" class="text-gray-200 font-mono truncate max-w-[200px]">guide-fr.pdf</span>
                             </div>
                             <div class="flex items-center space-x-2 flex-shrink-0">
-                                <a id="link-preview-guide-fr" href="#" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Voir ↗</a>
-                                <button type="button" onclick="AdminApp.clearUploadedMedia('guide', 'fr')" class="text-[11px] text-red-400 hover:text-red-300">Supprimer</button>
+                                <a id="link-preview-guide-fr" href="#" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded-lg bg-gold/20 text-gold hover:bg-gold/30 text-[11px] font-bold">Voir ↗</a>
+                                <button type="button" onclick="AdminApp.clearUploadedMedia('guide', 'fr')" class="px-2 py-0.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold">Changer</button>
                             </div>
                         </div>
 
@@ -751,8 +755,9 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             <input type="file" id="property-guide-en-file" accept="application/pdf,.pdf" class="hidden" onchange="AdminApp.handleGuideFileUpload(this, 'en')">
                             <div class="flex items-center justify-center space-x-2 text-xs text-gray-300">
                                 <span class="text-base group-hover:scale-110 transition-transform">📤</span>
-                                <span><strong class="text-gold">Téléverser</strong> ou glisser le PDF (EN)</span>
+                                <span><strong class="text-gold">Choisir le PDF (EN)</strong> ou glisser le fichier</span>
                             </div>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Le téléversement s'effectue à l'enregistrement (guide-en.pdf)</p>
                         </div>
 
                         <!-- Barre de progression EN -->
@@ -767,14 +772,14 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </div>
 
                         <!-- Carte aperçu EN -->
-                        <div id="preview-guide-en" class="hidden items-center justify-between p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
+                        <div id="preview-guide-en" class="hidden items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all">
                             <div class="flex items-center space-x-2 min-w-0">
-                                <span class="text-emerald-400">✓</span>
+                                <span id="preview-badge-guide-en" class="text-emerald-400 text-sm">✓</span>
                                 <span id="preview-filename-guide-en" class="text-gray-200 font-mono truncate max-w-[200px]">guide-en.pdf</span>
                             </div>
                             <div class="flex items-center space-x-2 flex-shrink-0">
-                                <a id="link-preview-guide-en" href="#" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Voir ↗</a>
-                                <button type="button" onclick="AdminApp.clearUploadedMedia('guide', 'en')" class="text-[11px] text-red-400 hover:text-red-300">Supprimer</button>
+                                <a id="link-preview-guide-en" href="#" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded-lg bg-gold/20 text-gold hover:bg-gold/30 text-[11px] font-bold">Voir ↗</a>
+                                <button type="button" onclick="AdminApp.clearUploadedMedia('guide', 'en')" class="px-2 py-0.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-[11px] font-semibold">Changer</button>
                             </div>
                         </div>
 
@@ -793,8 +798,10 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </div>
 
                 <div class="pt-4 border-t border-night-border flex justify-end space-x-2">
-                    <button type="button" onclick="AdminApp.closePropertyModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Annuler</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer</button>
+                    <button type="button" id="btn-cancel-property" onclick="AdminApp.closePropertyModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Annuler</button>
+                    <button type="submit" id="btn-save-property" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
+                        <span>Enregistrer</span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -1482,6 +1489,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=2.3"></script>
+    <script src="assets/js/admin.js?v=2.4"></script>
 </body>
 </html>

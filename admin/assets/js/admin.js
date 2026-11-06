@@ -21,7 +21,11 @@ const AdminApp = {
         activeTab: 'dashboard',
         isDev: false,
         pendingVideoFile: null,
-        pendingVideoObjectUrl: null
+        pendingVideoObjectUrl: null,
+        pendingGuideFrFile: null,
+        pendingGuideFrObjectUrl: null,
+        pendingGuideEnFile: null,
+        pendingGuideEnObjectUrl: null
     },
 
     // --------------------------------------------------------------------------
@@ -524,6 +528,38 @@ const AdminApp = {
         const form = document.getElementById('property-form');
         if (!modal || !form) return;
 
+        // Réinitialisation des fichiers guides en attente (FR et EN)
+        if (this.state.pendingGuideFrObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingGuideFrObjectUrl); } catch(e) {}
+            this.state.pendingGuideFrObjectUrl = null;
+        }
+        this.state.pendingGuideFrFile = null;
+
+        if (this.state.pendingGuideEnObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingGuideEnObjectUrl); } catch(e) {}
+            this.state.pendingGuideEnObjectUrl = null;
+        }
+        this.state.pendingGuideEnFile = null;
+
+        const fiFr = document.getElementById('property-guide-fr-file');
+        if (fiFr) fiFr.value = '';
+        const fiEn = document.getElementById('property-guide-en-file');
+        if (fiEn) fiEn.value = '';
+
+        const progFr = document.getElementById('progress-guide-fr');
+        if (progFr) progFr.classList.add('hidden');
+        const progEn = document.getElementById('progress-guide-en');
+        if (progEn) progEn.classList.add('hidden');
+
+        const saveBtn = document.getElementById('btn-save-property');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<span>Enregistrer</span>';
+            saveBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
+        const cancelBtn = document.getElementById('btn-cancel-property');
+        if (cancelBtn) cancelBtn.disabled = false;
+
         form.reset();
         document.getElementById('property-id').value = id;
 
@@ -547,14 +583,26 @@ const AdminApp = {
         }
 
         // Met à jour l'affichage des prévisualisations et dropzones des guides
-        this.onGuideUrlInput('fr');
-        this.onGuideUrlInput('en');
+        this.updateGuideStagedPreview('fr');
+        this.updateGuideStagedPreview('en');
         this.updateGuideR2Previews();
 
         modal.classList.remove('hidden');
     },
 
     closePropertyModal() {
+        if (this.state.pendingGuideFrObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingGuideFrObjectUrl); } catch(e) {}
+            this.state.pendingGuideFrObjectUrl = null;
+        }
+        this.state.pendingGuideFrFile = null;
+
+        if (this.state.pendingGuideEnObjectUrl) {
+            try { URL.revokeObjectURL(this.state.pendingGuideEnObjectUrl); } catch(e) {}
+            this.state.pendingGuideEnObjectUrl = null;
+        }
+        this.state.pendingGuideEnFile = null;
+
         const modal = document.getElementById('modal-property-form');
         if (modal) modal.classList.add('hidden');
     },
@@ -562,8 +610,7 @@ const AdminApp = {
     onPropertyNameInput(val) {
         const id = document.getElementById('property-id').value;
         const slugInput = document.getElementById('property-slug');
-        // Génère le slug automatiquement lors de la création
-        if (id == 0 && slugInput) {
+        if (id == 0 && slugInput && !slugInput.value.trim()) {
             slugInput.value = this.slugify(val);
         }
         this.updateGuideR2Previews();
@@ -585,11 +632,11 @@ const AdminApp = {
         const previewEl = document.getElementById('property-r2-dest-preview');
         if (previewEl) {
             if (slug) {
-                previewEl.textContent = `carredhotes-guides/${slug}/guide-fr.pdf`;
+                previewEl.textContent = `carredhotes-guides/${slug}/guide-fr.pdf (et guide-en.pdf)`;
                 previewEl.className = 'font-mono text-gold font-bold truncate';
             } else {
-                previewEl.textContent = 'carredhotes-guides/[slug-logement]/guide-fr.pdf (saisir le nom d\'abord)';
-                previewEl.className = 'font-mono text-gray-400 font-semibold truncate italic';
+                previewEl.textContent = 'carredhotes-guides/[slug-logement]/guide-fr.pdf (champ slug obligatoire)';
+                previewEl.className = 'font-mono text-amber-400 font-semibold truncate italic';
             }
         }
     },
@@ -597,26 +644,168 @@ const AdminApp = {
     async saveProperty(e) {
         e.preventDefault();
         const id = parseInt(document.getElementById('property-id').value, 10);
+        const name = (document.getElementById('property-name').value || '').trim();
+        let slug = (document.getElementById('property-slug').value || '').trim();
+
+        // 1. Validation du nom
+        if (!name) {
+            this.showToast("Le nom du logement est obligatoire.", "error");
+            document.getElementById('property-name')?.focus();
+            return;
+        }
+
+        // 2. Validation impérative du Slug (strictement obligatoire pour Cloudflare R2)
+        if (!slug) {
+            this.showToast("Le slug unique est obligatoire pour valider le formulaire et nommer le dossier sur Cloudflare R2.", "error");
+            const slugInput = document.getElementById('property-slug');
+            if (slugInput) {
+                slugInput.focus();
+                slugInput.classList.add('border-red-500', 'ring-2', 'ring-red-500/50');
+                setTimeout(() => slugInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/50'), 2500);
+            }
+            return;
+        }
+
+        slug = this.slugify(slug);
+        const slugInput = document.getElementById('property-slug');
+        if (slugInput) slugInput.value = slug;
+
+        let guideFrUrl = (document.getElementById('property-guide-fr').value || '').trim();
+        let guideEnUrl = (document.getElementById('property-guide-en').value || '').trim();
+
+        const saveBtn = document.getElementById('btn-save-property');
+        const cancelBtn = document.getElementById('btn-cancel-property');
+        const origBtnHtml = saveBtn ? saveBtn.innerHTML : '<span>Enregistrer</span>';
+
+        const setBusyState = (isBusy, label) => {
+            if (saveBtn) {
+                saveBtn.disabled = isBusy;
+                if (isBusy) {
+                    saveBtn.innerHTML = `<span>⏳</span> <span>${label}</span>`;
+                    saveBtn.classList.add('opacity-80', 'cursor-not-allowed');
+                } else {
+                    saveBtn.innerHTML = origBtnHtml;
+                    saveBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+                }
+            }
+            if (cancelBtn) cancelBtn.disabled = isBusy;
+        };
+
+        // 3. Téléversement Cloudflare R2 du guide FR s'il est en attente
+        if (this.state.pendingGuideFrFile) {
+            const file = this.state.pendingGuideFrFile;
+            setBusyState(true, "Envoi du guide FR vers Cloudflare R2...");
+
+            const progressEl = document.getElementById('progress-guide-fr');
+            const barEl = document.getElementById('progress-bar-guide-fr');
+            const percentEl = document.getElementById('progress-percent-guide-fr');
+            const textEl = document.getElementById('progress-text-guide-fr');
+
+            if (progressEl) progressEl.classList.remove('hidden');
+            if (barEl) barEl.style.width = '0%';
+            if (percentEl) percentEl.textContent = '0%';
+            if (textEl) textEl.textContent = `Téléversement de guide-fr.pdf vers ${slug}/...`;
+
+            try {
+                const res = await this.uploadMediaFile(file, 'guide', {
+                    property_slug: slug,
+                    lang: 'fr'
+                }, (percent, loaded, total) => {
+                    if (barEl) barEl.style.width = `${percent}%`;
+                    if (percentEl) percentEl.textContent = `${percent}%`;
+                    if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
+                });
+
+                guideFrUrl = res.url;
+                const urlInput = document.getElementById('property-guide-fr');
+                if (urlInput) urlInput.value = guideFrUrl;
+
+                if (this.state.pendingGuideFrObjectUrl) {
+                    try { URL.revokeObjectURL(this.state.pendingGuideFrObjectUrl); } catch(e) {}
+                    this.state.pendingGuideFrObjectUrl = null;
+                }
+                this.state.pendingGuideFrFile = null;
+
+            } catch (errFr) {
+                setBusyState(false);
+                if (progressEl) progressEl.classList.add('hidden');
+                this.showToast(`Échec du téléversement du guide FR sur Cloudflare R2 : ${errFr.message}. Hébergement non enregistré.`, "error");
+                return; // Bloque l'enregistrement en BDD
+            } finally {
+                if (progressEl) progressEl.classList.add('hidden');
+            }
+        }
+
+        // 4. Téléversement Cloudflare R2 du guide EN s'il est en attente
+        if (this.state.pendingGuideEnFile) {
+            const file = this.state.pendingGuideEnFile;
+            setBusyState(true, "Envoi du guide EN vers Cloudflare R2...");
+
+            const progressEl = document.getElementById('progress-guide-en');
+            const barEl = document.getElementById('progress-bar-guide-en');
+            const percentEl = document.getElementById('progress-percent-guide-en');
+            const textEl = document.getElementById('progress-text-guide-en');
+
+            if (progressEl) progressEl.classList.remove('hidden');
+            if (barEl) barEl.style.width = '0%';
+            if (percentEl) percentEl.textContent = '0%';
+            if (textEl) textEl.textContent = `Téléversement de guide-en.pdf vers ${slug}/...`;
+
+            try {
+                const res = await this.uploadMediaFile(file, 'guide', {
+                    property_slug: slug,
+                    lang: 'en'
+                }, (percent, loaded, total) => {
+                    if (barEl) barEl.style.width = `${percent}%`;
+                    if (percentEl) percentEl.textContent = `${percent}%`;
+                    if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
+                });
+
+                guideEnUrl = res.url;
+                const urlInput = document.getElementById('property-guide-en');
+                if (urlInput) urlInput.value = guideEnUrl;
+
+                if (this.state.pendingGuideEnObjectUrl) {
+                    try { URL.revokeObjectURL(this.state.pendingGuideEnObjectUrl); } catch(e) {}
+                    this.state.pendingGuideEnObjectUrl = null;
+                }
+                this.state.pendingGuideEnFile = null;
+
+            } catch (errEn) {
+                setBusyState(false);
+                if (progressEl) progressEl.classList.add('hidden');
+                this.showToast(`Échec du téléversement du guide EN sur Cloudflare R2 : ${errEn.message}. Hébergement non enregistré.`, "error");
+                return; // Bloque l'enregistrement en BDD
+            } finally {
+                if (progressEl) progressEl.classList.add('hidden');
+            }
+        }
+
+        // 5. Enregistrement en base de données (strictement synchronisé avec Cloudflare R2)
+        setBusyState(true, "Enregistrement en base...");
+
         const data = {
             id,
-            name: document.getElementById('property-name').value.trim(),
-            slug: document.getElementById('property-slug').value.trim(),
-            address: document.getElementById('property-address').value.trim(),
-            wifi_ssid: document.getElementById('property-wifi-ssid').value.trim(),
-            wifi_password: document.getElementById('property-wifi-password').value.trim(),
-            guide_fr_url: document.getElementById('property-guide-fr').value.trim(),
-            guide_en_url: document.getElementById('property-guide-en').value.trim(),
+            name: name,
+            slug: slug,
+            address: (document.getElementById('property-address').value || '').trim(),
+            wifi_ssid: (document.getElementById('property-wifi-ssid').value || '').trim(),
+            wifi_password: (document.getElementById('property-wifi-password').value || '').trim(),
+            guide_fr_url: guideFrUrl,
+            guide_en_url: guideEnUrl,
             active: document.getElementById('property-active').checked ? 1 : 0
         };
 
         try {
             const res = await this.apiRequest('api/index.php?action=property_save', 'POST', { property: data });
-            this.showToast(res.message || 'Hébergement enregistré avec succès.');
+            this.showToast(res.message || 'Hébergement enregistré et connecté avec succès.');
             this.closePropertyModal();
             await this.loadInitialData();
             this.renderProperties();
         } catch (err) {
-            this.showToast(err.message, 'error');
+            this.showToast(`Erreur d'enregistrement : ${err.message}`, 'error');
+        } finally {
+            setBusyState(false);
         }
     },
 
@@ -2886,7 +3075,7 @@ const AdminApp = {
         if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             const file = e.dataTransfer.files[0];
             if (category === 'guide') {
-                this.uploadGuideFile(file, lang || 'fr');
+                this.stageGuideFile(file, lang || 'fr');
             } else if (category === 'video') {
                 this.stageVideoFile(file);
             }
@@ -2901,107 +3090,128 @@ const AdminApp = {
     handleGuideFileUpload(inputEl, lang) {
         if (!inputEl || !inputEl.files || inputEl.files.length === 0) return;
         const file = inputEl.files[0];
-        this.uploadGuideFile(file, lang);
+        this.stageGuideFile(file, lang);
     },
 
-    async uploadGuideFile(file, lang) {
+    stageGuideFile(file, lang) {
         if (!file) return;
         if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
             this.showToast("Seuls les livrets au format PDF (.pdf) sont acceptés.", "error");
+            const fileInput = document.getElementById(`property-guide-${lang}-file`);
+            if (fileInput) fileInput.value = '';
             return;
         }
         if (file.size > 52428800) {
             this.showToast("Le livret PDF ne doit pas dépasser 50 Mo.", "error");
+            const fileInput = document.getElementById(`property-guide-${lang}-file`);
+            if (fileInput) fileInput.value = '';
             return;
         }
 
-        // Vérification impérative du slug logement avant l'upload
-        let slug = (document.getElementById('property-slug')?.value || '').trim();
-        if (!slug) {
-            const nameVal = (document.getElementById('property-name')?.value || '').trim();
-            if (nameVal) {
-                slug = this.slugify(nameVal);
-                const slugInput = document.getElementById('property-slug');
-                if (slugInput) slugInput.value = slug;
+        const upperLang = (lang === 'en' ? 'En' : 'Fr');
+
+        // Nettoyage de l'ancien object URL
+        if (this.state[`pendingGuide${upperLang}ObjectUrl`]) {
+            try { URL.revokeObjectURL(this.state[`pendingGuide${upperLang}ObjectUrl`]); } catch(e) {}
+            this.state[`pendingGuide${upperLang}ObjectUrl`] = null;
+        }
+
+        this.state[`pendingGuide${upperLang}File`] = file;
+        try {
+            this.state[`pendingGuide${upperLang}ObjectUrl`] = URL.createObjectURL(file);
+        } catch(e) {
+            this.state[`pendingGuide${upperLang}ObjectUrl`] = null;
+        }
+
+        // Auto-suggérer le nom ou slug si vides
+        const slugInput = document.getElementById('property-slug');
+        const nameInput = document.getElementById('property-name');
+        if (nameInput && !nameInput.value.trim() && slugInput && !slugInput.value.trim()) {
+            const raw = file.name.replace(/\.[^/.]+$/, "").replace(/guide[-_]?/i, "").trim();
+            if (raw) {
+                slugInput.value = this.slugify(raw);
                 this.updateGuideR2Previews();
             }
         }
 
-        if (!slug) {
-            this.showToast("Veuillez d'abord renseigner le nom ou le slug du logement afin de créer son dossier sur Cloudflare R2.", "warning");
-            const nameInput = document.getElementById('property-name');
-            if (nameInput) {
-                nameInput.focus();
-                nameInput.classList.add('border-gold', 'ring-2', 'ring-gold/50');
-                setTimeout(() => nameInput.classList.remove('border-gold', 'ring-2', 'ring-gold/50'), 2500);
-            }
-            const fileInput = document.getElementById(`property-guide-${lang}-file`);
-            if (fileInput) fileInput.value = '';
-            return;
-        }
+        this.updateGuideStagedPreview(lang);
+        this.updateGuideR2Previews();
 
-        const progressEl = document.getElementById(`progress-guide-${lang}`);
-        const barEl = document.getElementById(`progress-bar-guide-${lang}`);
-        const percentEl = document.getElementById(`progress-percent-guide-${lang}`);
-        const textEl = document.getElementById(`progress-text-guide-${lang}`);
+        this.showToast(`Guide PDF (${lang.toUpperCase()}) sélectionné. Il sera téléversé à la validation du formulaire.`, "info");
+    },
+
+    uploadGuideFile(file, lang) {
+        // Alias de rétrocompatibilité
+        this.stageGuideFile(file, lang);
+    },
+
+    updateGuideStagedPreview(lang) {
+        const upperLang = (lang === 'en' ? 'En' : 'Fr');
+        const pendingFile = this.state[`pendingGuide${upperLang}File`];
+        const pendingUrl = this.state[`pendingGuide${upperLang}ObjectUrl`];
+
         const dropzoneEl = document.getElementById(`dropzone-guide-${lang}`);
         const previewEl = document.getElementById(`preview-guide-${lang}`);
         const previewNameEl = document.getElementById(`preview-filename-guide-${lang}`);
         const previewLinkEl = document.getElementById(`link-preview-guide-${lang}`);
-        const urlInput = document.getElementById(`property-guide-${lang}`);
+        const badgeEl = document.getElementById(`preview-badge-guide-${lang}`);
 
-        if (progressEl) progressEl.classList.remove('hidden');
-        if (barEl) barEl.style.width = '0%';
-        if (percentEl) percentEl.textContent = '0%';
-        if (textEl) textEl.textContent = `Téléversement de guide-${lang}.pdf vers ${slug}/...`;
-
-        try {
-            const res = await this.uploadMediaFile(file, 'guide', {
-                property_slug: slug,
-                lang: lang
-            }, (percent, loaded, total) => {
-                if (barEl) barEl.style.width = `${percent}%`;
-                if (percentEl) percentEl.textContent = `${percent}%`;
-                if (textEl) textEl.textContent = `${this.formatBytes(loaded)} / ${this.formatBytes(total)} (${percent}%)`;
-            });
-
-            if (urlInput) {
-                urlInput.value = res.url;
+        if (pendingFile) {
+            if (previewEl) {
+                previewEl.className = 'flex items-center justify-between p-2.5 rounded-xl bg-gold/10 border border-gold/40 text-xs transition-all';
+                previewEl.classList.remove('hidden');
             }
-
-            if (previewNameEl) previewNameEl.textContent = `${res.filename} (${res.size_formatted})`;
-            if (previewLinkEl) previewLinkEl.href = res.url;
-            if (previewEl) previewEl.classList.remove('hidden');
             if (dropzoneEl) dropzoneEl.classList.add('hidden');
-
-            this.showToast(`Guide PDF (${lang.toUpperCase()}) téléversé dans ${slug}/ (${res.storage_label}) !`, 'success');
-        } catch (err) {
-            this.showToast(`Échec du téléversement : ${err.message}`, 'error');
-        } finally {
-            if (progressEl) progressEl.classList.add('hidden');
-            const fileInput = document.getElementById(`property-guide-${lang}-file`);
-            if (fileInput) fileInput.value = '';
+            if (badgeEl) {
+                badgeEl.textContent = '📄';
+                badgeEl.className = 'text-gold text-sm';
+            }
+            if (previewNameEl) {
+                previewNameEl.textContent = `${pendingFile.name} (${this.formatBytes(pendingFile.size)}) • En attente d'enregistrement`;
+                previewNameEl.className = 'text-white font-mono text-xs font-semibold truncate max-w-[200px]';
+            }
+            if (previewLinkEl) {
+                previewLinkEl.href = pendingUrl || '#';
+                previewLinkEl.textContent = 'Voir ↗';
+                previewLinkEl.classList.remove('hidden');
+            }
+        } else {
+            const urlInput = document.getElementById(`property-guide-${lang}`);
+            const url = urlInput ? urlInput.value.trim() : '';
+            if (url) {
+                if (previewEl) {
+                    previewEl.className = 'flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs transition-all';
+                    previewEl.classList.remove('hidden');
+                }
+                if (dropzoneEl) dropzoneEl.classList.add('hidden');
+                if (badgeEl) {
+                    badgeEl.textContent = '✓';
+                    badgeEl.className = 'text-emerald-400 text-sm';
+                }
+                if (previewNameEl) {
+                    const fname = url.split('/').pop().split('?')[0] || `guide-${lang}.pdf`;
+                    previewNameEl.textContent = `${fname} • En ligne`;
+                    previewNameEl.className = 'text-white font-mono text-xs font-semibold truncate max-w-[200px]';
+                }
+                if (previewLinkEl) {
+                    previewLinkEl.href = url;
+                    previewLinkEl.textContent = 'Voir ↗';
+                    previewLinkEl.classList.remove('hidden');
+                }
+            } else {
+                if (previewEl) previewEl.classList.add('hidden');
+                if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+            }
         }
     },
 
     onGuideUrlInput(lang) {
-        const urlInput = document.getElementById(`property-guide-${lang}`);
-        const url = urlInput ? urlInput.value.trim() : '';
-        const previewEl = document.getElementById(`preview-guide-${lang}`);
-        const previewNameEl = document.getElementById(`preview-filename-guide-${lang}`);
-        const previewLinkEl = document.getElementById(`link-preview-guide-${lang}`);
-        const dropzoneEl = document.getElementById(`dropzone-guide-${lang}`);
-
-        if (url) {
-            const fname = url.split('/').pop().split('?')[0] || `guide-${lang}.pdf`;
-            if (previewNameEl) previewNameEl.textContent = fname;
-            if (previewLinkEl) previewLinkEl.href = url;
-            if (previewEl) previewEl.classList.remove('hidden');
-            if (dropzoneEl) dropzoneEl.classList.add('hidden');
-        } else {
-            if (previewEl) previewEl.classList.add('hidden');
-            if (dropzoneEl) dropzoneEl.classList.remove('hidden');
+        const upperLang = (lang === 'en' ? 'En' : 'Fr');
+        if (this.state[`pendingGuide${upperLang}File`]) {
+            this.updateGuideStagedPreview(lang);
+            return;
         }
+        this.updateGuideStagedPreview(lang);
     },
 
     handleVideoFileUpload(inputEl) {
@@ -3164,6 +3374,13 @@ const AdminApp = {
 
     clearUploadedMedia(category, lang = null) {
         if (category === 'guide') {
+            const upperLang = (lang === 'en' ? 'En' : 'Fr');
+            if (this.state[`pendingGuide${upperLang}ObjectUrl`]) {
+                try { URL.revokeObjectURL(this.state[`pendingGuide${upperLang}ObjectUrl`]); } catch(e) {}
+                this.state[`pendingGuide${upperLang}ObjectUrl`] = null;
+            }
+            this.state[`pendingGuide${upperLang}File`] = null;
+
             const urlInput = document.getElementById(`property-guide-${lang}`);
             if (urlInput) urlInput.value = '';
             const previewEl = document.getElementById(`preview-guide-${lang}`);
@@ -3172,6 +3389,7 @@ const AdminApp = {
             if (dropzoneEl) dropzoneEl.classList.remove('hidden');
             const fileInput = document.getElementById(`property-guide-${lang}-file`);
             if (fileInput) fileInput.value = '';
+            this.updateGuideR2Previews();
         } else if (category === 'video') {
             if (this.state.pendingVideoObjectUrl) {
                 try { URL.revokeObjectURL(this.state.pendingVideoObjectUrl); } catch(e) {}
