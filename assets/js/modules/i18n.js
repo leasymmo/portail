@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.6';
-import { Utils } from './utils.js?v=10.6';
+import { AppState } from './state.js?v=10.7';
+import { Utils } from './utils.js?v=10.7';
 
 export const I18n = {
     currentLang: 'fr',
@@ -54,7 +54,7 @@ export const I18n = {
             parking_sec_tcl_desc: "Gratuits avec un titre de transport TCL",
             parking_easypark_btn: "Gérer avec EasyPark",
             parking_book_btn: "Réserver",
-            parking_tcl_btn: "Application & Lignes TCL",
+            parking_tcl_btn: "Site TCL",
             parking_maps_btn: "Itinéraire GPS",
             parking_max_height: "Hauteur max",
             parking_capacity: "Capacité",
@@ -192,7 +192,7 @@ export const I18n = {
             parking_sec_tcl_desc: "Free with a validated transit ticket",
             parking_easypark_btn: "Manage on EasyPark",
             parking_book_btn: "Book a spot",
-            parking_tcl_btn: "TCL Transit App & Lines",
+            parking_tcl_btn: "TCL Website",
             parking_maps_btn: "GPS Directions",
             parking_max_height: "Max clearance",
             parking_capacity: "Capacity",

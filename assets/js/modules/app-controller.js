@@ -5,17 +5,17 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.6';
-import { Utils } from './utils.js?v=10.6';
-import { I18n } from './i18n.js?v=10.6';
-import { Router } from './router.js?v=10.6';
-import { ApiService } from './api.js?v=10.6';
-import { PropertyRenderer, ListRenderer } from './renderer.js?v=10.6';
-import { ModalManager } from './modals.js?v=10.6';
-import { ScrollManager } from './scroll.js?v=10.6';
-import { PdfViewer } from './pdf-viewer.js?v=10.6';
-import { SheetGestureController, TabGestureController } from './gestures.js?v=10.6';
-import { PwaManager } from './pwa.js?v=10.6';
+import { AppState } from './state.js?v=10.7';
+import { Utils } from './utils.js?v=10.7';
+import { I18n } from './i18n.js?v=10.7';
+import { Router } from './router.js?v=10.7';
+import { ApiService } from './api.js?v=10.7';
+import { PropertyRenderer, ListRenderer } from './renderer.js?v=10.7';
+import { ModalManager } from './modals.js?v=10.7';
+import { ScrollManager } from './scroll.js?v=10.7';
+import { PdfViewer } from './pdf-viewer.js?v=10.7';
+import { SheetGestureController, TabGestureController } from './gestures.js?v=10.7';
+import { PwaManager } from './pwa.js?v=10.7';
 
 export const AppController = {
     async load() {
@@ -66,6 +66,8 @@ export const AppController = {
 
             if (route.section === 'reservation') {
                 ModalManager.openBooking(false);
+            } else if (route.section === 'parking') {
+                ModalManager.openParking(false);
             }
         } catch (err) {
             this.hideAllViews();

@@ -33,6 +33,8 @@ export const Router = {
 
         if (part1 === 'reservation') {
             section = 'reservation';
+        } else if (part1 === 'parking' || part1 === 'stationnement') {
+            section = 'parking';
         } else if (part1 === 'videos' || part1 === 'tutos') {
             section = 'videos';
             subSection = part2;
@@ -61,6 +63,8 @@ export const Router = {
                 if (subSection) newPath += '/guides/' + subSection;
             } else if (section === 'reservation') {
                 newPath += '/reservation';
+            } else if (section === 'parking') {
+                newPath += '/parking';
             }
         } else if (section === 'reservation') {
             newPath += 'reservation';

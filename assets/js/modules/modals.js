@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.6';
-import { Utils } from './utils.js?v=10.6';
-import { I18n } from './i18n.js?v=10.6';
-import { ScrollManager } from './scroll.js?v=10.6';
-import { Router } from './router.js?v=10.6';
-import { PdfViewer } from './pdf-viewer.js?v=10.6';
+import { AppState } from './state.js?v=10.7';
+import { Utils } from './utils.js?v=10.7';
+import { I18n } from './i18n.js?v=10.7';
+import { ScrollManager } from './scroll.js?v=10.7';
+import { Router } from './router.js?v=10.7';
+import { PdfViewer } from './pdf-viewer.js?v=10.7';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -674,13 +674,14 @@ export const ModalManager = {
     },
 
     // --- MODALE STATIONNEMENT & PARKINGS ---
-    openParking() {
+    openParking(updateUrl = true) {
         if (!AppState.currentProperty || !AppState.currentProperty.parking) return;
         const modal = document.getElementById('modal-parking');
         if (!modal) return;
 
+        // Réinitialise tout style restant d'un glissement gestuel
         modal.classList.remove('is-closing');
-        const sheet = modal.querySelector('.modal-sheet-compact, .modal-sheet');
+        const sheet = modal.querySelector('.modal-sheet');
         if (sheet) {
             sheet.style.transform = '';
             sheet.style.transition = '';
@@ -688,9 +689,11 @@ export const ModalManager = {
         modal.style.opacity = '';
         modal.style.backgroundColor = '';
 
+        // Étape 1 : active la modale dans le DOM (display: flex) à sa position fermée translateY(100%)
         modal.classList.add('is-active');
-        void modal.offsetHeight;
+        void modal.offsetHeight; // Force le calcul du rendu initial
 
+        // Étape 2 : déclenche l'animation d'ouverture fluide (montée depuis le bas)
         requestAnimationFrame(() => {
             modal.classList.add('open');
             modal.classList.remove('is-active');
@@ -699,6 +702,14 @@ export const ModalManager = {
 
         AppState.isParkingModalOpen = true;
         ScrollManager.lock();
+
+        // Réinitialise le défilement du conteneur en haut de page
+        const bodyEl = document.getElementById('parking-modal-body');
+        if (bodyEl) bodyEl.scrollTop = 0;
+
+        if (updateUrl) {
+            Router.setUrl(AppState.currentSlug, 'parking');
+        }
     },
 
     closeParking(immediate = false) {
@@ -711,25 +722,29 @@ export const ModalManager = {
         if (immediate || !modal.classList.contains('open')) {
             modal.classList.remove('open', 'is-active', 'is-closing');
             modal.setAttribute('aria-hidden', 'true');
-            return;
-        }
-
-        modal.classList.add('is-closing');
-        const sheet = modal.querySelector('.modal-sheet-compact, .modal-sheet');
-        if (sheet) {
-            sheet.style.transform = 'translateY(100%)';
-        }
-        modal.style.opacity = '0';
-
-        setTimeout(() => {
-            modal.classList.remove('open', 'is-active', 'is-closing');
-            modal.setAttribute('aria-hidden', 'true');
+            const sheet = modal.querySelector('.modal-sheet');
             if (sheet) {
                 sheet.style.transform = '';
                 sheet.style.transition = '';
             }
-            modal.style.opacity = '';
-        }, 340);
+            Router.setUrl(AppState.currentSlug, AppState.currentActiveTab || 'guides');
+            return;
+        }
+
+        // Animation de fermeture fluide : descente progressive jusqu'en bas
+        modal.classList.remove('open');
+        modal.classList.add('is-closing');
+        modal.setAttribute('aria-hidden', 'true');
+
+        setTimeout(() => {
+            modal.classList.remove('is-closing', 'is-active');
+            const sheet = modal.querySelector('.modal-sheet');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            Router.setUrl(AppState.currentSlug, AppState.currentActiveTab || 'guides');
+        }, 360);
     }
 };
 
