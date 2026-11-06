@@ -99,6 +99,16 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <span class="text-base">👥</span>
                         <span>Administrateurs</span>
                     </button>
+
+                    <div class="pt-2 border-t border-night-border/50 my-1"></div>
+
+                    <button type="button" onclick="AdminApp.openAiSettingsModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold border border-transparent text-gray-300 hover:text-white hover:bg-gold/10 hover:border-gold/30 transition group">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-base group-hover:scale-110 transition-transform">✨</span>
+                            <span class="text-gold-light group-hover:text-gold font-bold">Traduction IA</span>
+                        </div>
+                        <span id="nav-ai-provider-badge" class="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded-md bg-gold/15 text-gold border border-gold/30">Gemini</span>
+                    </button>
                 </nav>
             </div>
 
@@ -150,7 +160,11 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </div>
 
                 <div class="flex items-center space-x-2.5">
-                    <a href="../" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-gold/10 hover:bg-gold text-gold hover:text-white border border-gold/30 text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                    <button type="button" onclick="AdminApp.openAiSettingsModal()" class="px-3 py-1.5 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm" title="Configurer l'intelligence artificielle pour les traductions">
+                        <span>✨</span>
+                        <span class="hidden sm:inline">Traduction IA</span>
+                    </button>
+                    <a href="../" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-night-border text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
                         <span>👁️</span>
                         <span class="hidden sm:inline">Portail Voyageurs</span>
                     </a>
@@ -368,72 +382,54 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <!-- SOUS-ONGLET A : RÈGLES GÉNÉRALES -->
                     <div id="parking-subtab-general" class="space-y-4">
                         <form id="parking-general-form" onsubmit="AdminApp.saveParkingGeneral(event)" class="rounded-2xl bg-night-card border border-night-border p-5 sm:p-6 space-y-5 shadow-lg">
-                            <div class="border-b border-night-border/70 pb-3">
-                                <h3 class="text-sm font-bold text-white uppercase tracking-wider">Consignes générales du logement</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">Ces informations apparaissent en haut de la modale de stationnement.</p>
+                            
+                            <!-- Bannière information IA & Traduction automatique -->
+                            <div class="bg-gradient-to-r from-gold/15 via-gold/5 to-transparent border border-gold/30 rounded-2xl p-4 flex items-start gap-3.5 shadow-sm">
+                                <span class="p-2 rounded-xl bg-gold/20 text-gold text-lg flex-shrink-0">✨</span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center justify-between flex-wrap gap-2">
+                                        <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                                            <span>Traduction bilingue automatique par IA</span>
+                                            <span id="parking-general-ai-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/25 text-gold-light border border-gold/40 normal-case font-semibold">Gemini</span>
+                                        </h4>
+                                        <button type="button" onclick="AdminApp.openAiSettingsModal()" class="text-[11px] text-gold hover:text-gold-light underline font-medium">Paramètres IA ⚙️</button>
+                                    </div>
+                                    <p class="text-xs text-gray-300 mt-1 leading-relaxed">
+                                        Saisissez uniquement vos consignes en <strong class="text-white">français</strong> ci-dessous. À chaque enregistrement, l'intelligence artificielle traduit et synchronise automatiquement toutes les versions en <strong class="text-white">anglais</strong> pour vos voyageurs internationaux.
+                                    </p>
+                                </div>
                             </div>
 
-                            <!-- Introduction bilingue -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Introduction (Français)</label>
-                                    <textarea id="parking-intro-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Les meilleures solutions pour vous garer sereinement..."></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Introduction (Anglais)</label>
-                                    <textarea id="parking-intro-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="The best parking options around..."></textarea>
-                                </div>
+                            <!-- Introduction -->
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Message d'accueil & Introduction</label>
+                                <textarea id="parking-intro-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Les meilleures solutions pour vous garer sereinement..."></textarea>
                             </div>
 
                             <!-- Bannière alerte impérative (Alerte rouge) -->
-                            <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-3">
+                            <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-2">
                                 <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs">
                                     <span>⚠️</span>
-                                    <span>Règle impérative / Alerte rouge (Optionnel)</span>
+                                    <span>Règle d'or impérative / Alerte (Optionnel)</span>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Alerte (Français)</label>
-                                        <textarea id="parking-rule-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: RÈGLE STRICTE : Stationnement formellement INTERDIT dans la cour..."></textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Alerte (Anglais)</label>
-                                        <textarea id="parking-rule-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: STRICT RULE: Parking strictly PROHIBITED inside courtyard..."></textarea>
-                                    </div>
-                                </div>
+                                <textarea id="parking-rule-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: RÈGLE STRICTE : Stationnement formellement INTERDIT dans la cour..."></textarea>
                             </div>
 
                             <!-- Notes voirie payante & Horaires -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Notes places gratuites (FR)</label>
-                                    <input type="text" id="parking-free-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Notes places gratuites (EN)</label>
-                                    <input type="text" id="parking-free-notes-en" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Astuces & notes sur les places gratuites</label>
+                                <input type="text" id="parking-free-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Rues non violettes gratuites sur EasyPark...">
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Périmètre voirie payante (FR)</label>
-                                    <textarea id="parking-street-info-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Périmètre voirie payante (EN)</label>
-                                    <textarea id="parking-street-info-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                                </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Périmètre de voirie payante</label>
+                                <textarea id="parking-street-info-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Stationnement payant à Villeurbanne dans l'ensemble du quartier..."></textarea>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires payants (FR)</label>
-                                    <input type="text" id="parking-street-sched-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires payants (EN)</label>
-                                    <input type="text" id="parking-street-sched-en" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires payants voirie</label>
+                                    <input type="text" id="parking-street-sched-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Lun-Sam : 9h-19h (Gratuit nuit, dimanche et tout le mois d'août)">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-300 mb-1">Application mobile recommandée</label>
@@ -441,44 +437,56 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Grille tarifaire voirie (FR)</label>
-                                    <textarea id="parking-street-rates-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Grille tarifaire voirie (EN)</label>
-                                    <textarea id="parking-street-rates-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                                </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Grille tarifaire voirie</label>
+                                <textarea id="parking-street-rates-fr" rows="3" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold" placeholder="• Citadines & Électriques : 1 €/h&#10;• Standards : 2 €/h&#10;• Gros modèles & SUV : 3,50 €/h"></textarea>
                             </div>
 
                             <!-- Conditions TCL -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Conditions gratuité TCL (FR)</label>
-                                    <textarea id="parking-tcl-cond-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Conditions gratuité TCL (EN)</label>
-                                    <textarea id="parking-tcl-cond-en" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                                </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Conditions de gratuité Parcs Relais TCL (P+R)</label>
+                                <textarea id="parking-tcl-cond-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Gratuit avec aller-retour TCL validé le jour même (scan du titre à la sortie). Sans validation : 20 €."></textarea>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Notes complémentaires TCL (FR)</label>
-                                    <input type="text" id="parking-tcl-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-300 mb-1">Notes complémentaires TCL (EN)</label>
-                                    <input type="text" id="parking-tcl-notes-en" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 mb-1">Lignes, métros et accès conseillés TCL</label>
+                                <input type="text" id="parking-tcl-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Parkings relais Laurent Bonnevay et La Soie situés à 10-15 min en Métro A.">
                             </div>
 
-                            <div class="pt-4 flex justify-end">
-                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">
-                                    💾 Enregistrer les règles générales
+                            <!-- CHAMPS ANGLAIS MASQUÉS (Alimentés automatiquement par l'IA lors de la sauvegarde) -->
+                            <input type="hidden" id="parking-intro-en">
+                            <input type="hidden" id="parking-rule-en">
+                            <input type="hidden" id="parking-free-notes-en">
+                            <input type="hidden" id="parking-street-info-en">
+                            <input type="hidden" id="parking-street-sched-en">
+                            <input type="hidden" id="parking-street-rates-en">
+                            <input type="hidden" id="parking-tcl-cond-en">
+                            <input type="hidden" id="parking-tcl-notes-en">
+
+                            <!-- Volet accordéon replié : Aperçu de la traduction anglaise en base -->
+                            <details class="rounded-xl border border-night-border/70 bg-night/40 text-xs group">
+                                <summary class="p-3 font-semibold text-gray-400 hover:text-white cursor-pointer select-none flex items-center justify-between">
+                                    <span class="flex items-center space-x-2">
+                                        <span>🇬🇧</span>
+                                        <span>Consulter l'aperçu de la version anglaise (générée par l'IA)</span>
+                                    </span>
+                                    <span class="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+                                </summary>
+                                <div id="parking-general-en-preview" class="p-4 border-t border-night-border/70 space-y-3 text-gray-300 text-xs">
+                                    <p class="text-[11px] text-gray-400 italic">Aucune traduction pour l'instant ou sélectionnez un logement.</p>
+                                </div>
+                            </details>
+
+                            <div class="pt-4 flex items-center justify-between border-t border-night-border/50">
+                                <span class="text-[11px] text-gray-400 flex items-center gap-1.5">
+                                    <span>⚡</span>
+                                    <span>Traduction IA instantanée à l'enregistrement</span>
+                                </span>
+                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-2">
+                                    <span>💾</span>
+                                    <span>Enregistrer & Traduire</span>
                                 </button>
+                            </div>
                             </div>
                         </form>
                     </div>
@@ -755,13 +763,32 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="modal-location-form" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden overflow-y-auto">
         <div class="bg-night-card border border-night-border rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
-                <h3 id="modal-location-title" class="text-base font-bold text-white">Ajouter un emplacement</h3>
+                <div>
+                    <h3 id="modal-location-title" class="text-base font-bold text-white">Ajouter un emplacement</h3>
+                    <p class="text-[11px] text-gray-400">Remplissez les informations en français (traduction anglaise automatique par IA).</p>
+                </div>
                 <button type="button" onclick="AdminApp.closeLocationModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
             </div>
 
             <form id="location-form" onsubmit="AdminApp.saveLocation(event)" class="space-y-4">
                 <input type="hidden" id="location-id" value="0">
                 <input type="hidden" id="location-property-id" value="0">
+
+                <!-- CHAMPS ANGLAIS MASQUÉS (remplis automatiquement par l'IA lors de la sauvegarde) -->
+                <input type="hidden" id="location-name-en">
+                <input type="hidden" id="location-walking-en">
+                <input type="hidden" id="location-transit-en">
+                <input type="hidden" id="location-hours-en">
+                <input type="hidden" id="location-rates-en">
+                <input type="hidden" id="location-vehicles-en">
+                <input type="hidden" id="location-reach-en">
+                <input type="hidden" id="location-notes-en">
+
+                <!-- Bannière rappel IA -->
+                <div class="bg-gold/10 border border-gold/30 rounded-xl p-3 flex items-center space-x-2 text-xs text-gold-light">
+                    <span>✨</span>
+                    <span>Traduction bilingue : Les équivalents anglais seront générés automatiquement par l'IA lors de l'enregistrement.</span>
+                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -774,144 +801,90 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Opérateur (ex: LPA, Zenpark, TCL)</label>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Opérateur (ex: LPA, Zenpark, TCL, Indigo)</label>
                         <input type="text" id="location-operator" placeholder="LPA&CO"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking / rue (FR) *</label>
-                        <input type="text" id="location-name-fr" required placeholder="Rue de l'Est"
-                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking / rue (EN)</label>
-                        <input type="text" id="location-name-en" placeholder="Rue de l'Est"
-                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking ou de la rue *</label>
+                    <input type="text" id="location-name-fr" required placeholder="Rue de l'Est"
+                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise (avec bouton GPS)</label>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise (avec bouton GPS pour Waze / Maps)</label>
                     <input type="text" id="location-address" placeholder="12 rue de l'Est, 69003 Lyon"
                            class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Temps à pied (FR)</label>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche à pied</label>
                         <input type="text" id="location-walking-fr" placeholder="Environ 5 min à pied"
                                class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Temps à pied (EN)</label>
-                        <input type="text" id="location-walking-en" placeholder="Approx. 5 min walk"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Minutes (Tri)</label>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Minutes de marche (pour le tri par proximité)</label>
                         <input type="number" id="location-walking-min" placeholder="5"
                                class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Temps transports (FR)</label>
-                        <input type="text" id="location-transit-fr" placeholder="10 min en Métro A"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Temps transports (EN)</label>
-                        <input type="text" id="location-transit-en" placeholder="10 min by Metro A"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Temps en transports en commun (TCL)</label>
+                    <input type="text" id="location-transit-fr" placeholder="Environ 10 min en Métro A"
+                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Hauteur max (gabarit)</label>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Hauteur max autorisée (gabarit)</label>
                         <input type="text" id="location-max-height" placeholder="1,90 m"
                                class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Capacité</label>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Capacité (nombre de places)</label>
                         <input type="text" id="location-capacity" placeholder="416 places"
                                class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Horaires (FR)</label>
-                        <input type="text" id="location-hours-fr" placeholder="24h/24, 7j/7"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Horaires (EN)</label>
-                        <input type="text" id="location-hours-en" placeholder="24/7"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Tarifs (FR)</label>
-                        <textarea id="location-rates-fr" rows="2" placeholder="2h : 3 € · 24h : 24 €"
-                                  class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Tarifs (EN)</label>
-                        <textarea id="location-rates-en" rows="2" placeholder="2h: €3 · 24h: €24"
-                                  class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Véhicules adaptés (FR)</label>
-                        <input type="text" id="location-vehicles-fr" placeholder="Citadines, SUV, berlines"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Véhicules adaptés (EN)</label>
-                        <input type="text" id="location-vehicles-en" placeholder="City cars, SUVs, sedans"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Itinéraire retour (FR)</label>
-                        <textarea id="location-reach-fr" rows="2" placeholder="Prendre le Métro D jusqu'à..."
-                                  class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Itinéraire retour (EN)</label>
-                        <textarea id="location-reach-en" rows="2" placeholder="Take Metro D to..."
-                                  class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires d'ouverture</label>
+                    <input type="text" id="location-hours-fr" placeholder="Ouvert 24h/24 et 7j/7"
+                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Lien de réservation / site web</label>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Grille tarifaire</label>
+                    <textarea id="location-rates-fr" rows="2" placeholder="15 min gratuites · 2h : 3 € · 24h : 24 €"
+                              class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Véhicules adaptés</label>
+                    <input type="text" id="location-vehicles-fr" placeholder="Citadines, SUV, berlines, 2 roues"
+                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire pour rejoindre le logement</label>
+                    <textarea id="location-reach-fr" rows="2" placeholder="Prendre le Métro A direction Perrache jusqu'à la station Flachet..."
+                              class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Lien de réservation / site web officiel</label>
                     <input type="url" id="location-booking-url" placeholder="https://zenpark.com/..."
                            class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Remarques (FR)</label>
-                        <input type="text" id="location-notes-fr" placeholder="Réservation conseillée sur l'app"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold text-gray-300 mb-1">Remarques (EN)</label>
-                        <input type="text" id="location-notes-en" placeholder="Booking recommended via app"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Notes & remarques complémentaires</label>
+                    <input type="text" id="location-notes-fr" placeholder="Idéal pour décharger les bagages grâce aux 15 min offertes."
+                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                 </div>
 
                 <div class="flex items-center justify-between pt-2">
@@ -1050,10 +1023,90 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         </div>
     </div>
 
+    <!-- 9. MODALE CONFIGURATION INTELLIGENCE ARTIFICIELLE (IA) -->
+    <div id="modal-ai-settings" class="fixed inset-0 z-50 flex items-center justify-center p-4 admin-modal-backdrop hidden">
+        <div class="bg-night-card border border-gold/40 rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative my-auto">
+            <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
+                <div class="flex items-center space-x-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold text-base">✨</span>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Traduction Automatique & IA</h3>
+                        <p class="text-[11px] text-gray-400">Synchronisation bilingue FR ➜ EN instantanée</p>
+                    </div>
+                </div>
+                <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+
+            <form id="ai-settings-form" onsubmit="AdminApp.saveAiSettings(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Moteur d'Intelligence Artificielle *</label>
+                    <select id="ai-provider-select" onchange="AdminApp.handleAiProviderChange()" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <option value="gemini">Google Gemini (Recommandé - rapide, précis & économique)</option>
+                        <option value="openai">ChatGPT / OpenAI (gpt-4o-mini)</option>
+                        <option value="claude">Anthropic Claude (claude-3-5-haiku)</option>
+                    </select>
+                </div>
+
+                <!-- Section Clé API Gemini -->
+                <div id="ai-key-group-gemini" class="ai-key-group space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-gray-300">Clé API Google Gemini</label>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé Google AI Studio ↗</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="ai-key-gemini" placeholder="AIzaSy..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-gemini')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-2.5-flash</code> (repli auto sur <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gemini-1.5-flash</code>)</p>
+                </div>
+
+                <!-- Section Clé API OpenAI -->
+                <div id="ai-key-group-openai" class="ai-key-group space-y-1.5 hidden">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-gray-300">Clé API OpenAI (ChatGPT)</label>
+                        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé OpenAI ↗</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="ai-key-openai" placeholder="sk-proj-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-openai')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">gpt-4o-mini</code></p>
+                </div>
+
+                <!-- Section Clé API Claude -->
+                <div id="ai-key-group-claude" class="ai-key-group space-y-1.5 hidden">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-gray-300">Clé API Anthropic Claude</label>
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" class="text-[11px] text-gold hover:underline">Obtenir une clé Anthropic ↗</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="ai-key-claude" placeholder="sk-ant-..." class="w-full p-2.5 pr-10 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                        <button type="button" onclick="AdminApp.toggleKeyVisibility('ai-key-claude')" class="absolute right-3 top-2.5 text-gray-400 hover:text-white text-xs">👁️</button>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">claude-3-5-haiku-latest</code></p>
+                </div>
+
+                <!-- Zone résultat test connexion -->
+                <div id="ai-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
+
+                <div class="pt-4 border-t border-night-border flex items-center justify-between">
+                    <button type="button" id="btn-test-ai" onclick="AdminApp.testAiConnection()" class="px-3.5 py-2 rounded-xl bg-night border border-night-border hover:border-gold/50 text-xs text-gray-300 hover:text-white transition flex items-center space-x-1.5">
+                        <span>⚡</span>
+                        <span>Tester la connexion</span>
+                    </button>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="AdminApp.closeAiSettingsModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-gray-300 transition">Fermer</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition">Enregistrer</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- CONTENEUR DES TOASTS DE NOTIFICATION -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.0"></script>
+    <script src="assets/js/admin.js?v=1.1"></script>
 </body>
 </html>

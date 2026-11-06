@@ -52,13 +52,15 @@ try {
             $stats = $repo->getDashboardStats();
             $properties = $repo->getAllProperties();
             $recentLogs = ActivityLogger::getRecent(15);
+            $settings = $repo->getSettings();
             echo json_encode([
                 'ok'         => true,
                 'user'       => $currentUser,
                 'csrf_token' => Auth::getCsrfToken(),
                 'stats'      => $stats,
                 'properties' => $properties,
-                'recent_logs'=> $recentLogs
+                'recent_logs'=> $recentLogs,
+                'settings'   => $settings
             ], JSON_UNESCAPED_UNICODE);
             exit;
 
@@ -348,6 +350,53 @@ try {
                 http_response_code(400);
                 echo json_encode($res, JSON_UNESCAPED_UNICODE);
             }
+            exit;
+
+        // ----------------------------------------------------------------------
+        // PARAMÈTRES IA & CONFIGURATION
+        // ----------------------------------------------------------------------
+        case 'settings_get':
+            echo json_encode([
+                'ok' => true,
+                'settings' => $repo->getSettings()
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'settings_save':
+            Auth::requireSuperAdmin(true);
+            $settingsData = $body['settings'] ?? $_POST;
+            $ok = $repo->saveSettings($settingsData);
+            echo json_encode([
+                'ok' => $ok,
+                'settings' => $repo->getSettings(),
+                'message' => 'Configuration IA mise à jour avec succès.'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'test_ai':
+            $provider = $body['provider'] ?? ($_POST['provider'] ?? 'gemini');
+            $apiKey = trim((string)($body['api_key'] ?? ($_POST['api_key'] ?? '')));
+            $model = !empty($body['model']) ? trim((string)$body['model']) : null;
+
+            if (empty($apiKey) || strpos($apiKey, '•') !== false) {
+                $db = \Cdh\Portal\Database::getConnection();
+                $stmt = $db->prepare('SELECT setting_value FROM admin_settings WHERE setting_key = :k LIMIT 1');
+                $stmt->execute(['k' => 'ai_api_key_' . $provider]);
+                $apiKey = (string)$stmt->fetchColumn();
+            }
+
+            if (empty($apiKey)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Veuillez saisir une clé API pour tester la connexion.']);
+                exit;
+            }
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/AiTranslator.php';
+            $testRes = \Cdh\Portal\Admin\AiTranslator::testConnection($provider, $apiKey, $model);
+            if (!$testRes['ok']) {
+                http_response_code(400);
+            }
+            echo json_encode($testRes, JSON_UNESCAPED_UNICODE);
             exit;
 
         default:

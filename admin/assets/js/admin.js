@@ -10,6 +10,7 @@ const AdminApp = {
         user: null,
         csrfToken: '',
         stats: null,
+        settings: null,
         properties: [],
         currentPropertyId: null,
         currentVideos: [],
@@ -58,9 +59,11 @@ const AdminApp = {
                 this.state.stats = data.stats;
                 this.state.properties = data.properties || [];
                 this.state.logs = data.recent_logs || [];
+                this.state.settings = data.settings || null;
 
-                // Mise à jour de l'UI utilisateur
+                // Mise à jour de l'UI utilisateur & badges IA
                 this.updateUserBadge();
+                this.updateAiBadges();
 
                 // Rendu du Dashboard
                 this.renderDashboard();
@@ -773,6 +776,30 @@ const AdminApp = {
         document.getElementById('parking-tcl-cond-en').value = gen.tcl_conditions_en || '';
         document.getElementById('parking-tcl-notes-fr').value = gen.tcl_notes_fr || '';
         document.getElementById('parking-tcl-notes-en').value = gen.tcl_notes_en || '';
+
+        this.renderEnglishGeneralPreview(gen);
+    },
+
+    renderEnglishGeneralPreview(gen) {
+        const preview = document.getElementById('parking-general-en-preview');
+        if (!preview) return;
+
+        if (!gen || (!gen.intro_en && !gen.important_rule_en && !gen.street_parking_info_en && !gen.tcl_conditions_en)) {
+            preview.innerHTML = `<p class="text-[11px] text-gray-400 italic">Aucune traduction anglaise enregistrée pour l'instant. Saisissez votre texte en français puis enregistrez pour que l'IA génère la traduction.</p>`;
+            return;
+        }
+
+        const items = [];
+        if (gen.intro_en) items.push(`<div><strong class="text-gold block mb-0.5">Introduction (EN) :</strong><span>${this.escape(gen.intro_en)}</span></div>`);
+        if (gen.important_rule_en) items.push(`<div><strong class="text-amber-400 block mb-0.5">Alerte / Règle d'or (EN) :</strong><span>${this.escape(gen.important_rule_en)}</span></div>`);
+        if (gen.free_parking_notes_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Notes places gratuites (EN) :</strong><span>${this.escape(gen.free_parking_notes_en)}</span></div>`);
+        if (gen.street_parking_info_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Voirie payante (EN) :</strong><span>${this.escape(gen.street_parking_info_en)}</span></div>`);
+        if (gen.street_parking_schedule_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Horaires payants (EN) :</strong><span>${this.escape(gen.street_parking_schedule_en)}</span></div>`);
+        if (gen.street_parking_rates_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Tarifs voirie (EN) :</strong><pre class="font-mono text-[11px] text-gray-300 whitespace-pre-wrap">${this.escape(gen.street_parking_rates_en)}</pre></div>`);
+        if (gen.tcl_conditions_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Conditions TCL P+R (EN) :</strong><span>${this.escape(gen.tcl_conditions_en)}</span></div>`);
+        if (gen.tcl_notes_en) items.push(`<div><strong class="text-gray-400 block mb-0.5">Lignes & accès TCL (EN) :</strong><span>${this.escape(gen.tcl_notes_en)}</span></div>`);
+
+        preview.innerHTML = items.join('');
     },
 
     async saveParkingGeneral(e) {
@@ -803,8 +830,9 @@ const AdminApp = {
                 property_id: propertyId,
                 general: data
             });
-            this.showToast(res.message || 'Règles générales de stationnement enregistrées.');
+            this.showToast(res.message || 'Règles générales enregistrées et traduites par IA !', 'success');
             await this.loadInitialData();
+            await this.loadParkingData(propertyId);
         } catch (err) {
             this.showToast(err.message, 'error');
         }
@@ -1433,6 +1461,165 @@ const AdminApp = {
             logout: 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
         };
         return classes[action] || 'bg-gray-500/10 text-gray-400';
+    },
+
+    // --------------------------------------------------------------------------
+    // CONFIGURATION & GESTION DE L'IA (GEMINI / CHATGPT / CLAUDE)
+    // --------------------------------------------------------------------------
+
+    openAiSettingsModal() {
+        const modal = document.getElementById('modal-ai-settings');
+        if (!modal) return;
+
+        const s = this.state.settings || {};
+        const providerSelect = document.getElementById('ai-provider-select');
+        if (providerSelect) {
+            providerSelect.value = s.ai_provider || 'gemini';
+        }
+
+        const keyGemini = document.getElementById('ai-key-gemini');
+        if (keyGemini) {
+            keyGemini.value = s.masked_key_gemini || '';
+        }
+        const keyOpenai = document.getElementById('ai-key-openai');
+        if (keyOpenai) {
+            keyOpenai.value = s.masked_key_openai || '';
+        }
+        const keyClaude = document.getElementById('ai-key-claude');
+        if (keyClaude) {
+            keyClaude.value = s.masked_key_claude || '';
+        }
+
+        this.handleAiProviderChange();
+
+        const resultEl = document.getElementById('ai-test-result');
+        if (resultEl) {
+            resultEl.classList.add('hidden');
+            resultEl.innerHTML = '';
+        }
+
+        modal.classList.remove('hidden');
+    },
+
+    closeAiSettingsModal() {
+        const modal = document.getElementById('modal-ai-settings');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    handleAiProviderChange() {
+        const select = document.getElementById('ai-provider-select');
+        if (!select) return;
+        const provider = select.value;
+
+        document.querySelectorAll('.ai-key-group').forEach(el => el.classList.add('hidden'));
+        const activeGroup = document.getElementById(`ai-key-group-${provider}`);
+        if (activeGroup) {
+            activeGroup.classList.remove('hidden');
+        }
+    },
+
+    toggleKeyVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.type = input.type === 'password' ? 'text' : 'password';
+    },
+
+    async testAiConnection() {
+        const select = document.getElementById('ai-provider-select');
+        const provider = select ? select.value : 'gemini';
+        const keyInput = document.getElementById(`ai-key-${provider}`);
+        const apiKey = keyInput ? keyInput.value.trim() : '';
+
+        const testBtn = document.getElementById('btn-test-ai');
+        const resultEl = document.getElementById('ai-test-result');
+        if (!resultEl) return;
+
+        if (testBtn) {
+            testBtn.disabled = true;
+            testBtn.innerHTML = `<span>⏳</span><span>Test en cours...</span>`;
+        }
+
+        resultEl.classList.remove('hidden');
+        resultEl.className = 'p-3 rounded-xl text-xs space-y-1 border bg-night/80 border-gold/30 text-gold-light';
+        resultEl.innerHTML = `<p class="flex items-center gap-2"><span>🔄</span><span>Envoi d'une requête de test à ${provider.toUpperCase()}...</span></p>`;
+
+        try {
+            const res = await this.apiRequest('api/index.php?action=test_ai', 'POST', {
+                provider,
+                api_key: apiKey
+            });
+
+            resultEl.className = 'p-3.5 rounded-xl text-xs space-y-1.5 border bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
+            resultEl.innerHTML = `
+                <div class="flex items-center space-x-2 font-bold text-emerald-400">
+                    <span>✅</span>
+                    <span>Connexion réussie avec ${res.provider.toUpperCase()} (${res.duration_ms} ms)</span>
+                </div>
+                <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
+                    <p><strong class="text-gray-400">FR :</strong> "${this.escape(res.sample_fr)}"</p>
+                    <p><strong class="text-emerald-400">EN :</strong> "${this.escape(res.sample_en)}"</p>
+                </div>
+            `;
+            this.showToast(`Connexion à ${provider.toUpperCase()} validée avec succès !`, 'success');
+        } catch (err) {
+            resultEl.className = 'p-3.5 rounded-xl text-xs space-y-1 border bg-red-500/10 border-red-500/30 text-red-300';
+            resultEl.innerHTML = `
+                <div class="flex items-center space-x-2 font-bold text-red-400">
+                    <span>❌</span>
+                    <span>Échec de connexion (${provider.toUpperCase()})</span>
+                </div>
+                <p class="text-[11px] text-red-200 mt-1">${this.escape(err.message)}</p>
+            `;
+            this.showToast(`Erreur IA : ${err.message}`, 'error');
+        } finally {
+            if (testBtn) {
+                testBtn.disabled = false;
+                testBtn.innerHTML = `<span>⚡</span><span>Tester la connexion</span>`;
+            }
+        }
+    },
+
+    async saveAiSettings(e) {
+        e.preventDefault();
+        const select = document.getElementById('ai-provider-select');
+        const provider = select ? select.value : 'gemini';
+
+        const payload = {
+            ai_provider: provider,
+            ai_api_key_gemini: (document.getElementById('ai-key-gemini')?.value || '').trim(),
+            ai_api_key_openai: (document.getElementById('ai-key-openai')?.value || '').trim(),
+            ai_api_key_claude: (document.getElementById('ai-key-claude')?.value || '').trim()
+        };
+
+        try {
+            const res = await this.apiRequest('api/index.php?action=settings_save', 'POST', {
+                settings: payload
+            });
+
+            this.state.settings = res.settings;
+            this.updateAiBadges();
+            this.showToast(res.message || 'Configuration IA enregistrée avec succès.', 'success');
+            this.closeAiSettingsModal();
+        } catch (err) {
+            this.showToast(err.message, 'error');
+        }
+    },
+
+    updateAiBadges() {
+        const s = this.state.settings || {};
+        const p = s.ai_provider || 'gemini';
+        const names = { gemini: 'Gemini', openai: 'ChatGPT', claude: 'Claude' };
+        const displayName = names[p] || p;
+
+        const sidebarBadge = document.getElementById('nav-ai-provider-badge');
+        if (sidebarBadge) {
+            sidebarBadge.textContent = displayName;
+        }
+
+        const parkingBadge = document.getElementById('parking-general-ai-badge');
+        if (parkingBadge) {
+            parkingBadge.textContent = displayName;
+        }
     }
 };
 

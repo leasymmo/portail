@@ -7,6 +7,9 @@ use PDO;
 use Throwable;
 use Cdh\Portal\Database;
 
+require_once __DIR__ . '/AiTranslator.php';
+require_once __DIR__ . '/ActivityLogger.php';
+
 /**
  * ==============================================================================
  * RÉPERTOIRE D'ADMINISTRATION & OPÉRATIONS CRUD
@@ -341,6 +344,10 @@ class AdminRepository
     public function saveParkingGeneral(int $propertyId, array $data): bool
     {
         $existing = $this->getParkingByProperty($propertyId);
+
+        // Traduction automatique intelligente via IA des champs en français vers l'anglais
+        $data = AiTranslator::translateParkingGeneral($this->db, $data);
+
         $fields = [
             'intro_fr', 'intro_en',
             'important_rule_fr', 'important_rule_en',
@@ -402,6 +409,9 @@ class AdminRepository
 
     public function createParkingLocation(array $data): int
     {
+        // Traduction automatique intelligente via IA des champs en français vers l'anglais
+        $data = AiTranslator::translateParkingLocation($this->db, $data);
+
         $order = isset($data['display_order']) ? (int)$data['display_order'] : 0;
         if ($order <= 0) {
             $stmtOrder = $this->db->prepare('SELECT COALESCE(MAX(display_order), 0) + 1 FROM parking_locations WHERE property_id = :pid AND category = :cat');
@@ -468,6 +478,9 @@ class AdminRepository
     {
         $old = $this->findParkingLocationById($id);
         if (!$old) return false;
+
+        // Traduction automatique intelligente via IA des champs en français vers l'anglais
+        $data = AiTranslator::translateParkingLocation($this->db, $data);
 
         $stmt = $this->db->prepare('
             UPDATE parking_locations SET
@@ -698,5 +711,71 @@ class AdminRepository
             ActivityLogger::log('delete', 'user', $id, $user['email']);
         }
         return $ok;
+    }
+
+    // --------------------------------------------------------------------------
+    // CONFIGURATION & IA (admin_settings)
+    // --------------------------------------------------------------------------
+
+    public function getSettings(): array
+    {
+        $stmt = $this->db->query('SELECT setting_key, setting_value FROM admin_settings');
+        $raw = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $raw[$row['setting_key']] = $row['setting_value'];
+        }
+
+        $provider = $raw['ai_provider'] ?? 'gemini';
+
+        $maskKey = function (?string $key): string {
+            if (empty($key)) return '';
+            $len = strlen($key);
+            if ($len <= 8) return '••••••••';
+            return substr($key, 0, 6) . str_repeat('•', max(4, $len - 10)) . substr($key, -4);
+        };
+
+        return [
+            'ai_provider' => $provider,
+            'ai_model_gemini' => $raw['ai_model_gemini'] ?? 'gemini-2.5-flash',
+            'ai_model_openai' => $raw['ai_model_openai'] ?? 'gpt-4o-mini',
+            'ai_model_claude' => $raw['ai_model_claude'] ?? 'claude-3-5-haiku-latest',
+            'has_key_gemini' => !empty($raw['ai_api_key_gemini']),
+            'has_key_openai' => !empty($raw['ai_api_key_openai']),
+            'has_key_claude' => !empty($raw['ai_api_key_claude']),
+            'masked_key_gemini' => $maskKey($raw['ai_api_key_gemini'] ?? null),
+            'masked_key_openai' => $maskKey($raw['ai_api_key_openai'] ?? null),
+            'masked_key_claude' => $maskKey($raw['ai_api_key_claude'] ?? null),
+        ];
+    }
+
+    public function saveSettings(array $settings): bool
+    {
+        $allowedProviders = ['gemini', 'openai', 'claude'];
+        $provider = in_array($settings['ai_provider'] ?? '', $allowedProviders, true) ? $settings['ai_provider'] : 'gemini';
+
+        $stmt = $this->db->prepare('
+            INSERT INTO admin_settings (setting_key, setting_value) 
+            VALUES (:k, :v) 
+            ON DUPLICATE KEY UPDATE setting_value = :v2
+        ');
+
+        // Fournisseur actif
+        $stmt->execute(['k' => 'ai_provider', 'v' => $provider, 'v2' => $provider]);
+
+        // Mise à jour conditionnelle des clés (si non vide et non masquée '••••')
+        $keyFields = ['gemini', 'openai', 'claude'];
+        foreach ($keyFields as $kf) {
+            $keyInput = trim((string)($settings['ai_api_key_' . $kf] ?? ''));
+            if ($keyInput !== '' && strpos($keyInput, '•') === false) {
+                $stmt->execute(['k' => 'ai_api_key_' . $kf, 'v' => $keyInput, 'v2' => $keyInput]);
+            }
+            if (!empty($settings['ai_model_' . $kf])) {
+                $m = trim((string)$settings['ai_model_' . $kf]);
+                $stmt->execute(['k' => 'ai_model_' . $kf, 'v' => $m, 'v2' => $m]);
+            }
+        }
+
+        ActivityLogger::log('update', 'settings', null, "Configuration IA ({$provider})");
+        return true;
     }
 }

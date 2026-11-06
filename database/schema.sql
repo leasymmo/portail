@@ -168,4 +168,15 @@ CREATE TABLE IF NOT EXISTS `admin_activity_logs` (
     INDEX `idx_admin_logs_entity` (`entity_type`, `entity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ------------------------------------------------------------------------------
+-- Table : admin_settings (Paramètres système et clés API pour l'IA)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `admin_settings` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `setting_key` VARCHAR(100) NOT NULL UNIQUE,
+    `setting_value` TEXT DEFAULT NULL,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX `idx_admin_settings_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET foreign_key_checks = 1;
