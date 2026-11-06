@@ -317,7 +317,12 @@ try {
                             'video',
                             $id,
                             $titleFr,
-                            "Fichier vidéo Cloudflare R2 renommé : {$oldObjectKey} -> {$newObjectKey}"
+                            [
+                                'action'  => 'rename_cloudflare_r2',
+                                'message' => "Fichier vidéo Cloudflare R2 renommé : {$oldObjectKey} -> {$newObjectKey}",
+                                'old_key' => $oldObjectKey,
+                                'new_key' => $newObjectKey
+                            ]
                         );
                     }
                 }
@@ -419,7 +424,8 @@ try {
                 'delete',
                 'video_file',
                 $id > 0 ? $id : null,
-                "Suppression fichier vidéo Cloudflare R2 : {$objectKey}"
+                "Suppression fichier vidéo Cloudflare R2",
+                ['object_key' => $objectKey]
             );
 
             echo json_encode([
@@ -462,7 +468,8 @@ try {
                                 'delete',
                                 'video_file',
                                 $id,
-                                "Suppression fichier Cloudflare R2 lors de la suppression du tutoriel : {$objectKey}"
+                                "Suppression vidéo Cloudflare R2",
+                                ['object_key' => $objectKey, 'context' => 'video_delete']
                             );
                         }
                     }
@@ -736,7 +743,11 @@ try {
                 'upload', 
                 $category, 
                 null, 
-                "Téléversement {$category} vers Cloudflare R2 : {$uploadResult['object_key']} ({$uploadResult['size_formatted']})"
+                "Téléversement {$category} Cloudflare R2",
+                [
+                    'object_key' => $uploadResult['object_key'],
+                    'size'       => $uploadResult['size_formatted']
+                ]
             );
 
             echo json_encode($uploadResult, JSON_UNESCAPED_UNICODE);

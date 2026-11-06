@@ -23,7 +23,7 @@ class ActivityLogger
         string $entityType,
         ?int $entityId = null,
         ?string $entityLabel = null,
-        ?array $details = null
+        array|string|null $details = null
     ): void {
         try {
             $db = Database::getConnection();
@@ -31,6 +31,10 @@ class ActivityLogger
             $user = Auth::user();
             if ($user) {
                 $userId = (int)$user['id'];
+            }
+
+            if (is_string($details)) {
+                $details = ['message' => $details];
             }
 
             $stmt = $db->prepare('
