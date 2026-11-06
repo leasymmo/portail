@@ -595,7 +595,7 @@ const AdminApp = {
                         <span>👁️</span>
                         <span>Portail</span>
                     </a>
-                    <button type="button" onclick="AdminApp.confirmDeleteProperty(${p.id}, '${this.escape(p.name)}')" 
+                    <button type="button" onclick="AdminApp.confirmDeleteProperty(${p.id})" 
                             class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet hébergement">
                         <span>🗑️</span>
                     </button>
@@ -904,14 +904,17 @@ const AdminApp = {
         }
     },
 
-    confirmDeleteProperty(id, name) {
+    confirmDeleteProperty(id, name = null) {
+        const prop = (this.state.properties || []).find(p => p.id == id);
+        const resolvedName = name || (prop ? prop.name : 'cet hébergement');
+
         this.confirmAction(
-            `Supprimer ${name} ?`,
+            `Supprimer ${resolvedName} ?`,
             `Attention : cette action supprimera définitivement le logement, ses vidéos tutoriels et ses configurations de stationnement associées. Cette action est irréversible.`,
             async () => {
                 try {
                     await this.apiRequest('api/index.php?action=property_delete', 'POST', { id });
-                    this.showToast(`Hébergement ${name} supprimé.`);
+                    this.showToast(`Hébergement ${resolvedName} supprimé.`);
                     await this.loadInitialData();
                     this.renderProperties();
                 } catch (err) {
@@ -1045,7 +1048,7 @@ const AdminApp = {
 
                         <!-- LIGNE 2 : BARRE D'ACTIONS (Grille 12 colonnes, 1 seule ligne, 0 chevauchement) -->
                         <div class="pt-3 mt-3.5 border-t border-night-border/50 grid grid-cols-12 gap-2">
-                            <button type="button" onclick="AdminApp.previewVideo('${this.escape(v.video_url)}', '${this.escape(v.title_fr)}')" 
+                            <button type="button" onclick="AdminApp.previewVideo(${v.id})" 
                                     class="col-span-6 py-2 px-2.5 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm">
                                 <span>▶️</span>
                                 <span>Lire la vidéo</span>
@@ -1057,7 +1060,7 @@ const AdminApp = {
                                 <span>Modifier</span>
                             </button>
 
-                            <button type="button" onclick="AdminApp.confirmDeleteVideo(${v.id}, '${this.escape(v.title_fr)}')" 
+                            <button type="button" onclick="AdminApp.confirmDeleteVideo(${v.id})" 
                                     class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer la vidéo">
                                 <span>🗑️</span>
                             </button>
@@ -1372,8 +1375,9 @@ const AdminApp = {
         }
     },
 
-    confirmDeleteVideo(id, title) {
+    confirmDeleteVideo(id, title = null) {
         const video = (this.state.currentVideos || []).find(v => v.id == id);
+        const resolvedTitle = title || (video ? video.title_fr : 'ce tutoriel vidéo');
         const hasR2 = video && video.video_url && this.isR2VideoUrl(video.video_url);
         window.__deleteR2Selected = hasR2 ? 1 : 0;
 
@@ -1390,7 +1394,7 @@ const AdminApp = {
         ` : '';
 
         this.confirmAction(
-            `Supprimer ${title} ?`,
+            `Supprimer ${resolvedTitle} ?`,
             `Le tutoriel vidéo sera définitivement retiré du portail voyageur pour cet hébergement.`,
             async () => {
                 const cb = document.getElementById('confirm-delete-r2-checkbox');
@@ -1401,7 +1405,7 @@ const AdminApp = {
                         id,
                         delete_r2: deleteR2
                     });
-                    this.showToast(res.message || `Vidéo ${title} supprimée.`);
+                    this.showToast(res.message || `Vidéo ${resolvedTitle} supprimée.`);
                     await this.fetchAndRenderVideos(this.state.currentPropertyId);
                     await this.loadInitialData();
                 } catch (err) {
@@ -1412,15 +1416,25 @@ const AdminApp = {
         );
     },
 
-    previewVideo(url, title) {
+    previewVideo(urlOrId, title = null) {
+        let url = urlOrId;
+        let resolvedTitle = title;
+        if (typeof urlOrId === 'number' || (typeof urlOrId === 'string' && /^\d+$/.test(urlOrId))) {
+            const video = (this.state.currentVideos || []).find(v => v.id == urlOrId);
+            if (video) {
+                url = video.video_url;
+                resolvedTitle = resolvedTitle || video.title_fr;
+            }
+        }
+
         const modal = document.getElementById('modal-video-preview');
         const container = document.getElementById('video-preview-player-container');
         const titleEl = document.getElementById('video-preview-title');
-        if (!modal || !container) return;
+        if (!modal || !container || !url) return;
 
-        titleEl.textContent = title || 'Aperçu vidéo';
+        titleEl.textContent = resolvedTitle || 'Aperçu vidéo';
 
-        if (url.includes('drive.google.com')) {
+        if (typeof url === 'string' && url.includes('drive.google.com')) {
             const embedUrl = url.replace(/\/view.*$/, '/preview');
             container.innerHTML = `<iframe src="${this.escape(embedUrl)}" class="w-full h-64 sm:h-80 rounded-xl border-0" allow="autoplay; fullscreen"></iframe>`;
         } else {
@@ -2127,7 +2141,7 @@ const AdminApp = {
                                     <span>✏️</span>
                                     <span>Modifier</span>
                                 </button>
-                                <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id}, '${this.escape(loc.name_fr)}')" 
+                                <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id})" 
                                         class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet emplacement">
                                     <span>🗑️</span>
                                 </button>
@@ -2392,14 +2406,17 @@ const AdminApp = {
         }
     },
 
-    confirmDeleteLocation(id, name) {
+    confirmDeleteLocation(id, name = null) {
+        const loc = (this.state.currentParkingLocations || []).find(l => l.id == id);
+        const resolvedName = name || (loc ? loc.name_fr : 'cet emplacement');
+
         this.confirmAction(
-            `Supprimer ${name} ?`,
+            `Supprimer ${resolvedName} ?`,
             `L'emplacement de parking sera retiré de la liste pour cet hébergement.`,
             async () => {
                 try {
                     await this.apiRequest('api/index.php?action=parking_location_delete', 'POST', { id });
-                    this.showToast(`Emplacement ${name} supprimé.`);
+                    this.showToast(`Emplacement ${resolvedName} supprimé.`);
                     await this.fetchAndRenderParking(this.state.currentPropertyId);
                     await this.loadInitialData();
                 } catch (err) {
@@ -2516,7 +2533,7 @@ const AdminApp = {
                             ✏️
                         </button>
                         ${u.id !== this.state.user.id ? `
-                            <button type="button" onclick="AdminApp.confirmDeleteUser(${u.id}, '${this.escape(u.name)}')" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 transition" title="Supprimer">
+                            <button type="button" onclick="AdminApp.confirmDeleteUser(${u.id})" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 transition" title="Supprimer">
                                 🗑️
                             </button>
                         ` : ''}
@@ -2587,14 +2604,17 @@ const AdminApp = {
         }
     },
 
-    confirmDeleteUser(id, name) {
+    confirmDeleteUser(id, name = null) {
+        const user = (this.state.users || []).find(u => u.id == id);
+        const resolvedName = name || (user ? user.name : 'cet utilisateur');
+
         this.confirmAction(
-            `Supprimer le compte de ${name} ?`,
+            `Supprimer le compte de ${resolvedName} ?`,
             `L'administrateur n'aura plus aucun accès à la console d'administration.`,
             async () => {
                 try {
                     await this.apiRequest('api/index.php?action=user_delete', 'POST', { id });
-                    this.showToast(`Compte de ${name} supprimé.`);
+                    this.showToast(`Compte de ${resolvedName} supprimé.`);
                     await this.loadUsersView();
                     await this.loadInitialData();
                 } catch (err) {
