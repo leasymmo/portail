@@ -10,7 +10,6 @@
 *.old
 *.tmp
 *.temp
-Portail-Parking/*.png
 
 # Journaux et logs
 *.log
