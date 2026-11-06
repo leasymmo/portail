@@ -1013,16 +1013,6 @@ const AdminApp = {
         document.getElementById('parking-tcl-cond-en').value = gen.tcl_conditions_en || '';
         document.getElementById('parking-tcl-notes-fr').value = gen.tcl_notes_fr || '';
         document.getElementById('parking-tcl-notes-en').value = gen.tcl_notes_en || '';
-
-        const hasEn = !!(gen.intro_en || gen.important_rule_en || gen.free_parking_notes_en || gen.street_parking_info_en);
-        const box = document.getElementById('parking-general-en-box');
-        if (box) {
-            if (hasEn) {
-                box.classList.remove('hidden');
-            } else {
-                box.classList.add('hidden');
-            }
-        }
     },
 
     getTranslationFieldDefinitions(type) {
@@ -1163,6 +1153,18 @@ const AdminApp = {
 
         this.state.translationReview = { type, fields: [] };
 
+        // Ajuster titre et sous-titre selon le mode (Flash Check IA ou Saisie Manuelle Côte-à-Côte)
+        const titleEl = document.getElementById('modal-translation-review-title');
+        const subtitleEl = document.getElementById('modal-translation-review-subtitle');
+        if (titleEl) {
+            titleEl.textContent = overrideEnData ? "Vérification de l'anglais" : "Saisie de l'anglais (Vue côte-à-côte)";
+        }
+        if (subtitleEl) {
+            subtitleEl.textContent = overrideEnData 
+                ? "Généré par l'IA — Un coup d'œil rapide avant enregistrement" 
+                : "Ajustez les textes en anglais face à leur version française avant d'enregistrer";
+        }
+
         const activeFields = [];
         defs.forEach(def => {
             const frInput = document.getElementById(def.frId);
@@ -1185,13 +1187,28 @@ const AdminApp = {
             }
         });
 
+        // Si aucun champ n'est encore rempli
         if (activeFields.length === 0) {
-            if (type === 'parking_general') {
-                this.saveParkingGeneral(null, true);
-            } else if (type === 'parking_location') {
-                this.saveLocation(null, true);
+            if (overrideEnData !== null) {
+                // Flux automatique lors de l'enregistrement sans texte
+                if (type === 'parking_general') {
+                    this.saveParkingGeneral(null, true);
+                } else if (type === 'parking_location') {
+                    this.saveLocation(null, true);
+                }
+                return;
+            } else {
+                // Saisie manuelle : inclure tous les champs pour que l'utilisateur puisse saisir
+                defs.forEach(def => {
+                    const frInput = document.getElementById(def.frId);
+                    const enInput = document.getElementById(def.enId);
+                    activeFields.push({
+                        ...def,
+                        frVal: frInput ? frInput.value.trim() : '',
+                        enVal: enInput ? enInput.value.trim() : ''
+                    });
+                });
             }
-            return;
         }
 
         this.state.translationReview.fields = activeFields;
@@ -1619,20 +1636,11 @@ const AdminApp = {
             document.getElementById('location-order').value = loc.display_order || 0;
             document.getElementById('location-active').checked = (loc.active == 1);
 
-            const hasEn = !!(loc.name_en || loc.walking_time_en || loc.rates_en || loc.opening_hours_en || loc.notes_en);
-            const box = document.getElementById('location-en-box');
-            if (box) {
-                if (hasEn) box.classList.remove('hidden');
-                else box.classList.add('hidden');
-            }
         } else {
             titleEl.textContent = 'Ajouter un emplacement de stationnement';
             document.getElementById('location-category').value = 'free_street';
             document.getElementById('location-order').value = this.state.currentParkingLocations.length + 1;
             document.getElementById('location-active').checked = true;
-
-            const box = document.getElementById('location-en-box');
-            if (box) box.classList.add('hidden');
         }
 
         modal.classList.remove('hidden');
