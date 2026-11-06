@@ -269,7 +269,7 @@ const AdminApp = {
         if (kpiParkings) kpiParkings.textContent = s.total_parkings;
         if (kpiLocations) kpiLocations.textContent = `${s.active_locations} / ${s.total_locations}`;
 
-        // Tableau synthétique des logements sur le Dashboard
+        // Tableau synthétique des logements sur le Dashboard (Bureau / Tablette)
         const tbody = document.getElementById('dashboard-properties-tbody');
         if (tbody) {
             tbody.innerHTML = this.state.properties.map(p => `
@@ -284,9 +284,10 @@ const AdminApp = {
                         </div>
                     </td>
                     <td class="py-3.5 px-4">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${p.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}">
+                        <button type="button" onclick="AdminApp.togglePropertyStatus(${p.id})" title="Cliquer pour activer/désactiver"
+                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold cursor-pointer transition ${p.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20 hover:bg-gray-500/20'}">
                             ${p.active == 1 ? '● Actif' : '○ Inactif'}
-                        </span>
+                        </button>
                     </td>
                     <td class="py-3.5 px-4 text-xs text-gray-300">
                         🎬 ${p.videos_count} tutoriel(s)
@@ -303,6 +304,48 @@ const AdminApp = {
                         </a>
                     </td>
                 </tr>
+            `).join('');
+        }
+
+        // Cartes mobiles optimisées sans scroll horizontal (Mobile)
+        const mobileContainer = document.getElementById('dashboard-properties-mobile-cards');
+        if (mobileContainer) {
+            mobileContainer.innerHTML = this.state.properties.map(p => `
+                <div class="p-4 rounded-2xl bg-night border border-night-border/80 space-y-3 shadow-md">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-gold/15 text-gold flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                ${p.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-bold text-white truncate">${this.escape(p.name)}</h4>
+                                <span class="text-[11px] text-gray-400 font-mono block">/${this.escape(p.slug)}</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="AdminApp.togglePropertyStatus(${p.id})" title="Cliquer pour activer/désactiver"
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold cursor-pointer transition flex-shrink-0 ${p.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'}">
+                            ${p.active == 1 ? '● Actif' : '○ Inactif'}
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-300 py-1.5 px-2.5 rounded-xl bg-night-card border border-night-border/50 text-center font-medium">
+                        <span>🎬 ${p.videos_count} tutoriel(s)</span>
+                        <span>🅿️ ${p.parking_locations_count} lieu(x)</span>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-2 pt-1">
+                        <button type="button" onclick="AdminApp.quickManageProperty(${p.id})" 
+                                class="col-span-8 py-2 px-3 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm">
+                            <span>✏️</span>
+                            <span>Gérer l'hébergement</span>
+                        </button>
+                        <a href="${this.getPortalUrl(p.slug)}" target="_blank" rel="noopener noreferrer" 
+                           class="col-span-4 py-2 px-2 rounded-xl bg-night-card border border-night-border hover:bg-white/10 text-gray-300 hover:text-white text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-sm" title="Voir le portail">
+                            <span>👁️</span>
+                            <span>Portail</span>
+                        </a>
+                    </div>
+                </div>
             `).join('');
         }
 
@@ -387,47 +430,86 @@ const AdminApp = {
 
                     ${p.address ? `<p class="text-xs text-gray-300 mb-3 flex items-center"><span class="mr-1.5 flex-shrink-0">📍</span><span class="truncate">${this.escape(p.address)}</span></p>` : ''}
 
-                    <!-- Métriques Wi-Fi & Modules -->
-                    <div class="grid grid-cols-2 gap-2 text-xs py-2.5 border-y border-night-border/50 my-3">
-                        <div class="bg-night/50 p-2.5 rounded-xl border border-night-border/30">
-                            <div class="text-gray-400 text-[10px] uppercase font-semibold">Wi-Fi</div>
-                            <div class="font-bold text-white truncate mt-0.5">${p.wifi_ssid ? this.escape(p.wifi_ssid) : '<span class="text-gray-500 italic">Non configuré</span>'}</div>
+                    <!-- Encadré Wi-Fi & Guides PDF Cliquables -->
+                    <div class="p-3 rounded-xl bg-night/60 border border-night-border/50 space-y-2 mb-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-400 text-[11px] font-semibold flex items-center gap-1.5">
+                                <span>📶</span><span>Wi-Fi :</span>
+                            </span>
+                            <span class="font-bold text-white truncate max-w-[170px]">${p.wifi_ssid ? this.escape(p.wifi_ssid) : '<span class="text-gray-500 italic font-normal">Non configuré</span>'}</span>
                         </div>
-                        <div class="bg-night/50 p-2.5 rounded-xl border border-night-border/30">
-                            <div class="text-gray-400 text-[10px] uppercase font-semibold">Modules</div>
-                            <div class="font-bold text-white truncate mt-0.5">🎬 ${p.videos_count} · 🅿️ ${p.parking_locations_count}</div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-night-border/30 text-xs">
+                            <span class="text-gray-400 text-[11px] font-semibold flex items-center gap-1.5">
+                                <span>📖</span><span>Guides PDF :</span>
+                            </span>
+                            <div class="flex items-center space-x-1.5">
+                                ${hasFrGuide ? `
+                                    <a href="${this.escape(p.guide_pdf_url_fr)}" target="_blank" rel="noopener noreferrer" 
+                                       class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition inline-flex items-center space-x-1 shadow-sm" title="Consulter le guide PDF français (nouvel onglet)">
+                                        <span>FR</span>
+                                        <span class="text-[10px]">👁️</span>
+                                    </a>
+                                ` : `
+                                    <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" 
+                                            class="px-2 py-1 rounded-lg text-xs font-semibold bg-night border border-night-border text-gray-500 hover:border-gold/40 hover:text-gray-300 transition" title="Ajouter le guide PDF français">
+                                        <span>FR —</span>
+                                    </button>
+                                `}
+
+                                ${hasEnGuide ? `
+                                    <a href="${this.escape(p.guide_pdf_url_en)}" target="_blank" rel="noopener noreferrer" 
+                                       class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition inline-flex items-center space-x-1 shadow-sm" title="Consulter le guide PDF anglais (nouvel onglet)">
+                                        <span>EN</span>
+                                        <span class="text-[10px]">👁️</span>
+                                    </a>
+                                ` : `
+                                    <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" 
+                                            class="px-2 py-1 rounded-lg text-xs font-semibold bg-night border border-night-border text-gray-500 hover:border-gold/40 hover:text-gray-300 transition" title="Ajouter le guide PDF anglais">
+                                        <span>EN —</span>
+                                    </button>
+                                `}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Guides PDF R2 Status -->
-                    <div class="flex items-center space-x-2 text-[11px] mb-2">
-                        <span class="text-gray-400">Guides PDF :</span>
-                        <span class="px-2 py-0.5 rounded-md ${hasFrGuide ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-gray-500 border border-night-border'}">FR ${hasFrGuide ? '✓' : '—'}</span>
-                        <span class="px-2 py-0.5 rounded-md ${hasEnGuide ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-gray-500 border border-night-border'}">EN ${hasEnGuide ? '✓' : '—'}</span>
+                    <!-- Raccourcis Modules (Tutoriels Vidéos & Stationnement) -->
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button type="button" onclick="AdminApp.selectPropertyAndTab(${p.id}, 'videos')" 
+                                class="flex items-center justify-between p-2.5 rounded-xl bg-night border border-night-border hover:border-blue-500/40 hover:bg-blue-500/5 transition group/btn">
+                            <span class="text-xs font-semibold text-gray-300 group-hover/btn:text-white flex items-center space-x-1.5">
+                                <span>🎬</span>
+                                <span>Vidéos</span>
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">${p.videos_count}</span>
+                        </button>
+                        <button type="button" onclick="AdminApp.selectPropertyAndTab(${p.id}, 'parking')" 
+                                class="flex items-center justify-between p-2.5 rounded-xl bg-night border border-night-border hover:border-amber-500/40 hover:bg-amber-500/5 transition group/btn">
+                            <span class="text-xs font-semibold text-gray-300 group-hover/btn:text-white flex items-center space-x-1.5">
+                                <span>🅿️</span>
+                                <span>Parking</span>
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">${p.parking_locations_count}</span>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Barre d'actions responsive -->
-                <div class="pt-3 flex flex-wrap items-center justify-between border-t border-night-border/40 gap-2">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                        <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" class="px-3 py-1.5 rounded-xl bg-night border border-night-border hover:bg-gold hover:text-white hover:border-gold text-xs font-semibold text-gray-200 transition">
-                            ✏️ Éditer
-                        </button>
-                        <button type="button" onclick="AdminApp.selectPropertyAndTab(${p.id}, 'videos')" class="px-2.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 text-xs font-semibold transition" title="Gérer les vidéos">
-                            🎬 Vidéos (${p.videos_count})
-                        </button>
-                        <button type="button" onclick="AdminApp.selectPropertyAndTab(${p.id}, 'parking')" class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500 hover:text-white text-amber-400 text-xs font-semibold transition" title="Gérer le stationnement">
-                            🅿️ Parking
-                        </button>
-                    </div>
-                    <div class="flex items-center space-x-1.5 ml-auto">
-                        <a href="${this.getPortalUrl(p.slug)}" target="_blank" rel="noopener noreferrer" class="p-2 rounded-xl bg-night border border-night-border hover:bg-white/10 text-gray-400 hover:text-white transition" title="Tester le portail voyageur">
-                            👁️
-                        </a>
-                        <button type="button" onclick="AdminApp.confirmDeleteProperty(${p.id}, '${this.escape(p.name)}')" class="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 transition" title="Supprimer">
-                            🗑️
-                        </button>
-                    </div>
+                <!-- Barre d'actions équilibrée (1 seule ligne, grille 12 colonnes sans chevauchement) -->
+                <div class="pt-3 border-t border-night-border/50 grid grid-cols-12 gap-2">
+                    <button type="button" onclick="AdminApp.openPropertyModal(${p.id})" 
+                            class="col-span-6 py-2 px-2.5 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm">
+                        <span>✏️</span>
+                        <span>Modifier</span>
+                    </button>
+                    <a href="${this.getPortalUrl(p.slug)}" target="_blank" rel="noopener noreferrer" 
+                       class="col-span-4 py-2 px-2 rounded-xl bg-night border border-night-border hover:bg-white/10 text-gray-300 hover:text-white text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-sm" title="Ouvrir le portail voyageur">
+                        <span>👁️</span>
+                        <span>Portail</span>
+                    </a>
+                    <button type="button" onclick="AdminApp.confirmDeleteProperty(${p.id}, '${this.escape(p.name)}')" 
+                            class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet hébergement">
+                        <span>🗑️</span>
+                    </button>
                 </div>
             </div>
             `;
@@ -646,14 +728,14 @@ const AdminApp = {
                         <!-- LIGNE 1 : EN-TÊTE / IDENTITÉ DE LA VIDÉO (Pleine largeur sur mobile, titre jamais masqué) -->
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
-                                <!-- Poignée d'ordre ▲ / ▼ -->
-                                <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
-                                    <button type="button" onclick="AdminApp.moveVideo(${v.id}, -1)" ${index === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
-                                    <button type="button" onclick="AdminApp.moveVideo(${v.id}, 1)" ${index === list.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
+                                <!-- Poignée d'ordre ▲ / ▼ en micro-pillule élégante -->
+                                <div class="flex flex-col space-y-0.5 bg-night p-1 rounded-xl border border-night-border/70 text-gray-400 flex-shrink-0">
+                                    <button type="button" onclick="AdminApp.moveVideo(${v.id}, -1)" ${index === 0 ? 'disabled class="opacity-20 cursor-not-allowed p-0.5 text-[11px]"' : 'class="p-0.5 hover:text-gold text-[11px] transition"'} title="Monter">▲</button>
+                                    <button type="button" onclick="AdminApp.moveVideo(${v.id}, 1)" ${index === list.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed p-0.5 text-[11px]"' : 'class="p-0.5 hover:text-gold text-[11px] transition"'} title="Descendre">▼</button>
                                 </div>
 
                                 <!-- Badge icône -->
-                                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${this.escape(v.icon_bg_color || 'bg-blue-50')} ${this.escape(v.icon_text_color || 'text-blue-500')} flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 shadow-md">
+                                <div class="w-12 h-12 rounded-2xl ${this.escape(v.icon_bg_color || 'bg-blue-50')} ${this.escape(v.icon_text_color || 'text-blue-500')} flex items-center justify-center text-2xl flex-shrink-0 shadow-md">
                                     ${this.escape(v.icon || '🎬')}
                                 </div>
 
@@ -685,26 +767,24 @@ const AdminApp = {
                             </div>
                         </div>
 
-                        <!-- LIGNE 2 : BARRE D'ACTIONS (SÉPARÉE, RESPONSIVE & ADAPTÉE AU MOBILE) -->
-                        <div class="pt-3 mt-3.5 border-t border-night-border/50 flex flex-wrap items-center justify-between gap-2">
+                        <!-- LIGNE 2 : BARRE D'ACTIONS (Grille 12 colonnes, 1 seule ligne, 0 chevauchement) -->
+                        <div class="pt-3 mt-3.5 border-t border-night-border/50 grid grid-cols-12 gap-2">
                             <button type="button" onclick="AdminApp.previewVideo('${this.escape(v.video_url)}', '${this.escape(v.title_fr)}')" 
-                                    class="px-3.5 py-1.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-200 transition flex items-center space-x-1.5 shadow-sm">
+                                    class="col-span-6 py-2 px-2.5 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm">
                                 <span>▶️</span>
                                 <span>Lire la vidéo</span>
                             </button>
 
-                            <div class="flex items-center space-x-2 ml-auto">
-                                <button type="button" onclick="AdminApp.openVideoModal(${v.id})" 
-                                        class="px-3 py-1.5 rounded-xl bg-night border border-night-border hover:bg-gold hover:text-white hover:border-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm" title="Modifier les informations">
-                                    <span>✏️</span>
-                                    <span>Modifier</span>
-                                </button>
-                                <button type="button" onclick="AdminApp.confirmDeleteVideo(${v.id}, '${this.escape(v.title_fr)}')" 
-                                        class="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 text-xs font-semibold text-red-400 transition flex items-center space-x-1 shadow-sm" title="Supprimer la vidéo">
-                                    <span>🗑️</span>
-                                    <span>Supprimer</span>
-                                </button>
-                            </div>
+                            <button type="button" onclick="AdminApp.openVideoModal(${v.id})" 
+                                    class="col-span-4 py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm" title="Modifier le tutoriel">
+                                <span>✏️</span>
+                                <span>Modifier</span>
+                            </button>
+
+                            <button type="button" onclick="AdminApp.confirmDeleteVideo(${v.id}, '${this.escape(v.title_fr)}')" 
+                                    class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer la vidéo">
+                                <span>🗑️</span>
+                            </button>
                         </div>
                     </div>
                     `;
@@ -1564,30 +1644,29 @@ const AdminApp = {
                                 </div>
                             </div>
 
-                            <!-- LIGNE 2 : BARRE D'ACTIONS -->
-                            <div class="pt-3 mt-3.5 border-t border-night-border/50 flex flex-wrap items-center justify-between gap-2">
-                                <div>
-                                    ${hasAddress ? `
-                                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" rel="noopener noreferrer"
-                                           class="px-3.5 py-1.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition inline-flex items-center space-x-1.5 shadow-sm">
-                                            <span>🗺️</span>
-                                            <span>Ouvrir sur Maps</span>
-                                        </a>
-                                    ` : '<span class="text-[11px] text-gray-500 italic">Pas d\'adresse renseignée</span>'}
-                                </div>
+                            <!-- LIGNE 2 : BARRE D'ACTIONS (Grille 12 colonnes sans chevauchement) -->
+                            <div class="pt-3 mt-3.5 border-t border-night-border/50 grid grid-cols-12 gap-2">
+                                ${hasAddress ? `
+                                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" rel="noopener noreferrer"
+                                       class="col-span-6 py-2 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1.5 shadow-sm">
+                                        <span>🗺️</span>
+                                        <span>Maps</span>
+                                    </a>
+                                ` : `
+                                    <div class="col-span-6 py-2 px-2 rounded-xl bg-night/50 border border-night-border/40 text-[11px] text-gray-500 italic flex items-center justify-center">
+                                        <span>Sans adresse</span>
+                                    </div>
+                                `}
 
-                                <div class="flex items-center space-x-2 ml-auto">
-                                    <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" 
-                                            class="px-3 py-1.5 rounded-xl bg-night border border-night-border hover:bg-gold hover:text-white hover:border-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm" title="Modifier l'emplacement">
-                                        <span>✏️</span>
-                                        <span>Modifier</span>
-                                    </button>
-                                    <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id}, '${this.escape(loc.name_fr)}')" 
-                                            class="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/30 text-xs font-semibold text-red-400 transition flex items-center space-x-1 shadow-sm" title="Supprimer cet emplacement">
-                                        <span>🗑️</span>
-                                        <span>Supprimer</span>
-                                    </button>
-                                </div>
+                                <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" 
+                                        class="col-span-4 py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm" title="Modifier l'emplacement">
+                                    <span>✏️</span>
+                                    <span>Modifier</span>
+                                </button>
+                                <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id}, '${this.escape(loc.name_fr)}')" 
+                                        class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet emplacement">
+                                    <span>🗑️</span>
+                                </button>
                             </div>
                         </div>
                     `;
