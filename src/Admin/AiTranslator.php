@@ -64,6 +64,221 @@ class AiTranslator
     }
 
     /**
+     * Interroge l'API de l'IA pour lister dynamiquement les modèles disponibles
+     */
+    public static function listAvailableModels(string $provider, string $apiKey = ''): array
+    {
+        $provider = strtolower(trim($provider));
+        if ($provider === self::PROVIDER_GEMINI) {
+            return self::listGeminiModels($apiKey);
+        } elseif ($provider === self::PROVIDER_OPENAI) {
+            return self::listOpenAiModels($apiKey);
+        } elseif ($provider === self::PROVIDER_CLAUDE) {
+            return self::listClaudeModels($apiKey);
+        }
+        return [];
+    }
+
+    private static function listGeminiModels(string $apiKey): array
+    {
+        $defaultList = [
+            ['id' => 'gemini-3.5-flash', 'name' => 'Gemini 3.5 Flash (Recommandé)', 'recommended' => true],
+            ['id' => 'gemini-3.8-flash', 'name' => 'Gemini 3.8 Flash', 'recommended' => false],
+            ['id' => 'gemini-3-flash-preview', 'name' => 'Gemini 3 Flash Preview', 'recommended' => false],
+            ['id' => 'gemini-flash-latest', 'name' => 'Gemini Flash Latest', 'recommended' => false],
+            ['id' => 'gemini-3.5-flash-lite', 'name' => 'Gemini 3.5 Flash Lite', 'recommended' => false],
+            ['id' => 'gemini-2.5-pro', 'name' => 'Gemini 2.5 Pro', 'recommended' => false],
+        ];
+
+        if (empty($apiKey)) {
+            return $defaultList;
+        }
+
+        try {
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . urlencode($apiKey);
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT        => 6,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_SSL_VERIFYPEER => true
+            ]);
+            $body = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $body) {
+                $data = json_decode((string)$body, true);
+                if (!empty($data['models']) && is_array($data['models'])) {
+                    $models = [];
+                    foreach ($data['models'] as $m) {
+                        $methods = $m['supportedGenerationMethods'] ?? [];
+                        if (!in_array('generateContent', $methods, true)) {
+                            continue;
+                        }
+                        $id = str_replace('models/', '', $m['name'] ?? '');
+                        if (preg_match('/(tts|robotics|banana|argon|lyria|transcribe|computer-use|antigravity|embedding)/i', $id)) {
+                            continue;
+                        }
+                        $displayName = $m['displayName'] ?? $id;
+                        $isRecommended = ($id === 'gemini-3.5-flash');
+                        $models[] = [
+                            'id' => $id,
+                            'name' => $displayName . ($isRecommended ? ' (Recommandé)' : ''),
+                            'recommended' => $isRecommended,
+                            'is_flash' => (strpos($id, 'flash') !== false)
+                        ];
+                    }
+
+                    if (!empty($models)) {
+                        usort($models, function ($a, $b) {
+                            if ($a['recommended'] !== $b['recommended']) {
+                                return $a['recommended'] ? -1 : 1;
+                            }
+                            if ($a['is_flash'] !== $b['is_flash']) {
+                                return $a['is_flash'] ? -1 : 1;
+                            }
+                            return strnatcasecmp($b['id'], $a['id']);
+                        });
+                        return $models;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('[AiTranslator] listGeminiModels error: ' . $e->getMessage());
+        }
+
+        return $defaultList;
+    }
+
+    private static function listOpenAiModels(string $apiKey): array
+    {
+        $defaultList = [
+            ['id' => 'gpt-4o-mini', 'name' => 'GPT-4o Mini (Recommandé - Rapide & économique)', 'recommended' => true],
+            ['id' => 'gpt-4o', 'name' => 'GPT-4o (Haut de gamme)', 'recommended' => false],
+            ['id' => 'o3-mini', 'name' => 'o3-mini (Raisonnement avancé)', 'recommended' => false],
+            ['id' => 'gpt-3.5-turbo', 'name' => 'GPT-3.5 Turbo', 'recommended' => false],
+        ];
+
+        if (empty($apiKey)) {
+            return $defaultList;
+        }
+
+        try {
+            $url = 'https://api.openai.com/v1/models';
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . trim($apiKey)],
+                CURLOPT_TIMEOUT        => 6,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_SSL_VERIFYPEER => true
+            ]);
+            $body = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $body) {
+                $data = json_decode((string)$body, true);
+                if (!empty($data['data']) && is_array($data['data'])) {
+                    $models = [];
+                    foreach ($data['data'] as $m) {
+                        $id = $m['id'] ?? '';
+                        if (!preg_match('/^(gpt-4|o1|o3|chatgpt|gpt-3\.5)/i', $id)) {
+                            continue;
+                        }
+                        if (preg_match('/(audio|realtime|transcribe|moderation|embedding|tts|instruct|vision-preview)/i', $id)) {
+                            continue;
+                        }
+                        $isRecommended = ($id === 'gpt-4o-mini');
+                        $models[] = [
+                            'id' => $id,
+                            'name' => $id . ($isRecommended ? ' (Recommandé)' : ''),
+                            'recommended' => $isRecommended
+                        ];
+                    }
+
+                    if (!empty($models)) {
+                        usort($models, function ($a, $b) {
+                            if ($a['recommended'] !== $b['recommended']) {
+                                return $a['recommended'] ? -1 : 1;
+                            }
+                            return strnatcasecmp($a['id'], $b['id']);
+                        });
+                        return $models;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('[AiTranslator] listOpenAiModels error: ' . $e->getMessage());
+        }
+
+        return $defaultList;
+    }
+
+    private static function listClaudeModels(string $apiKey): array
+    {
+        $defaultList = [
+            ['id' => 'claude-3-5-haiku-latest', 'name' => 'Claude 3.5 Haiku (Recommandé - Rapide & précis)', 'recommended' => true],
+            ['id' => 'claude-3-5-sonnet-latest', 'name' => 'Claude 3.5 Sonnet (Qualité maximale)', 'recommended' => false],
+            ['id' => 'claude-3-opus-latest', 'name' => 'Claude 3 Opus', 'recommended' => false],
+            ['id' => 'claude-3-haiku-20240307', 'name' => 'Claude 3 Haiku (20240307)', 'recommended' => false],
+        ];
+
+        if (empty($apiKey)) {
+            return $defaultList;
+        }
+
+        try {
+            $url = 'https://api.anthropic.com/v1/models';
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => [
+                    'x-api-key: ' . trim($apiKey),
+                    'anthropic-version: 2023-06-01'
+                ],
+                CURLOPT_TIMEOUT        => 6,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_SSL_VERIFYPEER => true
+            ]);
+            $body = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $body) {
+                $data = json_decode((string)$body, true);
+                if (!empty($data['data']) && is_array($data['data'])) {
+                    $models = [];
+                    foreach ($data['data'] as $m) {
+                        $id = $m['id'] ?? '';
+                        $displayName = $m['display_name'] ?? $id;
+                        $isRecommended = (strpos($id, '3-5-haiku') !== false);
+                        $models[] = [
+                            'id' => $id,
+                            'name' => $displayName . ($isRecommended ? ' (Recommandé)' : ''),
+                            'recommended' => $isRecommended
+                        ];
+                    }
+                    if (!empty($models)) {
+                        usort($models, function ($a, $b) {
+                            if ($a['recommended'] !== $b['recommended']) {
+                                return $a['recommended'] ? -1 : 1;
+                            }
+                            return strnatcasecmp($a['id'], $b['id']);
+                        });
+                        return $models;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('[AiTranslator] listClaudeModels error: ' . $e->getMessage());
+        }
+
+        return $defaultList;
+    }
+
+    /**
      * Traduit les champs de règles générales de stationnement
      * Reçoit le tableau complet (avec champs *_fr) et remplit les versions *_en
      */

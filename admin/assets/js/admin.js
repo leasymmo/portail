@@ -1491,6 +1491,7 @@ const AdminApp = {
         }
 
         this.handleAiProviderChange();
+        this.refreshAiModels();
 
         const resultEl = document.getElementById('ai-test-result');
         if (resultEl) {
@@ -1516,6 +1517,48 @@ const AdminApp = {
         if (activeGroup) {
             activeGroup.classList.remove('hidden');
         }
+
+        this.refreshAiModels();
+    },
+
+    async refreshAiModels() {
+        const selectProvider = document.getElementById('ai-provider-select');
+        const provider = selectProvider ? selectProvider.value : 'gemini';
+        const keyInput = document.getElementById(`ai-key-${provider}`);
+        const apiKey = keyInput ? keyInput.value.trim() : '';
+
+        const modelSelect = document.getElementById('ai-model-select');
+        const refreshIcon = document.getElementById('ai-models-refresh-icon');
+        const refreshLabel = document.getElementById('ai-models-refresh-label');
+
+        if (refreshIcon) refreshIcon.classList.add('animate-spin');
+        if (refreshLabel) refreshLabel.textContent = 'Interrogation API...';
+        if (modelSelect) {
+            modelSelect.disabled = true;
+            modelSelect.innerHTML = `<option value="">Interrogation de l'API ${provider.toUpperCase()} en cours...</option>`;
+        }
+
+        try {
+            const res = await this.apiRequest(`api/index.php?action=models_list&provider=${encodeURIComponent(provider)}&api_key=${encodeURIComponent(apiKey)}`);
+            if (res.ok && Array.isArray(res.models) && res.models.length > 0) {
+                const s = this.state.settings || {};
+                const activeModel = s[`ai_model_${provider}`] || res.active_model || '';
+
+                modelSelect.innerHTML = res.models.map(m => {
+                    const isSelected = (m.id === activeModel || (!activeModel && m.recommended));
+                    return `<option value="${this.escape(m.id)}" ${isSelected ? 'selected' : ''}>${this.escape(m.name)} [${this.escape(m.id)}]</option>`;
+                }).join('');
+            } else {
+                modelSelect.innerHTML = `<option value="">Aucun modèle détecté (vérifiez votre clé API)</option>`;
+            }
+        } catch (err) {
+            modelSelect.innerHTML = `<option value="">Erreur lors de la récupération des modèles</option>`;
+            this.showToast(`Impossible de lister les modèles : ${err.message}`, 'error');
+        } finally {
+            if (modelSelect) modelSelect.disabled = false;
+            if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+            if (refreshLabel) refreshLabel.textContent = 'Actualiser les modèles';
+        }
     },
 
     toggleKeyVisibility(inputId) {
@@ -1529,6 +1572,8 @@ const AdminApp = {
         const provider = select ? select.value : 'gemini';
         const keyInput = document.getElementById(`ai-key-${provider}`);
         const apiKey = keyInput ? keyInput.value.trim() : '';
+        const modelSelect = document.getElementById('ai-model-select');
+        const model = modelSelect ? modelSelect.value : null;
 
         const testBtn = document.getElementById('btn-test-ai');
         const resultEl = document.getElementById('ai-test-result');
@@ -1541,26 +1586,27 @@ const AdminApp = {
 
         resultEl.classList.remove('hidden');
         resultEl.className = 'p-3 rounded-xl text-xs space-y-1 border bg-night/80 border-gold/30 text-gold-light';
-        resultEl.innerHTML = `<p class="flex items-center gap-2"><span>🔄</span><span>Envoi d'une requête de test à ${provider.toUpperCase()}...</span></p>`;
+        resultEl.innerHTML = `<p class="flex items-center gap-2"><span>🔄</span><span>Envoi d'une requête de test à ${provider.toUpperCase()} (${model || 'modèle par défaut'})...</span></p>`;
 
         try {
             const res = await this.apiRequest('api/index.php?action=test_ai', 'POST', {
                 provider,
-                api_key: apiKey
+                api_key: apiKey,
+                model
             });
 
             resultEl.className = 'p-3.5 rounded-xl text-xs space-y-1.5 border bg-emerald-500/10 border-emerald-500/30 text-emerald-300';
             resultEl.innerHTML = `
                 <div class="flex items-center space-x-2 font-bold text-emerald-400">
                     <span>✅</span>
-                    <span>Connexion réussie avec ${res.provider.toUpperCase()} (${res.duration_ms} ms)</span>
+                    <span>Connexion réussie avec ${res.provider.toUpperCase()} [${this.escape(res.model)}] (${res.duration_ms} ms)</span>
                 </div>
                 <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
                     <p><strong class="text-gray-400">FR :</strong> "${this.escape(res.sample_fr)}"</p>
                     <p><strong class="text-emerald-400">EN :</strong> "${this.escape(res.sample_en)}"</p>
                 </div>
             `;
-            this.showToast(`Connexion à ${provider.toUpperCase()} validée avec succès !`, 'success');
+            this.showToast(`Connexion à ${provider.toUpperCase()} (${res.model}) validée !`, 'success');
         } catch (err) {
             resultEl.className = 'p-3.5 rounded-xl text-xs space-y-1 border bg-red-500/10 border-red-500/30 text-red-300';
             resultEl.innerHTML = `
@@ -1583,6 +1629,8 @@ const AdminApp = {
         e.preventDefault();
         const select = document.getElementById('ai-provider-select');
         const provider = select ? select.value : 'gemini';
+        const modelSelect = document.getElementById('ai-model-select');
+        const selectedModel = modelSelect ? modelSelect.value : '';
 
         const payload = {
             ai_provider: provider,
@@ -1590,6 +1638,10 @@ const AdminApp = {
             ai_api_key_openai: (document.getElementById('ai-key-openai')?.value || '').trim(),
             ai_api_key_claude: (document.getElementById('ai-key-claude')?.value || '').trim()
         };
+
+        if (selectedModel) {
+            payload[`ai_model_${provider}`] = selectedModel;
+        }
 
         try {
             const res = await this.apiRequest('api/index.php?action=settings_save', 'POST', {

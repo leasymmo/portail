@@ -399,6 +399,30 @@ try {
             echo json_encode($testRes, JSON_UNESCAPED_UNICODE);
             exit;
 
+        case 'models_list':
+            $provider = $body['provider'] ?? ($_GET['provider'] ?? ($_POST['provider'] ?? 'gemini'));
+            $apiKey = trim((string)($body['api_key'] ?? ($_GET['api_key'] ?? ($_POST['api_key'] ?? ''))));
+
+            if (empty($apiKey) || strpos($apiKey, '•') !== false) {
+                $db = \Cdh\Portal\Database::getConnection();
+                $stmt = $db->prepare('SELECT setting_value FROM admin_settings WHERE setting_key = :k LIMIT 1');
+                $stmt->execute(['k' => 'ai_api_key_' . $provider]);
+                $apiKey = (string)$stmt->fetchColumn();
+            }
+
+            require_once dirname(__DIR__, 2) . '/src/Admin/AiTranslator.php';
+            $models = \Cdh\Portal\Admin\AiTranslator::listAvailableModels($provider, $apiKey);
+            $settings = $repo->getSettings();
+            $activeModel = $settings['ai_model_' . $provider] ?? (\Cdh\Portal\Admin\AiTranslator::DEFAULT_MODELS[$provider] ?? '');
+
+            echo json_encode([
+                'ok'           => true,
+                'provider'     => $provider,
+                'active_model' => $activeModel,
+                'models'       => $models
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+
         default:
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => 'Action inconnue : ' . $action]);

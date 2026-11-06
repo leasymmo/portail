@@ -1086,6 +1086,21 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <p class="text-[11px] text-gray-400">Modèle actif : <code class="text-gold-light bg-gold/10 px-1 py-0.5 rounded">claude-3-5-haiku-latest</code></p>
                 </div>
 
+                <!-- Sélecteur dynamique de modèle (interroge l'API de l'IA en direct) -->
+                <div class="pt-1 border-t border-night-border/50">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-gray-300">Modèle sélectionné *</label>
+                        <button type="button" onclick="AdminApp.refreshAiModels()" class="text-[11px] text-gold hover:text-gold-light flex items-center space-x-1 hover:underline cursor-pointer" title="Interroger l'API pour récupérer les modèles disponibles">
+                            <span id="ai-models-refresh-icon">🔄</span>
+                            <span id="ai-models-refresh-label">Actualiser les modèles</span>
+                        </button>
+                    </div>
+                    <select id="ai-model-select" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <option value="">Chargement des modèles disponibles...</option>
+                    </select>
+                    <p class="text-[11px] text-gray-400 mt-1">Interroge l'API en direct pour vous proposer uniquement les modèles actifs et compatibles.</p>
+                </div>
+
                 <!-- Zone résultat test connexion -->
                 <div id="ai-test-result" class="hidden p-3 rounded-xl text-xs space-y-1"></div>
 
@@ -1107,6 +1122,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=1.1"></script>
+    <script src="assets/js/admin.js?v=1.2"></script>
 </body>
 </html>
