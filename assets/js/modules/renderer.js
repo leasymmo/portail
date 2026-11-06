@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.7';
-import { Utils } from './utils.js?v=10.7';
-import { I18n } from './i18n.js?v=10.7';
-import { ScrollManager } from './scroll.js?v=10.7';
-import { Router, BASE_PATH } from './router.js?v=10.7';
-import { ModalManager } from './modals.js?v=10.7';
-import { PdfViewer } from './pdf-viewer.js?v=10.7';
+import { AppState } from './state.js?v=10.8';
+import { Utils } from './utils.js?v=10.8';
+import { I18n } from './i18n.js?v=10.8';
+import { ScrollManager } from './scroll.js?v=10.8';
+import { Router, BASE_PATH } from './router.js?v=10.8';
+import { ModalManager } from './modals.js?v=10.8';
+import { PdfViewer } from './pdf-viewer.js?v=10.8';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -605,7 +605,7 @@ export const PropertyRenderer = {
                                class="flex-1 py-1.5 px-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gold hover:text-white text-ink dark:text-white text-xs font-semibold text-center transition">
                                 📍 ${I18n.t('parking_maps_btn')}
                             </a>
-                            <a href="${loc.booking_url || 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures'}" target="_blank" rel="noopener noreferrer"
+                            <a href="${pr.booking_url || 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures'}" target="_blank" rel="noopener noreferrer"
                                class="flex-1 py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold text-center transition shadow-xs">
                                 🚇 ${I18n.t('parking_tcl_btn')} ↗
                             </a>

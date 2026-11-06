@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.7';
-import { Utils } from './utils.js?v=10.7';
+import { AppState } from './state.js?v=10.8';
+import { Utils } from './utils.js?v=10.8';
 
 export const I18n = {
     currentLang: 'fr',
