@@ -42,13 +42,11 @@ const AdminApp = {
         // Chargement initial des données
         await this.loadInitialData();
 
-        // Gérer le hash d'URL s'il existe (#properties, #videos, #parking, etc.)
-        const hash = window.location.hash.replace('#', '');
-        if (['dashboard', 'properties', 'videos', 'parking', 'logs', 'users'].includes(hash)) {
-            this.switchTab(hash);
-        } else {
-            this.switchTab('dashboard');
-        }
+        // Application de la route de l'URL (onglet + hébergement sélectionné)
+        this.applyRouteFromUrl(true);
+
+        // Écouter les changements de navigation dans l'historique (Back/Forward)
+        window.addEventListener('hashchange', () => this.applyRouteFromUrl(false));
     },
 
     async loadInitialData() {
@@ -181,7 +179,90 @@ const AdminApp = {
         });
     },
 
-    switchTab(tabName) {
+    parseRoute() {
+        let hash = (window.location.hash || '').replace(/^#\/?/, '').trim();
+        let tab = 'dashboard';
+        let propertyRef = null;
+        let parkingSubtab = null;
+
+        if (hash) {
+            if (hash.includes('?')) {
+                const parts = hash.split('?');
+                tab = parts[0].trim();
+                const params = new URLSearchParams(parts[1]);
+                propertyRef = params.get('property') || params.get('logement') || params.get('property_id') || params.get('id');
+                parkingSubtab = params.get('subtab');
+            } else if (hash.includes('/')) {
+                const parts = hash.split('/');
+                tab = parts[0].trim();
+                if (parts[1]) propertyRef = parts[1].trim();
+            } else {
+                tab = hash;
+            }
+        }
+
+        // Repli sur les paramètres de recherche de l'URL (?property=...)
+        if (!propertyRef) {
+            const urlParams = new URLSearchParams(window.location.search);
+            propertyRef = urlParams.get('property') || urlParams.get('logement') || urlParams.get('property_id') || urlParams.get('id');
+            if (!parkingSubtab) parkingSubtab = urlParams.get('subtab');
+        }
+
+        const validTabs = ['dashboard', 'properties', 'videos', 'parking', 'logs', 'users'];
+        if (!validTabs.includes(tab)) {
+            tab = 'dashboard';
+        }
+
+        return { tab, propertyRef, parkingSubtab };
+    },
+
+    applyRouteFromUrl(isInitial = false) {
+        const { tab, propertyRef, parkingSubtab } = this.parseRoute();
+
+        if (propertyRef && this.state.properties.length > 0) {
+            const matched = this.state.properties.find(p => 
+                p.slug === propertyRef || 
+                p.slug.toLowerCase() === propertyRef.toLowerCase() || 
+                String(p.id) === String(propertyRef)
+            );
+            if (matched) {
+                this.state.currentPropertyId = matched.id;
+            }
+        }
+
+        if (!this.state.currentPropertyId && this.state.properties.length > 0) {
+            this.state.currentPropertyId = this.state.properties[0].id;
+        }
+
+        if (parkingSubtab && ['general', 'locations'].includes(parkingSubtab)) {
+            this.state.parkingSubtab = parkingSubtab;
+        }
+
+        this.switchTab(tab, true);
+    },
+
+    updateUrlHash() {
+        const tab = this.state.activeTab || 'dashboard';
+        let newHash = `#${tab}`;
+
+        if (['videos', 'parking'].includes(tab)) {
+            const prop = this.state.properties.find(p => p.id == this.state.currentPropertyId);
+            const propParam = prop ? (prop.slug || prop.id) : this.state.currentPropertyId;
+            if (propParam) {
+                if (tab === 'parking' && this.state.parkingSubtab === 'locations') {
+                    newHash = `#${tab}?property=${encodeURIComponent(propParam)}&subtab=locations`;
+                } else {
+                    newHash = `#${tab}?property=${encodeURIComponent(propParam)}`;
+                }
+            }
+        }
+
+        if (window.location.hash !== newHash) {
+            history.replaceState(null, '', newHash);
+        }
+    },
+
+    switchTab(tabName, updateHash = true) {
         // Contrôle des droits d'accès
         if (tabName === 'users' && this.state.user && this.state.user.role !== 'superadmin') {
             this.showToast('Accès restreint aux super-administrateurs', 'error');
@@ -189,7 +270,9 @@ const AdminApp = {
         }
 
         this.state.activeTab = tabName;
-        window.location.hash = tabName;
+        if (updateHash) {
+            this.updateUrlHash();
+        }
 
         // Mise à jour visuelle des boutons de navigation
         document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -853,10 +936,12 @@ const AdminApp = {
     async loadVideosView() {
         this.updatePropertySelector('videos-property-select', async (pid) => {
             this.state.currentPropertyId = pid;
+            this.updateUrlHash();
             await this.fetchAndRenderVideos(pid);
         });
 
         if (this.state.currentPropertyId) {
+            this.updateUrlHash();
             await this.fetchAndRenderVideos(this.state.currentPropertyId);
         }
     },
@@ -1350,13 +1435,15 @@ const AdminApp = {
     async loadParkingView() {
         this.updatePropertySelector('parking-property-select', async (pid) => {
             this.state.currentPropertyId = pid;
+            this.updateUrlHash();
             await this.fetchAndRenderParking(pid);
         });
 
         // Initialiser l'état du sous-onglet actif
-        this.switchParkingSubtab(this.state.parkingSubtab || 'general');
+        this.switchParkingSubtab(this.state.parkingSubtab || 'general', false);
 
         if (this.state.currentPropertyId) {
+            this.updateUrlHash();
             await this.fetchAndRenderParking(this.state.currentPropertyId);
         }
     },
@@ -1395,8 +1482,11 @@ const AdminApp = {
         }
     },
 
-    switchParkingSubtab(subtab) {
+    switchParkingSubtab(subtab, updateHash = true) {
         this.state.parkingSubtab = subtab;
+        if (updateHash && this.state.activeTab === 'parking') {
+            this.updateUrlHash();
+        }
         const btnGeneral = document.getElementById('parking-subtab-btn-general');
         const btnLocations = document.getElementById('parking-subtab-btn-locations');
         const tabGeneral = document.getElementById('parking-subtab-general');
