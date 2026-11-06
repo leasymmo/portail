@@ -11,19 +11,19 @@
 // -----------------------------------------------------------------------------
 // 1. IMPORTATION DES MODULES APPLICATIFS
 // -----------------------------------------------------------------------------
-import { AppState } from './modules/state.js?v=10.8';
-import { Utils } from './modules/utils.js?v=10.8';
-import { I18n } from './modules/i18n.js?v=10.8';
-import { ThemeManager } from './modules/theme.js?v=10.8';
-import { ScrollManager } from './modules/scroll.js?v=10.8';
-import { Router, BASE_PATH } from './modules/router.js?v=10.8';
-import { ApiService } from './modules/api.js?v=10.8';
-import { SheetGestureController, TabGestureController } from './modules/gestures.js?v=10.8';
-import { PdfViewer } from './modules/pdf-viewer.js?v=10.8';
-import { ModalManager } from './modules/modals.js?v=10.8';
-import { PropertyRenderer, ListRenderer, VideoSearch } from './modules/renderer.js?v=10.8';
-import { PwaManager } from './modules/pwa.js?v=10.8';
-import { AppController } from './modules/app-controller.js?v=10.8';
+import { AppState } from './modules/state.js?v=10.9';
+import { Utils } from './modules/utils.js?v=10.9';
+import { I18n } from './modules/i18n.js?v=10.9';
+import { ThemeManager } from './modules/theme.js?v=10.9';
+import { ScrollManager } from './modules/scroll.js?v=10.9';
+import { Router, BASE_PATH } from './modules/router.js?v=10.9';
+import { ApiService } from './modules/api.js?v=10.9';
+import { SheetGestureController, TabGestureController } from './modules/gestures.js?v=10.9';
+import { PdfViewer } from './modules/pdf-viewer.js?v=10.9';
+import { ModalManager } from './modules/modals.js?v=10.9';
+import { PropertyRenderer, ListRenderer, VideoSearch } from './modules/renderer.js?v=10.9';
+import { PwaManager } from './modules/pwa.js?v=10.9';
+import { AppController } from './modules/app-controller.js?v=10.9';
 
 // -----------------------------------------------------------------------------
 // 2. EXPOSITION DES MODULES SUR L'OBJET GLOBAL (POUR DÉBOGAGE & INTEROPÉRABILITÉ)
@@ -74,6 +74,7 @@ window.openGoogleReview = (e) => ModalManager.openGoogleReview(e);
 window.switchFromReviewToContact = (e) => ModalManager.switchFromReviewToContact(e);
 window.openContactModal = () => ModalManager.openContact();
 window.closeContactModal = () => ModalManager.closeContact();
+window.updateAnthonyStatus = () => PropertyRenderer.updateAnthonyStatus();
 window.openWhatsAppAnthony = (e) => ModalManager.openWhatsAppAnthony(e);
 window.goToVideosFromContact = (e) => ModalManager.switchToVideosFromContact(e);
 window.goToWifiFromContact = (e) => ModalManager.switchToWifiFromContact(e);
@@ -101,6 +102,8 @@ window.addEventListener('DOMContentLoaded', () => {
     ThemeManager.init();
     PwaManager.init();
     PdfViewer.init();
+    PropertyRenderer.updateAnthonyStatus();
+    setInterval(() => PropertyRenderer.updateAnthonyStatus(), 60000);
     AppController.initEvents();
     AppController.load();
 });

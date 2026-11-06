@@ -5,9 +5,9 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.8';
-import { BASE_PATH } from './router.js?v=10.8';
-import { I18n } from './i18n.js?v=10.8';
+import { AppState } from './state.js?v=10.9';
+import { BASE_PATH } from './router.js?v=10.9';
+import { I18n } from './i18n.js?v=10.9';
 
 export const PdfViewer = {
     pdfDoc: null,

@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.8';
-import { Utils } from './utils.js?v=10.8';
+import { AppState } from './state.js?v=10.9';
+import { Utils } from './utils.js?v=10.9';
 
 export const I18n = {
     currentLang: 'fr',
@@ -142,6 +142,7 @@ export const I18n = {
             wifi_quick_copy_aria: "Copier immédiatement le mot de passe Wi-Fi dans le presse-papier",
             guide_badge: "14 pages HD",
             anthony_status_online: "Disponible pour votre séjour",
+            anthony_status_offline: "Disponible dès 9h (horaires : 9h - 21h)",
             booking_badge: "Direct",
             review_badge: "★★★★★",
             a11y_wifi_copied: "Mot de passe Wi-Fi copié dans le presse-papier.",
@@ -280,6 +281,7 @@ export const I18n = {
             wifi_quick_copy_aria: "Copy Wi-Fi password immediately to clipboard",
             guide_badge: "14 HD pages",
             anthony_status_online: "Available for your stay",
+            anthony_status_offline: "Available from 9am (hours: 9am - 9pm)",
             booking_badge: "Direct",
             review_badge: "★★★★★",
             a11y_wifi_copied: "Wi-Fi password copied to clipboard.",

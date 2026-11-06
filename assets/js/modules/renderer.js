@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.8';
-import { Utils } from './utils.js?v=10.8';
-import { I18n } from './i18n.js?v=10.8';
-import { ScrollManager } from './scroll.js?v=10.8';
-import { Router, BASE_PATH } from './router.js?v=10.8';
-import { ModalManager } from './modals.js?v=10.8';
-import { PdfViewer } from './pdf-viewer.js?v=10.8';
+import { AppState } from './state.js?v=10.9';
+import { Utils } from './utils.js?v=10.9';
+import { I18n } from './i18n.js?v=10.9';
+import { ScrollManager } from './scroll.js?v=10.9';
+import { Router, BASE_PATH } from './router.js?v=10.9';
+import { ModalManager } from './modals.js?v=10.9';
+import { PdfViewer } from './pdf-viewer.js?v=10.9';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -246,6 +246,9 @@ export const PropertyRenderer = {
             }
         }
 
+        // Statut d'Anthony en direct (heure française : Vert de 9h à 21h, Rouge de 21h à 9h)
+        this.updateAnthonyStatus();
+
         // 3. Actualiser la grille des vidéos avec les titres traduits
         if (AppState.currentVideos && AppState.currentVideos.length > 0) {
             this.renderVideos(AppState.currentVideos);
@@ -301,6 +304,92 @@ export const PropertyRenderer = {
             targetLang = 'en';
         }
         ModalManager.openPdf(targetLang);
+    },
+
+    /**
+     * Détermine si Anthony est actuellement en ligne selon l'heure de Paris / France
+     * - Entre 9h00 et 20h59 (heure >= 9 et < 21) => En ligne (Point Vert)
+     * - Entre 21h00 et 08h59 (heure >= 21 ou < 9) => Hors ligne / Repos (Point Rouge)
+     */
+    isAnthonyOnlineInParis() {
+        try {
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Europe/Paris',
+                hour: 'numeric',
+                hourCycle: 'h23'
+            }).formatToParts(new Date());
+            const hourPart = parts.find(p => p.type === 'hour');
+            const hour = hourPart ? parseInt(hourPart.value, 10) : new Date().getHours();
+            return (hour >= 9 && hour < 21);
+        } catch (e) {
+            const h = new Date().getHours();
+            return (h >= 9 && h < 21);
+        }
+    },
+
+    /**
+     * Met à jour le point de statut (vert/rouge) sur la carte contact Anthony
+     * ainsi que dans l'en-tête de la modale de contact.
+     */
+    updateAnthonyStatus() {
+        const isOnline = this.isAnthonyOnlineInParis();
+
+        const badgeEl = document.getElementById('anthony-status-badge');
+        const pingEl = document.getElementById('anthony-status-ping');
+        const textEl = document.getElementById('anthony-status-text');
+        const badgePillEl = document.getElementById('anthony-status-badge-pill');
+        const modalBadgeEl = document.getElementById('modal-anthony-status-badge');
+        const modalPingEl = document.getElementById('modal-anthony-status-ping');
+
+        if (badgeEl) {
+            if (isOnline) {
+                badgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
+                badgeEl.title = (I18n.currentLang === 'en' ? 'Online for your stay (9am - 9pm Paris time)' : 'En ligne pour votre séjour (9h - 21h heure de Paris)');
+            } else {
+                badgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
+                badgeEl.title = (I18n.currentLang === 'en' ? 'Currently offline (hours: 9am - 9pm Paris time)' : 'Actuellement en repos (horaires : 9h - 21h heure française)');
+            }
+        }
+
+        if (pingEl) {
+            if (isOnline) {
+                pingEl.classList.remove('hidden');
+            } else {
+                pingEl.classList.add('hidden');
+            }
+        }
+
+        if (badgePillEl) {
+            if (isOnline) {
+                badgePillEl.className = 'inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex-shrink-0 whitespace-nowrap';
+            } else {
+                badgePillEl.className = 'inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex-shrink-0 whitespace-nowrap';
+            }
+        }
+
+        if (textEl) {
+            const key = isOnline ? 'anthony_status_online' : 'anthony_status_offline';
+            textEl.setAttribute('data-i18n', key);
+            textEl.textContent = I18n.t(key);
+        }
+
+        if (modalBadgeEl) {
+            if (isOnline) {
+                modalBadgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
+                modalBadgeEl.title = (I18n.currentLang === 'en' ? 'Online for your stay (9am - 9pm Paris time)' : 'En ligne pour votre séjour (9h - 21h heure de Paris)');
+            } else {
+                modalBadgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
+                modalBadgeEl.title = (I18n.currentLang === 'en' ? 'Currently offline (hours: 9am - 9pm Paris time)' : 'Actuellement en repos (horaires : 9h - 21h heure française)');
+            }
+        }
+
+        if (modalPingEl) {
+            if (isOnline) {
+                modalPingEl.classList.remove('hidden');
+            } else {
+                modalPingEl.classList.add('hidden');
+            }
+        }
     },
 
     toggleParkingSection(id) {

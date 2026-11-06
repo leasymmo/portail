@@ -660,11 +660,11 @@ body.modal-open {
     transition: opacity 0.34s ease !important;
 }
 
-/* Modales Standardisées (PDF & Vidéo prennent toute la largeur) */
+/* Modales Standardisées (PDF, Vidéo, Booking, Parking calés sur la largeur de #main-app) */
 .modal-sheet,
 .modal-sheet-video {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 72rem !important; /* Limité à la largeur maximale de #main-app (max-w-6xl = 72rem / 1152px) */
     /* Hauteur réhaussée standardisée : espace de 28px préservé au sommet */
     height: calc(100vh - 28px);
     height: calc(100dvh - 28px);
@@ -686,6 +686,15 @@ body.modal-open {
     -webkit-overflow-scrolling: touch;
     touch-action: manipulation !important;
     will-change: transform;
+}
+
+/* Bordures latérales sur grand écran pour s'aligner sur les bordures de #main-app */
+@media (min-width: 72rem) {
+    .modal-sheet,
+    .modal-sheet-video {
+        border-left: 1px solid var(--line) !important;
+        border-right: 1px solid var(--line) !important;
+    }
 }
 
 .modal-overlay.open .modal-sheet:not(.is-dragging),
@@ -738,6 +747,13 @@ body.modal-open {
     will-change: transform;
     margin-bottom: 0 !important;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 500px) {
+    .modal-sheet-compact {
+        border-left: 1px solid var(--line) !important;
+        border-right: 1px solid var(--line) !important;
+    }
 }
 
 /* Boutons icônes Copier (modale Wi-Fi) */
