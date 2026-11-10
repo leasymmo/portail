@@ -1522,11 +1522,12 @@ const AdminApp = {
         const viewProp = document.getElementById('parking-view-property');
         const viewCat = document.getElementById('parking-view-catalog');
 
-        const activeModeClass = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gold text-white shadow-md shadow-gold/20 cursor-pointer';
-        const inactiveModeClass = 'px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition flex items-center gap-2 cursor-pointer';
+        const activeModeClass = 'group px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gold text-white shadow-md shadow-gold/20 cursor-pointer';
+        const inactiveModeClass = 'group px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-2 cursor-pointer';
 
         if (btnProp) btnProp.className = this.state.parkingMainMode === 'property' ? activeModeClass : inactiveModeClass;
         if (btnCat) btnCat.className = this.state.parkingMainMode === 'catalog' ? activeModeClass : inactiveModeClass;
+        this.updateParkingCatalogBadge();
 
         if (viewProp) viewProp.classList.toggle('hidden', this.state.parkingMainMode !== 'property');
         if (viewCat) viewCat.classList.toggle('hidden', this.state.parkingMainMode !== 'catalog');
@@ -1654,6 +1655,12 @@ const AdminApp = {
         const mainBadge = document.getElementById('parking-main-catalog-badge');
         if (mainBadge) {
             mainBadge.textContent = count;
+            const isCatalogActive = (this.state.parkingMainMode === 'catalog');
+            if (isCatalogActive) {
+                mainBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-night/90 text-gold border border-gold/40 shadow-xs transition-all';
+            } else {
+                mainBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold/20 text-gold border border-gold/30 group-hover:bg-gold group-hover:text-night group-hover:border-gold shadow-xs transition-all duration-200';
+            }
         }
         const badge = document.getElementById('parking-subtab-catalog-badge');
         if (badge) {
@@ -3606,37 +3613,97 @@ const AdminApp = {
         listContainer.innerHTML = properties.map(prop => {
             const existingLink = linkedProps.find(lp => lp.property_id === prop.id);
             const isChecked = !!existingLink;
-            const walkingTime = existingLink ? (existingLink.walking_time_fr || '') : '';
-            const transitTime = existingLink ? (existingLink.transit_time_fr || '') : '';
-            const reachTime = existingLink ? (existingLink.how_to_reach_fr || '') : '';
+            const walkingTimeFr = existingLink ? (existingLink.walking_time_fr || '') : '';
+            const walkingTimeEn = existingLink ? (existingLink.walking_time_en || '') : '';
+            const transitTimeFr = existingLink ? (existingLink.transit_time_fr || '') : '';
+            const transitTimeEn = existingLink ? (existingLink.transit_time_en || '') : '';
+            const reachTimeFr = existingLink ? (existingLink.how_to_reach_fr || '') : '';
+            const reachTimeEn = existingLink ? (existingLink.how_to_reach_en || '') : '';
+            const notesFr = existingLink ? (existingLink.notes_fr || '') : '';
+            const notesEn = existingLink ? (existingLink.notes_en || '') : '';
+            const hasEnglish = (walkingTimeEn || transitTimeEn || reachTimeEn || notesEn);
 
             return `
-                <div class="p-3.5 rounded-2xl bg-night border ${isChecked ? 'border-gold/40 bg-gold/5' : 'border-night-border'} space-y-2.5 transition">
+                <div class="p-3.5 rounded-2xl bg-night border ${isChecked ? 'border-gold/40 bg-gold/5' : 'border-night-border'} space-y-3 transition" id="manage-link-card-${prop.id}">
                     <div class="flex items-center justify-between">
-                        <label class="flex items-center space-x-3 cursor-pointer">
+                        <label class="flex items-center space-x-3 cursor-pointer select-none">
                             <input type="checkbox" name="manage_link_prop_check" value="${prop.id}" onchange="AdminApp.toggleManageLinkDetails(${prop.id}, this.checked)" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded bg-night-card border-night-border text-gold focus:ring-gold accent-[#ba9641]">
                             <span class="text-xs font-bold text-white">${this.escape(prop.name)}</span>
                         </label>
-                        <span class="text-[11px] ${isChecked ? 'text-gold font-semibold' : 'text-gray-500'}">${isChecked ? '✓ Associé' : 'Non associé'}</span>
+                        <div class="flex items-center gap-2">
+                            <span id="manage-link-status-${prop.id}" class="text-[11px] ${isChecked ? 'text-gold font-semibold' : 'text-gray-500'}">
+                                ${isChecked ? '✓ Associé' : 'Non associé'}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Champs de détail spécifiques au logement -->
-                    <div id="manage-link-details-${prop.id}" class="${isChecked ? '' : 'hidden'} pt-2 border-t border-night-border/40 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        ${!isTcl ? `
-                            <div>
-                                <label class="block text-[10px] text-gray-400 mb-0.5">Temps de marche</label>
-                                <input type="text" id="manage-link-walking-${prop.id}" value="${this.escape(walkingTime)}" placeholder="Ex: 8 min à pied" class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    <div id="manage-link-details-${prop.id}" class="${isChecked ? '' : 'hidden'} pt-2.5 border-t border-night-border/40 space-y-3 text-xs">
+                        <!-- Barre d'outils de proposition de traduction pour ce logement -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] pb-1">
+                            <span class="text-gray-400 font-medium">Informations d'accès pour « ${this.escape(prop.name)} » :</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="AdminApp.translateLinkProperty(${prop.id})" id="btn-prop-trans-${prop.id}" class="px-2.5 py-1 rounded-lg bg-gold/15 hover:bg-gold/25 border border-gold/30 text-gold font-bold flex items-center gap-1.5 cursor-pointer transition shadow-xs">
+                                    <span id="prop-trans-icon-${prop.id}">✨</span>
+                                    <span>Proposer traduction IA</span>
+                                </button>
+                                <button type="button" onclick="AdminApp.toggleLinkPropEn(${prop.id})" class="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white flex items-center gap-1 cursor-pointer transition shadow-xs">
+                                    <span>🇬🇧</span>
+                                    <span>Version anglaise</span>
+                                </button>
                             </div>
-                        ` : `
-                            <div>
-                                <label class="block text-[10px] text-gray-400 mb-0.5">Temps transport TCL</label>
-                                <input type="text" id="manage-link-transit-${prop.id}" value="${this.escape(transitTime)}" placeholder="Ex: 15 min Métro A" class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                            </div>
+                        </div>
+
+                        <!-- Champs Français -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            ${!isTcl ? `
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[10px] font-semibold text-gray-300 mb-0.5">Temps de marche (FR)</label>
+                                    <input type="text" id="manage-link-walking-${prop.id}" value="${this.escape(walkingTimeFr)}" placeholder="Ex: Environ 8 min à pied" class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                </div>
+                            ` : `
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-gray-300 mb-0.5">Temps transport TCL (FR)</label>
+                                    <input type="text" id="manage-link-transit-${prop.id}" value="${this.escape(transitTimeFr)}" placeholder="Ex: 15 min en Métro A" class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-gray-300 mb-0.5">Itinéraire retour (FR)</label>
+                                    <input type="text" id="manage-link-reach-${prop.id}" value="${this.escape(reachTimeFr)}" placeholder="Ex: Métro A jusqu'à..." class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                </div>
+                            `}
                             <div class="sm:col-span-2">
-                                <label class="block text-[10px] text-gray-400 mb-0.5">Itinéraire retour</label>
-                                <input type="text" id="manage-link-reach-${prop.id}" value="${this.escape(reachTime)}" placeholder="Ex: Métro A jusqu'à..." class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                <label class="block text-[10px] font-semibold text-gray-300 mb-0.5">Consigne ou note d'accès spécifique (FR)</label>
+                                <input type="text" id="manage-link-notes-${prop.id}" value="${this.escape(notesFr)}" placeholder="Ex: Accès conseillé par la rue Pasteur" class="w-full p-2 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                             </div>
-                        `}
+                        </div>
+
+                        <!-- Champs Anglais (dépliables ou affichés dès la traduction) -->
+                        <div id="manage-link-en-group-${prop.id}" class="${(hasEnglish ? '' : 'hidden')} p-3 rounded-xl bg-night-card border border-gold/30 space-y-2.5">
+                            <span class="text-[11px] font-bold text-gold flex items-center gap-1.5">
+                                <span>🇬🇧</span> Version anglaise pour « ${this.escape(prop.name)} »
+                            </span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                ${!isTcl ? `
+                                    <div class="sm:col-span-2">
+                                        <label class="block text-[10px] text-gray-400 mb-0.5">Walking time (EN)</label>
+                                        <input type="text" id="manage-link-walking-en-${prop.id}" value="${this.escape(walkingTimeEn)}" placeholder="Ex: About 8 min walk" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                    </div>
+                                ` : `
+                                    <div>
+                                        <label class="block text-[10px] text-gray-400 mb-0.5">TCL transit time (EN)</label>
+                                        <input type="text" id="manage-link-transit-en-${prop.id}" value="${this.escape(transitTimeEn)}" placeholder="Ex: 15 min by Metro A" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-gray-400 mb-0.5">Return directions (EN)</label>
+                                        <input type="text" id="manage-link-reach-en-${prop.id}" value="${this.escape(reachTimeEn)}" placeholder="Ex: Metro A to..." class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                    </div>
+                                `}
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[10px] text-gray-400 mb-0.5">Specific access notes (EN)</label>
+                                    <input type="text" id="manage-link-notes-en-${prop.id}" value="${this.escape(notesEn)}" placeholder="Ex: Recommended entrance via Rue Pasteur" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -3647,8 +3714,132 @@ const AdminApp = {
 
     toggleManageLinkDetails(propId, checked) {
         const details = document.getElementById(`manage-link-details-${propId}`);
+        const card = document.getElementById(`manage-link-card-${propId}`);
+        const statusEl = document.getElementById(`manage-link-status-${propId}`);
+
         if (details) {
             details.classList.toggle('hidden', !checked);
+        }
+        if (card) {
+            if (checked) {
+                card.classList.add('border-gold/40', 'bg-gold/5');
+                card.classList.remove('border-night-border');
+            } else {
+                card.classList.remove('border-gold/40', 'bg-gold/5');
+                card.classList.add('border-night-border');
+            }
+        }
+        if (statusEl) {
+            statusEl.textContent = checked ? '✓ Associé' : 'Non associé';
+            statusEl.className = checked ? 'text-[11px] text-gold font-semibold' : 'text-[11px] text-gray-500';
+        }
+    },
+
+    toggleLinkPropEn(propId) {
+        const enGroup = document.getElementById(`manage-link-en-group-${propId}`);
+        if (enGroup) {
+            enGroup.classList.toggle('hidden');
+        }
+    },
+
+    async translateLinkProperty(propId) {
+        const cat = document.getElementById('manage-links-category')?.value || '';
+        const isTcl = (cat === 'tcl_pr');
+
+        const walkingFr = (document.getElementById(`manage-link-walking-${propId}`)?.value || '').trim();
+        const transitFr = (document.getElementById(`manage-link-transit-${propId}`)?.value || '').trim();
+        const reachFr = (document.getElementById(`manage-link-reach-${propId}`)?.value || '').trim();
+        const notesFr = (document.getElementById(`manage-link-notes-${propId}`)?.value || '').trim();
+
+        if (!walkingFr && !transitFr && !reachFr && !notesFr) {
+            this.showToast('Veuillez d\'abord renseigner au moins un champ en français pour ce logement.', 'warning');
+            return;
+        }
+
+        const iconEl = document.getElementById(`prop-trans-icon-${propId}`);
+        const btnEl = document.getElementById(`btn-prop-trans-${propId}`);
+        const origIcon = iconEl ? iconEl.innerHTML : '✨';
+
+        try {
+            if (btnEl) btnEl.disabled = true;
+            if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+
+            const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                type: 'parking_connection',
+                data: {
+                    walking_time_fr: walkingFr,
+                    transit_time_fr: transitFr,
+                    how_to_reach_fr: reachFr,
+                    notes_fr: notesFr
+                }
+            });
+
+            if (res.data) {
+                const walkingEnInput = document.getElementById(`manage-link-walking-en-${propId}`);
+                const transitEnInput = document.getElementById(`manage-link-transit-en-${propId}`);
+                const reachEnInput = document.getElementById(`manage-link-reach-en-${propId}`);
+                const notesEnInput = document.getElementById(`manage-link-notes-en-${propId}`);
+
+                if (walkingEnInput && res.data.walking_time_en) walkingEnInput.value = res.data.walking_time_en;
+                if (transitEnInput && res.data.transit_time_en) transitEnInput.value = res.data.transit_time_en;
+                if (reachEnInput && res.data.how_to_reach_en) reachEnInput.value = res.data.how_to_reach_en;
+                if (notesEnInput && res.data.notes_en) notesEnInput.value = res.data.notes_en;
+
+                // Révéler le bloc anglais pour ce logement
+                const enGroup = document.getElementById(`manage-link-en-group-${propId}`);
+                if (enGroup) enGroup.classList.remove('hidden');
+
+                const propObj = (this.state.properties || []).find(p => p.id === propId);
+                const propName = propObj ? propObj.name : 'ce logement';
+                this.showToast(`Traduction IA appliquée pour « ${propName} » !`, 'success');
+            }
+        } catch (err) {
+            this.showToast('Erreur lors de la traduction : ' + err.message, 'error');
+        } finally {
+            if (btnEl) btnEl.disabled = false;
+            if (iconEl) iconEl.innerHTML = origIcon;
+        }
+    },
+
+    async translateAllManageLinks() {
+        const checkboxes = document.querySelectorAll('input[name="manage_link_prop_check"]:checked');
+        if (checkboxes.length === 0) {
+            this.showToast('Aucun logement coché à traduire.', 'warning');
+            return;
+        }
+
+        const btnAll = document.getElementById('btn-manage-links-translate-all');
+        const origHtml = btnAll ? btnAll.innerHTML : '';
+        try {
+            if (btnAll) {
+                btnAll.disabled = true;
+                btnAll.innerHTML = '<span class="inline-block animate-spin">⏳</span> Traduction en cours...';
+            }
+
+            let translatedCount = 0;
+            for (const cb of checkboxes) {
+                const propId = parseInt(cb.value, 10);
+                const walkingFr = (document.getElementById(`manage-link-walking-${propId}`)?.value || '').trim();
+                const transitFr = (document.getElementById(`manage-link-transit-${propId}`)?.value || '').trim();
+                const reachFr = (document.getElementById(`manage-link-reach-${propId}`)?.value || '').trim();
+                const notesFr = (document.getElementById(`manage-link-notes-${propId}`)?.value || '').trim();
+
+                if (walkingFr || transitFr || reachFr || notesFr) {
+                    await this.translateLinkProperty(propId);
+                    translatedCount++;
+                }
+            }
+
+            if (translatedCount > 0) {
+                this.showToast(`Traductions IA générées pour ${translatedCount} logement(s) !`, 'success');
+            } else {
+                this.showToast('Veuillez renseigner les textes en français avant de lancer la traduction.', 'info');
+            }
+        } finally {
+            if (btnAll) {
+                btnAll.disabled = false;
+                btnAll.innerHTML = origHtml;
+            }
         }
     },
 
@@ -3666,17 +3857,72 @@ const AdminApp = {
         const checkboxes = document.querySelectorAll('input[name="manage_link_prop_check"]:checked');
         const links = [];
 
+        // Pré-traduction automatique intelligente si traduction activée et anglais manquant
+        if (this.state.aiAutoTranslateEnabled) {
+            for (const cb of checkboxes) {
+                const propId = parseInt(cb.value, 10);
+                const walkingFr = (document.getElementById(`manage-link-walking-${propId}`)?.value || '').trim();
+                const walkingEn = (document.getElementById(`manage-link-walking-en-${propId}`)?.value || '').trim();
+                const transitFr = (document.getElementById(`manage-link-transit-${propId}`)?.value || '').trim();
+                const transitEn = (document.getElementById(`manage-link-transit-en-${propId}`)?.value || '').trim();
+                const reachFr = (document.getElementById(`manage-link-reach-${propId}`)?.value || '').trim();
+                const reachEn = (document.getElementById(`manage-link-reach-en-${propId}`)?.value || '').trim();
+                const notesFr = (document.getElementById(`manage-link-notes-${propId}`)?.value || '').trim();
+                const notesEn = (document.getElementById(`manage-link-notes-en-${propId}`)?.value || '').trim();
+
+                const hasFr = (walkingFr || transitFr || reachFr || notesFr);
+                const hasMissingEn = (walkingFr && !walkingEn) || (transitFr && !transitEn) || (reachFr && !reachEn) || (notesFr && !notesEn);
+
+                if (hasFr && hasMissingEn) {
+                    try {
+                        const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                            type: 'parking_connection',
+                            data: {
+                                walking_time_fr: walkingFr,
+                                transit_time_fr: transitFr,
+                                how_to_reach_fr: reachFr,
+                                notes_fr: notesFr
+                            }
+                        });
+                        if (res.data) {
+                            const walkingEnInput = document.getElementById(`manage-link-walking-en-${propId}`);
+                            const transitEnInput = document.getElementById(`manage-link-transit-en-${propId}`);
+                            const reachEnInput = document.getElementById(`manage-link-reach-en-${propId}`);
+                            const notesEnInput = document.getElementById(`manage-link-notes-en-${propId}`);
+
+                            if (walkingEnInput && !walkingEn && res.data.walking_time_en) walkingEnInput.value = res.data.walking_time_en;
+                            if (transitEnInput && !transitEn && res.data.transit_time_en) transitEnInput.value = res.data.transit_time_en;
+                            if (reachEnInput && !reachEn && res.data.how_to_reach_en) reachEnInput.value = res.data.how_to_reach_en;
+                            if (notesEnInput && !notesEn && res.data.notes_en) notesEnInput.value = res.data.notes_en;
+                        }
+                    } catch (err) {
+                        console.warn('[AI] Échec traduction préalable logement lié :', err);
+                    }
+                }
+            }
+        }
+
         checkboxes.forEach(cb => {
             const propId = parseInt(cb.value, 10);
             const walkingInput = document.getElementById(`manage-link-walking-${propId}`);
+            const walkingEnInput = document.getElementById(`manage-link-walking-en-${propId}`);
             const transitInput = document.getElementById(`manage-link-transit-${propId}`);
+            const transitEnInput = document.getElementById(`manage-link-transit-en-${propId}`);
             const reachInput = document.getElementById(`manage-link-reach-${propId}`);
+            const reachEnInput = document.getElementById(`manage-link-reach-en-${propId}`);
+            const notesInput = document.getElementById(`manage-link-notes-${propId}`);
+            const notesEnInput = document.getElementById(`manage-link-notes-en-${propId}`);
 
             links.push({
                 property_id: propId,
                 walking_time_fr: walkingInput ? walkingInput.value.trim() : null,
+                walking_time_en: walkingEnInput ? walkingEnInput.value.trim() : null,
                 transit_time_fr: transitInput ? transitInput.value.trim() : null,
-                how_to_reach_fr: reachInput ? reachInput.value.trim() : null
+                transit_time_en: transitEnInput ? transitEnInput.value.trim() : null,
+                how_to_reach_fr: reachInput ? reachInput.value.trim() : null,
+                how_to_reach_en: reachEnInput ? reachEnInput.value.trim() : null,
+                notes_fr: notesInput ? notesInput.value.trim() : null,
+                notes_en: notesEnInput ? notesEnInput.value.trim() : null
             });
         });
 

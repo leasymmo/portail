@@ -375,15 +375,15 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <!-- SWITCH PRIMAIRE : PAR HÉBERGEMENT VS CATALOGUE GÉNÉRAL -->
                         <div class="inline-flex p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1 self-start md:self-auto">
                             <button type="button" id="parking-mode-btn-property" onclick="AdminApp.switchParkingMainMode('property')"
-                                    class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gold text-white shadow-md shadow-gold/20 cursor-pointer">
+                                    class="group px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gold text-white shadow-md shadow-gold/20 cursor-pointer">
                                 <span>🏠</span>
                                 <span>Par hébergement</span>
                             </button>
                             <button type="button" id="parking-mode-btn-catalog" onclick="AdminApp.switchParkingMainMode('catalog')"
-                                    class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition flex items-center gap-2 cursor-pointer">
+                                    class="group px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-2 cursor-pointer">
                                 <span>🏛️</span>
                                 <span>Catalogue général</span>
-                                <span id="parking-main-catalog-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/15 text-gold font-bold">0</span>
+                                <span id="parking-main-catalog-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/20 text-gold border border-gold/30 group-hover:bg-gold group-hover:text-night group-hover:border-gold shadow-xs font-bold transition-all duration-200">0</span>
                             </button>
                         </div>
                     </div>
@@ -1538,9 +1538,16 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <input type="hidden" id="manage-links-category" value="">
                 <input type="hidden" id="manage-links-item-id" value="0">
 
-                <p class="text-xs text-gray-300">
-                    Cochez les logements pour lesquels ce parking doit être proposé. Vous pouvez renseigner un temps de marche ou de trajet personnalisé par logement.
-                </p>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs p-3 rounded-xl bg-night border border-night-border">
+                    <p class="text-gray-300">
+                        Cochez les logements associés et renseignez les accès (temps de marche/TCL, consignes).
+                    </p>
+                    <button type="button" id="btn-manage-links-translate-all" onclick="AdminApp.translateAllManageLinks()" 
+                            class="px-3.5 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-gold font-bold text-xs transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer self-start sm:self-auto shadow-sm">
+                        <span>✨</span>
+                        <span>Traduire tous les cochés (IA)</span>
+                    </button>
+                </div>
 
                 <!-- Liste des logements avec cases à cocher et champs repliables -->
                 <div id="manage-links-properties-list" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
