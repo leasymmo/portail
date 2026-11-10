@@ -1563,6 +1563,19 @@ const AdminApp = {
             }
         }
 
+        const contextPill = document.getElementById('parking-property-context-pill');
+        if (contextPill) {
+            const currentProp = (this.state.properties || []).find(p => p.id == this.state.currentPropertyId);
+            const propName = currentProp ? currentProp.name : 'Logement';
+            if (subtab === 'catalog') {
+                contextPill.innerHTML = '🌐 <span class="text-gold font-semibold">Mode catalogue</span> (fiches transversales)';
+            } else if (subtab === 'locations') {
+                contextPill.innerHTML = `📍 Emplacements pour : <span class="text-gold font-semibold">${this.escape(propName)}</span>`;
+            } else {
+                contextPill.innerHTML = `📋 Règles voirie pour : <span class="text-gold font-semibold">${this.escape(propName)}</span>`;
+            }
+        }
+
         if (subtab === 'catalog') {
             await this.loadCatalogView();
         }
@@ -1619,6 +1632,74 @@ const AdminApp = {
         this.renderCatalogList();
     },
 
+    /**
+     * Rendu unifié du badge de catégorie de parking
+     */
+    renderParkingCategoryBadge(category, operator = null) {
+        const catConfig = {
+            free_street: { label: 'Rue gratuite', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+            free_spot: { label: 'Dépose-minute', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
+            private_parking: { label: 'Parking privé / couvert', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
+            tcl_pr: { label: 'Parc Relais TCL (P+R)', color: 'bg-red-500/10 text-red-400 border-red-500/30' }
+        };
+        const cfg = catConfig[category] || { label: category, color: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
+        return `
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${cfg.color}">${cfg.label}</span>
+            ${operator ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold/15 text-gold border border-gold/30">${this.escape(operator)}</span>` : ''}
+        `;
+    },
+
+    /**
+     * Rendu unifié des capsules de caractéristiques physiques (adresse, gabarit, horaires, tarifs...)
+     */
+    renderParkingPhysicalPills(item) {
+        const pills = [];
+        if (item.address) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border text-gray-300 max-w-[220px] sm:max-w-xs truncate" title="${this.escape(item.address)}">📍 ${this.escape(item.address)}</span>`);
+        }
+        if (item.max_height) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold">↕️ Max ${this.escape(item.max_height)}</span>`);
+        }
+        if (item.capacity) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border text-gray-300">🚗 ${this.escape(item.capacity)}</span>`);
+        }
+        if (item.opening_hours_fr) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border text-gray-400">🕒 ${this.escape(item.opening_hours_fr)}</span>`);
+        }
+        if (item.rates_fr) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-gold/10 border border-gold/30 text-gold font-semibold">💶 ${this.escape(item.rates_fr)}</span>`);
+        }
+        return pills.join(' ');
+    },
+
+    /**
+     * Rendu unifié des capsules de liaison pour un logement donné (marche, TCL...)
+     */
+    renderParkingConnectionPills(loc) {
+        const pills = [];
+        if (loc.walking_time_fr) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-gold/15 border border-gold/40 text-gold font-bold">🚶 ${this.escape(loc.walking_time_fr)}</span>`);
+        }
+        if (loc.transit_time_fr) {
+            pills.push(`<span class="px-2.5 py-1 rounded-xl bg-blue-500/15 border border-blue-500/40 text-blue-400 font-bold">🚇 ${this.escape(loc.transit_time_fr)}</span>`);
+        }
+        return pills.join(' ');
+    },
+
+    resetCatalogFilters() {
+        const filterCat = document.getElementById('parking-catalog-filter-cat');
+        const searchInput = document.getElementById('parking-catalog-search');
+        if (filterCat) filterCat.value = 'all';
+        if (searchInput) searchInput.value = '';
+        this.renderCatalogList();
+    },
+
+    switchFromLinkToCreateOnTheFly() {
+        const cat = document.getElementById('link-existing-category')?.value || 'free_street';
+        this.closeLinkExistingModal();
+        this.openLocationModal(0, cat, false);
+    },
+
     renderCatalogList() {
         const container = document.getElementById('parking-catalog-list');
         const filterCat = document.getElementById('parking-catalog-filter-cat');
@@ -1644,54 +1725,58 @@ const AdminApp = {
         }
 
         if (items.length === 0) {
-            container.innerHTML = `
-                <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6">
-                    <span class="text-3xl block mb-2">🏛️</span>
-                    <p class="text-base font-bold text-white">Aucun parking trouvé dans le catalogue</p>
-                    <p class="text-xs text-gray-500 mt-1 mb-4">Créez un nouvel emplacement réutilisable pour vos hébergements.</p>
-                    <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg transition">
-                        + Créer un parking dans le catalogue
-                    </button>
-                </div>
-            `;
+            const hasFilter = (cat !== 'all') || (q.length > 0);
+            if (hasFilter) {
+                container.innerHTML = `
+                    <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6 space-y-3">
+                        <span class="text-3xl block">🔍</span>
+                        <p class="text-base font-bold text-white">Aucun parking ne correspond à vos filtres</p>
+                        <p class="text-xs text-gray-400">Aucun résultat trouvé pour votre recherche « ${this.escape(q)} » dans la catégorie sélectionnée.</p>
+                        <button type="button" onclick="AdminApp.resetCatalogFilters()" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition cursor-pointer">
+                            🔄 Réinitialiser les filtres
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6">
+                        <span class="text-3xl block mb-2">🏛️</span>
+                        <p class="text-base font-bold text-white">Aucun parking trouvé dans le catalogue</p>
+                        <p class="text-xs text-gray-500 mt-1 mb-4">Créez un nouvel emplacement réutilisable pour vos hébergements.</p>
+                        <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg transition cursor-pointer">
+                            + Créer un parking dans le catalogue
+                        </button>
+                    </div>
+                `;
+            }
             return;
         }
 
-        const catConfig = {
-            free_street: { label: 'Rue gratuite', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
-            free_spot: { label: 'Dépose-minute', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30' },
-            private_parking: { label: 'Parking privé / couvert', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' },
-            tcl_pr: { label: 'Parc Relais TCL (P+R)', color: 'bg-red-500/10 text-red-400 border-red-500/30' }
-        };
-
         const html = items.map(it => {
-            const badge = catConfig[it.category] || { label: it.category, color: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
             const linkedProps = it.linked_properties || [];
             const linkedCount = linkedProps.length;
+            const isTranslated = it.name_en && it.name_en.trim() !== '' && it.name_en !== it.name_fr;
 
             return `
                 <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 transition shadow-lg space-y-3 group">
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div class="space-y-1.5 min-w-0 flex-1">
                             <div class="flex items-center flex-wrap gap-2">
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badge.color}">${badge.label}</span>
-                                ${it.operator ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold/15 text-gold border border-gold/30">${this.escape(it.operator)}</span>` : ''}
+                                ${this.renderParkingCategoryBadge(it.category, it.operator)}
                                 <h4 class="text-sm sm:text-base font-bold text-white group-hover:text-gold transition break-words">
                                     ${this.escape(it.name_fr)}
                                 </h4>
                             </div>
                             <p class="text-xs text-gray-400 flex items-center gap-1.5 break-words">
                                 <span>🇬🇧</span>
-                                <span class="italic">${this.escape(it.name_en || it.name_fr)}</span>
+                                ${isTranslated 
+                                    ? `<span class="italic text-gray-400">${this.escape(it.name_en)}</span>` 
+                                    : `<span class="text-amber-400/80 text-[11px] not-italic">Non traduit</span>`}
                             </p>
 
-                            <!-- Caractéristiques physiques -->
+                            <!-- Caractéristiques physiques (composant réutilisable) -->
                             <div class="flex flex-wrap items-center gap-2 text-xs pt-1">
-                                ${it.address ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border text-gray-300" title="${this.escape(it.address)}">📍 ${this.escape(it.address)}</span>` : ''}
-                                ${it.max_height ? `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold">↕️ Max ${this.escape(it.max_height)}</span>` : ''}
-                                ${it.capacity ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border text-gray-300">🚗 ${this.escape(it.capacity)}</span>` : ''}
-                                ${it.opening_hours_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border text-gray-400">🕒 ${this.escape(it.opening_hours_fr)}</span>` : ''}
-                                ${it.rates_fr ? `<span class="px-2.5 py-1 rounded-xl bg-gold/10 border border-gold/30 text-gold font-semibold">💶 ${this.escape(it.rates_fr)}</span>` : ''}
+                                ${this.renderParkingPhysicalPills(it)}
                             </div>
 
                             ${it.notes_fr ? `<p class="text-xs text-gray-400 italic pt-1">💡 ${this.escape(it.notes_fr)}</p>` : ''}
@@ -1700,7 +1785,7 @@ const AdminApp = {
                         <!-- Bouton indicateur logements liés -->
                         <div class="flex-shrink-0">
                             <button type="button" onclick="AdminApp.openManageParkingLinksModal('${it.category}', ${it.id})" 
-                                    class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${linkedCount > 0 ? 'bg-gold/10 text-gold border-gold/30 hover:bg-gold/20' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}"
+                                    class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border cursor-pointer ${linkedCount > 0 ? 'bg-gold/10 text-gold border-gold/30 hover:bg-gold/20' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}"
                                     title="Cliquer pour gérer les logements associés à ce parking">
                                 <span>🏠</span>
                                 <span>${linkedCount > 0 ? `${linkedCount} logement${linkedCount > 1 ? 's' : ''} lié${linkedCount > 1 ? 's' : ''}` : 'Non associé'}</span>
@@ -1738,21 +1823,21 @@ const AdminApp = {
                                 </a>
                             ` : ''}
                         </div>
-                        <div class="flex items-center gap-2 ml-auto">
+                        <div class="flex flex-wrap items-center gap-2 ml-auto">
                             <button type="button" onclick="AdminApp.openManageParkingLinksModal('${it.category}', ${it.id})" 
-                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gold transition flex items-center space-x-1 shadow-sm"
+                                    class="py-1.5 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-semibold transition flex items-center space-x-1 shadow-sm cursor-pointer"
                                     title="Associer ou dissocier des logements">
                                 <span>🔗</span>
-                                <span>Associer aux logements</span>
+                                <span>Logements (${linkedCount})</span>
                             </button>
                             <button type="button" onclick="AdminApp.openLocationModal(${it.id}, '${it.category}', true)" 
-                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm"
-                                    title="Modifier la fiche complète du parking">
+                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm cursor-pointer"
+                                    title="Modifier la fiche complète du parking dans le catalogue">
                                 <span>✏️</span>
-                                <span>Modifier la fiche</span>
+                                <span>Fiche physique</span>
                             </button>
-                            <button type="button" onclick="AdminApp.confirmDeleteCatalogItem(${it.id}, '${it.category}')" 
-                                    class="py-1.5 px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm"
+                            <button type="button" onclick="AdminApp.confirmDeleteCatalogItem(${it.id}, '${it.category}', '${this.escape(it.name_fr)}')" 
+                                    class="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white border border-white/10 hover:border-red-500 text-xs font-semibold text-gray-400 hover:text-white transition flex items-center justify-center shadow-sm cursor-pointer"
                                     title="Supprimer définitivement ce parking du catalogue">
                                 <span>🗑️</span>
                             </button>
@@ -1962,6 +2047,8 @@ const AdminApp = {
                     this.saveParkingGeneral(null, true);
                 } else if (type === 'parking_location') {
                     this.saveLocation(null, true);
+                } else if (type === 'parking_connection') {
+                    this.saveConnectionEdit(null, true);
                 }
                 return;
             } else {
@@ -2068,6 +2155,8 @@ const AdminApp = {
                 await this.saveParkingGeneral(null, true);
             } else if (reviewState.type === 'parking_location') {
                 await this.saveLocation(null, true);
+            } else if (reviewState.type === 'parking_connection') {
+                await this.saveConnectionEdit(null, true);
             }
 
             this.closeTranslationReviewModal();
@@ -2311,48 +2400,52 @@ const AdminApp = {
         };
 
         const renderItemCard = (loc, listForCat, idx) => {
-            const badge = catLabels[loc.category] || { label: loc.category, color: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
             const hasAddress = (loc.address && loc.address.trim().length > 0);
             const assocId = loc.association_id || loc.id;
             const itemId = loc.parking_item_id || loc.id;
+            const isTranslated = loc.name_en && loc.name_en.trim() !== '' && loc.name_en !== loc.name_fr;
+            const cardBg = loc.active == 1 
+                ? 'bg-night-card border-night-border hover:border-gold/30' 
+                : 'bg-night/50 border-night-border/40 border-dashed opacity-65 hover:opacity-100';
 
             return `
-                <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 transition shadow-lg group">
+                <div class="p-4 sm:p-5 rounded-2xl ${cardBg} transition shadow-lg group space-y-3">
                     <!-- EN-TÊTE / NOM DE L'EMPLACEMENT & STATUT -->
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
-                            <!-- Poignée d'ordre ▲ / ▼ -->
-                            <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
-                                <button type="button" onclick="AdminApp.moveLocation(${assocId}, '${loc.category}', -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
-                                <button type="button" onclick="AdminApp.moveLocation(${assocId}, '${loc.category}', 1)" ${idx === listForCat.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
+                            <!-- Poignée d'ordre ▲ / ▼ ergonomique -->
+                            <div class="flex flex-col space-y-1 text-gray-400 flex-shrink-0 pt-0.5">
+                                <button type="button" onclick="AdminApp.moveLocation(${assocId}, '${loc.category}', -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed p-1 rounded-lg bg-night border border-night-border text-gray-600"' : 'class="p-1 rounded-lg bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-bold transition cursor-pointer"'} title="Monter">▲</button>
+                                <button type="button" onclick="AdminApp.moveLocation(${assocId}, '${loc.category}', 1)" ${idx === listForCat.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed p-1 rounded-lg bg-night border border-night-border text-gray-600"' : 'class="p-1 rounded-lg bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-bold transition cursor-pointer"'} title="Descendre">▼</button>
                             </div>
 
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center flex-wrap gap-2 mb-1">
-                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badge.color}">${badge.label}</span>
-                                    ${loc.operator ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold/15 text-gold border border-gold/30">${this.escape(loc.operator)}</span>` : ''}
+                                    ${this.renderParkingCategoryBadge(loc.category, loc.operator)}
                                     <h5 class="text-sm sm:text-base font-bold text-white group-hover:text-gold transition break-words">
                                         ${this.escape(loc.name_fr)}
                                     </h5>
                                 </div>
                                 <p class="text-xs text-gray-400 flex items-center gap-1.5 break-words">
                                     <span>🇬🇧</span>
-                                    <span class="italic">${this.escape(loc.name_en || loc.name_fr)}</span>
+                                    ${isTranslated 
+                                        ? `<span class="italic text-gray-400">${this.escape(loc.name_en)}</span>` 
+                                        : `<span class="text-amber-400/80 text-[11px] not-italic">Non traduit</span>`}
                                 </p>
                                 
-                                <!-- Métriques de connexion spécifiques à ce logement -->
+                                <!-- Métriques de connexion spécifiques à ce logement & attributs physiques -->
                                 <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                                    ${loc.walking_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-gold/10 border border-gold/30 text-gold font-semibold">🚶 ${this.escape(loc.walking_time_fr)}</span>` : ''}
-                                    ${loc.transit_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 font-semibold">🚇 ${this.escape(loc.transit_time_fr)}</span>` : ''}
-                                    ${loc.max_height ? `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold">↕️ Max ${this.escape(loc.max_height)}</span>` : ''}
-                                    ${loc.capacity ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚗 ${this.escape(loc.capacity)}</span>` : ''}
-                                    ${loc.opening_hours_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-400">🕒 ${this.escape(loc.opening_hours_fr)}</span>` : ''}
-                                    ${loc.rates_fr ? `<span class="px-2.5 py-1 rounded-xl bg-gold/10 border border-gold/30 text-gold font-semibold">💶 ${this.escape(loc.rates_fr)}</span>` : ''}
-                                    ${loc.address ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-400 truncate max-w-xs" title="${this.escape(loc.address)}">📍 ${this.escape(loc.address)}</span>` : ''}
+                                    ${this.renderParkingConnectionPills(loc)}
+                                    ${this.renderParkingPhysicalPills(loc)}
                                 </div>
 
                                 ${loc.notes_fr ? `<p class="mt-2 text-xs text-gray-400 italic">💡 ${this.escape(loc.notes_fr)}</p>` : ''}
-                                ${loc.how_to_reach_fr ? `<p class="mt-1 text-xs text-blue-300/90 bg-blue-950/40 p-2 rounded-xl border border-blue-900/40">🚇 <strong>Accès retour :</strong> ${this.escape(loc.how_to_reach_fr)}</p>` : ''}
+                                ${loc.how_to_reach_fr ? `
+                                    <div class="mt-2 text-xs text-gray-300 bg-night/80 p-2.5 rounded-xl border border-night-border flex items-start gap-2">
+                                        <span class="text-gold flex-shrink-0">🚇</span>
+                                        <div><strong class="text-white">Itinéraire retour vers le logement :</strong> ${this.escape(loc.how_to_reach_fr)}</div>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
 
@@ -2365,12 +2458,12 @@ const AdminApp = {
                         </div>
                     </div>
 
-                    <!-- BARRE D'ACTIONS -->
-                    <div class="pt-3 mt-3.5 border-t border-night-border/50 flex flex-wrap items-center justify-between gap-2">
+                    <!-- BARRE D'ACTIONS ERGONOMIQUE ET RESPONSIVE -->
+                    <div class="pt-3 border-t border-night-border/50 flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
                             ${hasAddress ? `
                                 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" rel="noopener noreferrer"
-                                   class="py-1.5 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm">
+                                   class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1.5 shadow-sm">
                                     <span>🗺️</span>
                                     <span>Maps</span>
                                 </a>
@@ -2378,43 +2471,45 @@ const AdminApp = {
 
                             ${loc.booking_url ? `
                                 <a href="${this.escape(this.safeUrl(loc.booking_url))}" target="_blank" rel="noopener noreferrer"
-                                   class="py-1.5 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm"
+                                   class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm"
                                    title="Lien réservation ou fiche officielle">
                                     <span>🔗</span>
-                                    <span>Lien</span>
+                                    <span>Site</span>
                                 </a>
                             ` : ''}
                         </div>
 
-                        <div class="flex items-center gap-1.5 ml-auto">
-                            <!-- Modifier l'accès spécifique à ce logement -->
+                        <div class="flex flex-wrap items-center gap-1.5 ml-auto">
+                            <!-- Modifier le trajet & l'accès spécifique à ce logement -->
                             <button type="button" onclick="AdminApp.openEditConnectionModal(${assocId})" 
-                                    class="py-1.5 px-2.5 rounded-xl bg-gold/15 border border-gold/40 hover:bg-gold hover:text-white text-xs font-bold text-gold transition flex items-center space-x-1 shadow-sm" 
-                                    title="Modifier le temps de marche/transport et l'itinéraire spécifique à ce logement">
-                                <span>⚙️</span>
-                                <span>Accès</span>
+                                    class="py-1.5 px-3 rounded-xl bg-gold/15 border border-gold/40 hover:bg-gold hover:text-white text-xs font-bold text-gold transition flex items-center space-x-1.5 shadow-sm cursor-pointer" 
+                                    title="Modifier le temps de marche/transport, l'itinéraire et les consignes d'accès pour ce logement">
+                                <span>⏱️</span>
+                                <span>Trajet & Accès</span>
                             </button>
 
                             <!-- Modifier la fiche physique générale dans le catalogue -->
                             <button type="button" onclick="AdminApp.openLocationModal(${itemId}, '${loc.category}', true)" 
-                                    class="py-1.5 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm" 
-                                    title="Modifier la fiche générale du parking dans le catalogue">
+                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-blue-500/50 hover:text-blue-400 text-xs font-semibold text-gray-300 transition flex items-center space-x-1.5 shadow-sm cursor-pointer" 
+                                    title="Modifier les caractéristiques physiques générales du parking dans le catalogue (adresse, horaires, tarifs...)">
                                 <span>✏️</span>
-                                <span>Fiche</span>
+                                <span>Fiche physique</span>
                             </button>
 
                             <!-- Associer à d'autres logements -->
                             <button type="button" onclick="AdminApp.openManageParkingLinksModal('${loc.category}', ${itemId})" 
-                                    class="py-1.5 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm" 
-                                    title="Gérer les logements liés à ce parking">
+                                    class="py-1.5 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm cursor-pointer" 
+                                    title="Gérer les liaisons de ce parking avec d'autres logements">
                                 <span>🏠</span>
+                                <span>Logements</span>
                             </button>
 
-                            <!-- Délier de ce logement -->
-                            <button type="button" onclick="AdminApp.confirmUnlinkParking(${assocId})" 
-                                    class="py-1.5 px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" 
-                                    title="Retirer ce parking de cet hébergement (sans supprimer le parking du catalogue)">
-                                <span>🗑️</span>
+                            <!-- Retirer de cet hébergement (sans supprimer du catalogue) -->
+                            <button type="button" onclick="AdminApp.confirmUnlinkParking(${assocId}, '${this.escape(loc.name_fr)}')" 
+                                    class="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white border border-white/10 hover:border-red-500 text-xs font-semibold text-gray-400 hover:text-white transition flex items-center space-x-1 shadow-sm cursor-pointer" 
+                                    title="Retirer ce parking de cet hébergement (le parking restera conservé dans le catalogue général)">
+                                <span>⛓️‍💥</span>
+                                <span>Retirer</span>
                             </button>
                         </div>
                     </div>
@@ -2805,6 +2900,15 @@ const AdminApp = {
                 notes_fr: notesFr
             };
 
+            if (isOnthefly) {
+                if (cat === 'tcl_pr') {
+                    dataFr.transit_time_fr = onTheFlyWalking;
+                    dataFr.how_to_reach_fr = onTheFlyReach;
+                } else {
+                    dataFr.walking_time_fr = onTheFlyWalking;
+                }
+            }
+
             const btnSave = document.getElementById('btn-save-location');
             const iconEl = document.getElementById('btn-save-loc-icon');
             const textEl = document.getElementById('btn-save-loc-text');
@@ -2821,6 +2925,9 @@ const AdminApp = {
                 });
 
                 if (res.data) {
+                    if (isOnthefly) {
+                        this.state._ontheflyTranslation = res.data;
+                    }
                     if (res.data.name_en !== undefined && document.getElementById('location-name-en')) {
                         document.getElementById('location-name-en').value = res.data.name_en;
                     }
@@ -2874,11 +2981,15 @@ const AdminApp = {
             notes_en: (document.getElementById('location-notes-en')?.value || '').trim(),
             // Paramètres de liaison à la volée (uniquement si création immédiate pour un hébergement)
             walking_time_fr: (isOnthefly && cat !== 'tcl_pr') ? onTheFlyWalking : '',
+            walking_time_en: (isOnthefly && cat !== 'tcl_pr' && this.state._ontheflyTranslation?.walking_time_en) ? this.state._ontheflyTranslation.walking_time_en : '',
             transit_time_fr: (isOnthefly && cat === 'tcl_pr') ? onTheFlyWalking : '',
+            transit_time_en: (isOnthefly && cat === 'tcl_pr' && this.state._ontheflyTranslation?.transit_time_en) ? this.state._ontheflyTranslation.transit_time_en : '',
             how_to_reach_fr: (isOnthefly && cat === 'tcl_pr') ? onTheFlyReach : '',
+            how_to_reach_en: (isOnthefly && cat === 'tcl_pr' && this.state._ontheflyTranslation?.how_to_reach_en) ? this.state._ontheflyTranslation.how_to_reach_en : '',
             display_order: isOnthefly ? onTheFlyOrder : 1,
             active: isOnthefly ? onTheFlyActive : 1
         };
+        this.state._ontheflyTranslation = null;
 
         try {
             if (isCatalogMode && propertyId === 0) {
@@ -2922,15 +3033,18 @@ const AdminApp = {
         const moved = list.splice(idx, 1)[0];
         list.splice(targetIdx, 0, moved);
 
+        // Rendu optimiste instantané
+        this.renderParkingLocationsList();
+
         const orderArray = list.map(l => l.association_id || l.id);
         try {
             await this.apiRequest('api/index.php?action=parking_location_reorder', 'POST', {
                 category: isFree ? 'free' : cat,
                 order: orderArray
             });
-            await this.fetchAndRenderParking(this.state.currentPropertyId);
             this.showToast('Ordre des emplacements actualisé.');
         } catch (err) {
+            await this.fetchAndRenderParking(this.state.currentPropertyId);
             this.showToast(err.message, 'error');
         }
     },
@@ -3070,10 +3184,14 @@ const AdminApp = {
         const items = (this.state.parkingCatalogItems || []).filter(it => it.category === cat || (cat === 'free_street' && it.category === 'free_spot'));
         const existingItemIds = (this.state.currentParkingLocations || []).map(l => l.parking_item_id || l.id);
 
+        const emptyHelper = document.getElementById('link-existing-empty-helper');
         if (items.length === 0) {
             itemSelect.innerHTML = '<option value="">Aucun parking disponible dans cette catégorie</option>';
+            if (emptyHelper) emptyHelper.classList.remove('hidden');
             this.onLinkItemSelectChange();
             return;
+        } else {
+            if (emptyHelper) emptyHelper.classList.add('hidden');
         }
 
         itemSelect.innerHTML = items.map(it => {
@@ -3203,25 +3321,92 @@ const AdminApp = {
         if (modal) modal.classList.add('hidden');
     },
 
-    async saveConnectionEdit(e) {
+    async saveConnectionEdit(e, skipAiCheck = false) {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
         const assocId = parseInt(document.getElementById('edit-conn-id').value, 10);
         if (!assocId) return;
 
+        const walkingFr = (document.getElementById('edit-conn-walking-fr')?.value || '').trim();
+        const walkingEn = (document.getElementById('edit-conn-walking-en')?.value || '').trim();
+        const transitFr = (document.getElementById('edit-conn-transit-fr')?.value || '').trim();
+        const transitEn = (document.getElementById('edit-conn-transit-en')?.value || '').trim();
+        const reachFr = (document.getElementById('edit-conn-reach-fr')?.value || '').trim();
+        const reachEn = (document.getElementById('edit-conn-reach-en')?.value || '').trim();
+        const notesFr = (document.getElementById('edit-conn-notes-fr')?.value || '').trim();
+        const notesEn = (document.getElementById('edit-conn-notes-en')?.value || '').trim();
+        const displayOrder = parseInt(document.getElementById('edit-conn-order')?.value, 10) || 0;
+        const active = document.getElementById('edit-conn-active')?.checked ? 1 : 0;
+
+        const btnSave = document.getElementById('btn-save-connection-edit');
+        const iconEl = document.getElementById('btn-save-conn-icon');
+        const textEl = document.getElementById('btn-save-conn-text');
+        const origText = textEl ? textEl.textContent : 'Enregistrer';
+
+        // Étape 1 : Si traduction automatique activée et champs anglais non renseignés, prévisualisation IA
+        const hasFrContent = (walkingFr || transitFr || reachFr || notesFr);
+        const hasMissingEn = (walkingFr && !walkingEn) || (transitFr && !transitEn) || (reachFr && !reachEn) || (notesFr && !notesEn);
+
+        if (!skipAiCheck && this.state.aiAutoTranslateEnabled && hasFrContent && hasMissingEn) {
+            try {
+                if (btnSave) btnSave.disabled = true;
+                if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+                if (textEl) textEl.textContent = 'Traduction IA...';
+
+                const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                    type: 'parking_connection',
+                    data: {
+                        walking_time_fr: walkingFr,
+                        transit_time_fr: transitFr,
+                        how_to_reach_fr: reachFr,
+                        notes_fr: notesFr
+                    }
+                });
+
+                if (res.data) {
+                    if (res.data.walking_time_en !== undefined && document.getElementById('edit-conn-walking-en')) {
+                        document.getElementById('edit-conn-walking-en').value = res.data.walking_time_en;
+                    }
+                    if (res.data.transit_time_en !== undefined && document.getElementById('edit-conn-transit-en')) {
+                        document.getElementById('edit-conn-transit-en').value = res.data.transit_time_en;
+                    }
+                    if (res.data.how_to_reach_en !== undefined && document.getElementById('edit-conn-reach-en')) {
+                        document.getElementById('edit-conn-reach-en').value = res.data.how_to_reach_en;
+                    }
+                    if (res.data.notes_en !== undefined && document.getElementById('edit-conn-notes-en')) {
+                        document.getElementById('edit-conn-notes-en').value = res.data.notes_en;
+                    }
+                }
+
+                this.openTranslationReviewModal('parking_connection', res.data);
+                return;
+            } catch (err) {
+                console.warn('[AI] Échec de la traduction préalable connexion :', err);
+            } finally {
+                if (btnSave) btnSave.disabled = false;
+                if (iconEl) iconEl.textContent = '💾';
+                if (textEl) textEl.textContent = origText;
+            }
+        }
+
+        // Étape 2 : Enregistrement en base de données
         const data = {
-            walking_time_fr: (document.getElementById('edit-conn-walking-fr')?.value || '').trim(),
+            walking_time_fr: walkingFr,
             walking_time_en: (document.getElementById('edit-conn-walking-en')?.value || '').trim(),
-            transit_time_fr: (document.getElementById('edit-conn-transit-fr')?.value || '').trim(),
+            transit_time_fr: transitFr,
             transit_time_en: (document.getElementById('edit-conn-transit-en')?.value || '').trim(),
-            how_to_reach_fr: (document.getElementById('edit-conn-reach-fr')?.value || '').trim(),
+            how_to_reach_fr: reachFr,
             how_to_reach_en: (document.getElementById('edit-conn-reach-en')?.value || '').trim(),
-            notes_fr: (document.getElementById('edit-conn-notes-fr')?.value || '').trim(),
+            notes_fr: notesFr,
             notes_en: (document.getElementById('edit-conn-notes-en')?.value || '').trim(),
-            display_order: parseInt(document.getElementById('edit-conn-order')?.value, 10) || 0,
-            active: document.getElementById('edit-conn-active')?.checked ? 1 : 0
+            display_order: displayOrder,
+            active: active
         };
 
         try {
+            if (btnSave) btnSave.disabled = true;
+            if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+            if (textEl) textEl.textContent = 'Enregistrement...';
+
             const res = await this.apiRequest('api/index.php?action=parking_association_update', 'POST', {
                 association_id: assocId,
                 connection: data
@@ -3231,6 +3416,10 @@ const AdminApp = {
             await this.fetchAndRenderParking(this.state.currentPropertyId);
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (iconEl) iconEl.textContent = '💾';
+            if (textEl) textEl.textContent = origText;
         }
     },
 
@@ -3240,18 +3429,22 @@ const AdminApp = {
         const listContainer = document.getElementById('manage-links-properties-list');
         if (!modal || !listContainer) return;
 
-        document.getElementById('manage-links-category').value = category;
-        document.getElementById('manage-links-item-id').value = itemId;
-
         if (!this.state.parkingCatalogItems || this.state.parkingCatalogItems.length === 0) {
             await this.loadCatalogView();
         }
-        const item = (this.state.parkingCatalogItems || []).find(it => it.id === itemId && it.category === category);
+        const isFree = (c) => c === 'free_street' || c === 'free_spot' || c === 'free';
+        const item = (this.state.parkingCatalogItems || []).find(it => 
+            it.id == itemId && (it.category === category || (isFree(it.category) && isFree(category)))
+        );
+
+        document.getElementById('manage-links-category').value = item ? item.category : category;
+        document.getElementById('manage-links-item-id').value = itemId;
+
         if (titleEl) {
             titleEl.textContent = item ? `« ${item.name_fr} » (${item.operator || item.address || category})` : '';
         }
 
-        const isTcl = (category === 'tcl_pr');
+        const isTcl = (category === 'tcl_pr' || (item && item.category === 'tcl_pr'));
         const properties = this.state.properties || [];
         const linkedProps = item ? (item.linked_properties || []) : [];
 
@@ -3332,7 +3525,16 @@ const AdminApp = {
             });
         });
 
+        const btnSave = document.getElementById('btn-save-parking-links');
+        const iconEl = document.getElementById('btn-save-links-icon');
+        const textEl = document.getElementById('btn-save-links-text');
+        const origText = textEl ? textEl.textContent : 'Enregistrer les associations';
+
         try {
+            if (btnSave) btnSave.disabled = true;
+            if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+            if (textEl) textEl.textContent = 'Enregistrement...';
+
             const res = await this.apiRequest('api/index.php?action=parking_catalog_set_properties', 'POST', {
                 category: category,
                 parking_item_id: itemId,
@@ -3347,6 +3549,10 @@ const AdminApp = {
             }
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (btnSave) btnSave.disabled = false;
+            if (iconEl) iconEl.textContent = '💾';
+            if (textEl) textEl.textContent = origText;
         }
     },
 

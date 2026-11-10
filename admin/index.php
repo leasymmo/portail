@@ -370,9 +370,10 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
 
                     <!-- Sélecteur de logement -->
-                    <div class="p-4 rounded-2xl bg-night-card border border-night-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                    <div id="parking-property-selector-card" class="p-4 rounded-2xl bg-night-card border border-night-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition">
+                        <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
                             <span>🏠 Choisir l'hébergement :</span>
+                            <span id="parking-property-context-pill" class="text-[10px] font-normal lowercase tracking-normal text-gray-400 bg-night px-2 py-0.5 rounded-lg border border-night-border">pour les règles & emplacements</span>
                         </label>
                         <select id="parking-property-select" class="py-2 px-3 rounded-xl bg-night border border-night-border text-xs text-white font-semibold focus:outline-none focus:border-gold max-w-md w-full">
                             <!-- Rempli dynamiquement -->
@@ -399,22 +400,22 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                     <!-- Sous-onglets Stationnement (Navigation segmented controls claire et intuitive) -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-night-border/70">
-                        <div class="grid grid-cols-1 sm:inline-flex w-full sm:w-auto p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1">
+                        <div class="flex flex-wrap sm:inline-flex w-full sm:w-auto p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1">
                             <button type="button" id="parking-subtab-btn-general" onclick="AdminApp.switchParkingSubtab('general')"
-                                    class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-gold text-white shadow-md shadow-gold/25"
+                                    class="parking-subtab-btn flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-gold text-white shadow-md shadow-gold/25"
                                     title="Informations générales, consignes, voirie et conditions TCL">
                                 <span>📋</span>
                                 <span>Règles Générales & Voirie</span>
                             </button>
                             <button type="button" id="parking-subtab-btn-locations" onclick="AdminApp.switchParkingSubtab('locations')"
-                                    class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
+                                    class="parking-subtab-btn flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
                                     title="Parkings et emplacements associés à ce logement">
                                 <span>📍</span>
                                 <span>Emplacements du logement</span>
                                 <span id="parking-subtab-locations-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-300 font-bold">0</span>
                             </button>
                             <button type="button" id="parking-subtab-btn-catalog" onclick="AdminApp.switchParkingSubtab('catalog')"
-                                    class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
+                                    class="parking-subtab-btn flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
                                     title="Catalogue centralisé de tous les parkings indépendants">
                                 <span>🏛️</span>
                                 <span>Catalogue général</span>
@@ -423,12 +424,12 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </div>
 
                         <!-- Boutons d'action pour le logement sélectionné -->
-                        <div id="parking-header-actions-property" class="flex items-center space-x-2 w-full sm:w-auto">
-                            <button type="button" onclick="AdminApp.openLinkExistingModal()" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm" title="Associer un parking existant du catalogue à ce logement">
+                        <div id="parking-header-actions-property" class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+                            <button type="button" onclick="AdminApp.openLinkExistingModal()" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer" title="Associer un parking existant du catalogue à ce logement">
                                 <span>🔗</span>
                                 <span>Lier un parking</span>
                             </button>
-                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-night-card hover:bg-white/10 text-white border border-night-border text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm" title="Créer un nouveau parking et l'associer directement à ce logement">
+                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-night-card hover:bg-white/10 text-white border border-night-border text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer" title="Créer un nouveau parking et l'associer directement à ce logement">
                                 <span>⚡</span>
                                 <span>Créer à la volée</span>
                             </button>
@@ -436,7 +437,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                         <!-- Boutons d'action pour le catalogue général -->
                         <div id="parking-header-actions-catalog" class="hidden items-center space-x-2 w-full sm:w-auto">
-                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-gold/20" title="Ajouter un nouveau parking au catalogue général (indépendant)">
+                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-gold/20 cursor-pointer" title="Ajouter un nouveau parking au catalogue général (indépendant)">
                                 <span>➕</span>
                                 <span>Nouveau parking au catalogue</span>
                             </button>
@@ -579,6 +580,26 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                     <!-- SOUS-ONGLET C : CATALOGUE GÉNÉRAL DES PARKINGS (CENTRALISÉ) -->
                     <div id="parking-subtab-catalog" class="hidden space-y-6">
+                        <!-- Bannière explicative du Catalogue Global -->
+                        <div class="p-4 sm:p-5 rounded-2xl bg-gold/5 border border-gold/25 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                            <div class="flex items-start space-x-3.5">
+                                <span class="text-2xl flex-shrink-0">🌐</span>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-sm font-bold text-white">Catalogue Centralisé & Transversal</h4>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold/20 text-gold border border-gold/30">Mutualisé</span>
+                                    </div>
+                                    <p class="text-xs text-gray-300 mt-0.5 leading-relaxed">
+                                        Les fiches physiques ci-dessous sont indépendantes de tout hébergement. Vous pouvez associer un même parking à plusieurs logements et personnaliser les temps de trajet pour chacun.
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center justify-center space-x-2 flex-shrink-0 cursor-pointer">
+                                <span>➕</span>
+                                <span>Créer un parking au catalogue</span>
+                            </button>
+                        </div>
+
                         <!-- Barre d'outils et filtre de catégorie -->
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-night-card border border-night-border shadow-sm">
                             <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
@@ -1354,6 +1375,15 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <!-- Rempli dynamiquement -->
                     </select>
                     <p id="link-existing-catalog-preview" class="text-[11px] text-gray-400 mt-1 italic"></p>
+                    <div id="link-existing-empty-helper" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
+                        <span class="flex items-center gap-1.5">
+                            <span>💡</span>
+                            <span>Ce parking n'est pas encore dans le catalogue ?</span>
+                        </span>
+                        <button type="button" onclick="AdminApp.switchFromLinkToCreateOnTheFly()" class="px-3 py-1.5 rounded-lg bg-gold hover:bg-gold-light text-white font-bold text-xs whitespace-nowrap transition cursor-pointer self-start sm:self-auto shadow-sm">
+                            + Créer à la volée
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 3. Paramètres de connexion spécifiques à ce logement -->
@@ -1394,9 +1424,9 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                 <div class="pt-3 border-t border-night-border flex items-center justify-between">
                     <button type="button" onclick="AdminApp.closeLinkExistingModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
-                    <button type="submit" id="btn-submit-link-existing" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
-                        <span>🔗</span>
-                        <span>Associer ce parking</span>
+                    <button type="submit" id="btn-submit-link-existing" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5 cursor-pointer">
+                        <span id="btn-submit-link-icon">🔗</span>
+                        <span id="btn-submit-link-text">Associer ce parking</span>
                     </button>
                 </div>
             </form>
@@ -1424,22 +1454,22 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <div class="space-y-3">
                     <div id="edit-conn-walking-group">
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche (FR)</label>
-                        <input type="text" id="edit-conn-walking-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <input type="text" id="edit-conn-walking-fr" placeholder="Ex: 8 min à pied (650 m)" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
 
                     <div id="edit-conn-transit-group">
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de transport TCL (FR)</label>
-                        <input type="text" id="edit-conn-transit-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <input type="text" id="edit-conn-transit-fr" placeholder="Ex: 12 min en Métro B direct" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
 
                     <div id="edit-conn-reach-group">
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire retour vers le logement (FR)</label>
-                        <textarea id="edit-conn-reach-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                        <textarea id="edit-conn-reach-fr" rows="2" placeholder="Ex: Prendre le Métro B jusqu'à Jean Macé, sortie 1 puis 2 min à pied..." class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Remarques / consignes d'accès spécifiques au logement (FR)</label>
-                        <input type="text" id="edit-conn-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <input type="text" id="edit-conn-notes-fr" placeholder="Ex: Badge parking remis à l'arrivée, digicode piéton : 4582A" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
 
                     <!-- Champs anglais cachés -->
@@ -1464,16 +1494,16 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                 <div class="pt-3 border-t border-night-border flex flex-wrap items-center justify-between gap-2">
                     <button type="button" onclick="AdminApp.openDirectReviewModal('parking_connection')" 
-                            class="text-xs text-gray-400 hover:text-gold flex items-center space-x-1.5 transition py-1"
+                            class="text-xs text-gray-400 hover:text-gold flex items-center space-x-1.5 transition py-1 cursor-pointer"
                             title="Consulter et ajuster la version anglaise des consignes d'accès">
                         <span>✏️</span>
                         <span>Version anglaise</span>
                     </button>
                     <div class="flex items-center space-x-2 ml-auto">
-                        <button type="button" onclick="AdminApp.closeEditConnectionModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
-                        <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
-                            <span>💾</span>
-                            <span>Enregistrer</span>
+                        <button type="button" onclick="AdminApp.closeEditConnectionModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition cursor-pointer">Annuler</button>
+                        <button type="submit" id="btn-save-connection-edit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5 cursor-pointer">
+                            <span id="btn-save-conn-icon">💾</span>
+                            <span id="btn-save-conn-text">Enregistrer</span>
                         </button>
                     </div>
                 </div>
@@ -1509,10 +1539,10 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 </div>
 
                 <div class="pt-3 border-t border-night-border flex items-center justify-between">
-                    <button type="button" onclick="AdminApp.closeManageParkingLinksModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
-                        <span>💾</span>
-                        <span>Enregistrer les associations</span>
+                    <button type="button" onclick="AdminApp.closeManageParkingLinksModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition cursor-pointer">Annuler</button>
+                    <button type="submit" id="btn-save-parking-links" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5 cursor-pointer">
+                        <span id="btn-save-links-icon">💾</span>
+                        <span id="btn-save-links-text">Enregistrer les associations</span>
                     </button>
                 </div>
             </form>

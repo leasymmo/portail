@@ -908,11 +908,11 @@ class AdminRepository
             'cat'        => $category,
             'item_id'    => $parkingItemId,
             'walking_fr' => !empty($connectionData['walking_time_fr']) ? trim($connectionData['walking_time_fr']) : null,
-            'walking_en' => !empty($connectionData['walking_time_en']) ? trim($connectionData['walking_time_en']) : (!empty($connectionData['walking_time_fr']) ? trim($connectionData['walking_time_fr']) : null),
+            'walking_en' => !empty($connectionData['walking_time_en']) ? trim($connectionData['walking_time_en']) : null,
             'transit_fr' => !empty($connectionData['transit_time_fr']) ? trim($connectionData['transit_time_fr']) : null,
-            'transit_en' => !empty($connectionData['transit_time_en']) ? trim($connectionData['transit_time_en']) : (!empty($connectionData['transit_time_fr']) ? trim($connectionData['transit_time_fr']) : null),
+            'transit_en' => !empty($connectionData['transit_time_en']) ? trim($connectionData['transit_time_en']) : null,
             'reach_fr'   => !empty($connectionData['how_to_reach_fr']) ? trim($connectionData['how_to_reach_fr']) : null,
-            'reach_en'   => !empty($connectionData['how_to_reach_en']) ? trim($connectionData['how_to_reach_en']) : (!empty($connectionData['how_to_reach_fr']) ? trim($connectionData['how_to_reach_fr']) : null),
+            'reach_en'   => !empty($connectionData['how_to_reach_en']) ? trim($connectionData['how_to_reach_en']) : null,
             'notes_fr'   => !empty($connectionData['notes_fr']) ? trim($connectionData['notes_fr']) : null,
             'notes_en'   => !empty($connectionData['notes_en']) ? trim($connectionData['notes_en']) : null,
             'order'      => $order > 0 ? $order : 1,
@@ -961,6 +961,8 @@ class AdminRepository
                     transit_time_en = :transit_en,
                     how_to_reach_fr = :reach_fr,
                     how_to_reach_en = :reach_en,
+                    notes_fr = :notes_fr,
+                    notes_en = :notes_en,
                     display_order = :order,
                     active = :active
                 WHERE id = :id
@@ -973,6 +975,8 @@ class AdminRepository
                 'transit_en' => !empty($data['transit_time_en']) ? trim($data['transit_time_en']) : null,
                 'reach_fr'   => !empty($data['how_to_reach_fr']) ? trim($data['how_to_reach_fr']) : null,
                 'reach_en'   => !empty($data['how_to_reach_en']) ? trim($data['how_to_reach_en']) : null,
+                'notes_fr'   => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
+                'notes_en'   => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
                 'order'      => isset($data['display_order']) ? (int)$data['display_order'] : 1,
                 'active'     => isset($data['active']) ? (int)$data['active'] : 1
             ]);
