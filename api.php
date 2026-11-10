@@ -32,7 +32,7 @@ try {
     if (isset($_GET['audit_parking']) && $_GET['audit_parking'] === '1') {
         $pdo = get_db_connection();
         $properties = $pdo->query("SELECT id, slug, name, active FROM properties ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
-        $general = $pdo->query("SELECT * FROM parking_general ORDER BY property_id ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $general = $pdo->query("SELECT * FROM property_parkings ORDER BY property_id ASC")->fetchAll(PDO::FETCH_ASSOC);
         $freeSpots = $pdo->query("SELECT * FROM parking_free_spots ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
         $privateLots = $pdo->query("SELECT * FROM parking_private_lots ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
         $tclPrs = $pdo->query("SELECT * FROM parking_tcl_prs ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -43,7 +43,7 @@ try {
             'type' => 'audit_parking',
             'data' => [
                 'properties' => $properties,
-                'parking_general' => $general,
+                'property_parkings' => $general,
                 'parking_free_spots' => $freeSpots,
                 'parking_private_lots' => $privateLots,
                 'parking_tcl_prs' => $tclPrs,
