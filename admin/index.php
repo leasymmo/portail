@@ -1060,8 +1060,8 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <div>
-                    <h3 id="modal-location-title" class="text-base font-bold text-white">Ajouter un emplacement</h3>
-                    <p id="modal-location-subtitle" class="text-[11px] text-gray-400">Renseignez uniquement les informations utiles pour cette catégorie.</p>
+                    <h3 id="modal-location-title" class="text-base font-bold text-white">Ajouter un parking</h3>
+                    <p id="modal-location-subtitle" class="text-[11px] text-gray-400">Renseignez les caractéristiques physiques de ce lieu de stationnement.</p>
                 </div>
                 <button type="button" onclick="AdminApp.closeLocationModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
             </div>
@@ -1075,7 +1075,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
 
                 <!-- SÉLECTEUR DE CATÉGORIE VISUEL EN SEGMENTS -->
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-night border border-night-border space-y-2">
-                    <label class="block text-xs font-bold text-gray-200">1. Catégorie d'emplacement *</label>
+                    <label class="block text-xs font-bold text-gray-200">1. Catégorie de parking *</label>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <label id="cat-label-free" class="flex items-center space-x-2.5 p-2.5 rounded-xl border border-night-border hover:border-emerald-500/50 bg-night-card cursor-pointer transition has-checked:border-emerald-500 has-checked:bg-emerald-500/10">
                             <input type="radio" name="location-category-radio" value="free_street" onchange="AdminApp.onLocationCategoryChange(this.value)" class="text-emerald-500 focus:ring-0 accent-emerald-500" checked>
@@ -1108,7 +1108,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <input type="hidden" id="location-free-subtype" value="free_street">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                            <span>🟢</span> Détails de la rue gratuite ou dépose-minute
+                            <span>🟢</span> Caractéristiques de la rue gratuite ou dépose-minute
                         </span>
                         <div class="flex items-center gap-3 text-xs">
                             <label class="flex items-center gap-1 text-gray-300 cursor-pointer">
@@ -1135,12 +1135,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps d'accès à pied</label>
-                        <input type="text" id="location-walking-fr-free" placeholder="Ex: Environ 10 min à pied"
-                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-
-                    <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Remarques & conseils pratiques (Optionnel)</label>
                         <input type="text" id="location-notes-fr-free" placeholder="Ex: Gratuit 7j/7 et 24h/24 ou 15 min offertes"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
@@ -1152,18 +1146,24 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <!-- ============================================================== -->
                 <div id="cat-fields-private" class="space-y-4 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 hidden">
                     <span class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-                        <span>🏢</span> Détails du parking couvert / privé
+                        <span>🏢</span> Caractéristiques du parking couvert / privé
                     </span>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking *</label>
+                        <input type="text" id="location-name-fr-priv" placeholder="Ex: Parking Zenpark - Ferrandière"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking *</label>
-                            <input type="text" id="location-name-fr-priv" placeholder="Ex: Parking Zenpark - Ferrandière"
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Opérateur</label>
+                            <input type="text" id="location-operator" placeholder="Zenpark, LPA&CO, Q-Park, Indigo..."
                                    class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Opérateur</label>
-                            <input type="text" id="location-operator" placeholder="Zenpark, LPA&CO, Q-Park, Indigo..."
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Hauteur max autorisée (Gabarit)</label>
+                            <input type="text" id="location-max-height" placeholder="Ex: 1,90 m ou 2,00 m"
                                    class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                         </div>
                     </div>
@@ -1172,19 +1172,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise</label>
                         <input type="text" id="location-address-priv" placeholder="Ex: 39 rue de la Cité, Lyon 3e"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche</label>
-                            <input type="text" id="location-walking-fr-priv" placeholder="Ex: 10 min à pied (4 min vélo)"
-                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Hauteur max autorisée (Gabarit)</label>
-                            <input type="text" id="location-max-height" placeholder="Ex: 1,90 m ou 2,00 m"
-                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1224,32 +1211,19 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <!-- ============================================================== -->
                 <div id="cat-fields-tcl" class="space-y-4 p-4 rounded-2xl bg-red-500/5 border border-red-500/20 hidden">
                     <span class="text-xs font-bold text-red-400 flex items-center gap-1.5">
-                        <span>🚇</span> Détails du Parc Relais TCL
+                        <span>🚇</span> Caractéristiques du Parc Relais TCL
                     </span>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du Parc Relais *</label>
-                            <input type="text" id="location-name-fr-tcl" placeholder="Ex: Parking Relais TCL - Mermoz-Pinel"
-                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Capacité totale</label>
-                            <input type="text" id="location-capacity" placeholder="Ex: 416 places"
-                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                        </div>
-                    </div>
-
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise</label>
-                        <input type="text" id="location-address-tcl" placeholder="Ex: 3 rue Lionel-Terray, 69500 Bron"
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du Parc Relais *</label>
+                        <input type="text" id="location-name-fr-tcl" placeholder="Ex: Parking Relais TCL - Mermoz-Pinel"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-300 mb-1">Temps en transports TCL</label>
-                            <input type="text" id="location-transit-fr" placeholder="Ex: Environ 25 min en TCL"
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Capacité totale</label>
+                            <input type="text" id="location-capacity" placeholder="Ex: 416 places"
                                    class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                         </div>
                         <div>
@@ -1260,9 +1234,9 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire pour rejoindre le logement</label>
-                        <textarea id="location-reach-fr" rows="2" placeholder="Ex: Prendre le Métro D jusqu'à Grange Blanche, puis le bus C13 jusqu'à Dauphiné-Lacassagne."
-                                  class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise</label>
+                        <input type="text" id="location-address-tcl" placeholder="Ex: 3 rue Lionel-Terray, 69500 Bron"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
 
                     <div>
@@ -1274,31 +1248,56 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <div>
                         <label class="block text-xs font-semibold text-gray-300 mb-1">Notes complémentaires</label>
                         <input type="text" id="location-notes-fr-tcl" placeholder="Ex: Le niveau 3 est réservé aux abonnés Premium."
-                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
                 <!-- Champs anglais masqués pour conservation bilingue -->
                 <div class="hidden" aria-hidden="true">
                     <input type="hidden" id="location-name-en">
-                    <input type="hidden" id="location-walking-en">
-                    <input type="hidden" id="location-transit-en">
                     <input type="hidden" id="location-hours-en">
                     <textarea id="location-rates-en"></textarea>
                     <input type="hidden" id="location-vehicles-en">
-                    <textarea id="location-reach-en"></textarea>
                     <input type="hidden" id="location-notes-en">
                 </div>
 
-                <!-- ORDRE ET STATUT -->
-                <div class="flex items-center justify-between pt-2">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre dans sa section</label>
-                        <input type="number" id="location-order" min="1" value="1" class="w-20 p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                <!-- ============================================================== -->
+                <!-- SECTION D : LIAISON À LA VOLÉE (UNIQUEMENT CRÉATION VIA LOGEMENT)-->
+                <!-- ============================================================== -->
+                <div id="location-on-the-fly-connection" class="hidden p-4 rounded-2xl bg-gold/5 border border-gold/30 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm">🔗</span>
+                            <div>
+                                <span class="text-xs font-bold text-white block">Liaison avec l'hébergement : <span id="location-on-the-fly-prop-name" class="text-gold font-semibold"></span></span>
+                                <span class="text-[10px] text-gray-400">Paramètres d'accès pour ce logement (optionnel à la création)</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold/15 text-gold border border-gold/30">Création à la volée</span>
                     </div>
-                    <div class="flex items-center space-x-2 pt-4">
-                        <input type="checkbox" id="location-active" class="w-4 h-4 rounded bg-night border-night-border text-gold focus:ring-gold accent-[#ba9641]" checked>
-                        <label for="location-active" class="text-xs font-semibold text-gray-300 cursor-pointer">Actif (Visible sur le portail)</label>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div id="location-onthefly-walking-wrap">
+                            <label class="block text-xs font-semibold text-gray-300 mb-1" id="location-onthefly-walking-label">Temps d'accès à pied</label>
+                            <input type="text" id="location-onthefly-walking-fr" placeholder="Ex: Environ 8 min à pied"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div id="location-onthefly-reach-wrap" class="hidden sm:col-span-2">
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire retour vers le logement</label>
+                            <input type="text" id="location-onthefly-reach-fr" placeholder="Ex: Prendre le Métro D jusqu'à Sans Souci"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre dans sa section</label>
+                            <input type="number" id="location-onthefly-order" min="1" value="1" class="w-20 p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div class="flex items-center space-x-2 pt-4">
+                            <input type="checkbox" id="location-onthefly-active" class="w-4 h-4 rounded bg-night border-night-border text-gold focus:ring-gold accent-[#ba9641]" checked>
+                            <label for="location-onthefly-active" class="text-xs font-semibold text-gray-300 cursor-pointer">Actif pour ce logement</label>
+                        </div>
                     </div>
                 </div>
 
@@ -1313,7 +1312,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <button type="button" onclick="AdminApp.closeLocationModal()" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
                         <button type="submit" id="btn-save-location" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-2">
                             <span id="btn-save-loc-icon">💾</span>
-                            <span id="btn-save-loc-text">Enregistrer l'emplacement</span>
+                            <span id="btn-save-loc-text">Enregistrer le parking</span>
                         </button>
                     </div>
                 </div>

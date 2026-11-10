@@ -332,35 +332,70 @@ class AiTranslator
     {
         $category = $data['category'] ?? 'free_street';
 
-        // Sélection ciblée des champs selon le type d'emplacement pour éliminer toute hallucination
+        // Sélection ciblée des champs physiques du parking dans le catalogue (indépendants des hébergements)
         if ($category === 'private_parking') {
             $fieldsToTranslate = [
-                'name'             => $data['name_fr'] ?? null,
-                'walking_time'     => $data['walking_time_fr'] ?? null,
-                'opening_hours'    => $data['opening_hours_fr'] ?? null,
-                'rates'            => $data['rates_fr'] ?? null,
-                'suitable_vehicles'=> $data['suitable_vehicles_fr'] ?? null,
-                'notes'            => $data['notes_fr'] ?? null,
+                'name'              => $data['name_fr'] ?? null,
+                'opening_hours'     => $data['opening_hours_fr'] ?? null,
+                'rates'             => $data['rates_fr'] ?? null,
+                'suitable_vehicles' => $data['suitable_vehicles_fr'] ?? null,
+                'notes'             => $data['notes_fr'] ?? null,
             ];
-            $context = 'Parking privé couvert (nom, temps à pied, horaires, tarifs, véhicules)';
+            $context = 'Parking privé couvert (nom, horaires d\'accès, tarifs, gabarit/véhicules adaptés, remarques)';
         } elseif ($category === 'tcl_pr') {
             $fieldsToTranslate = [
-                'name'             => $data['name_fr'] ?? null,
-                'transit_time'     => $data['transit_time_fr'] ?? null,
-                'opening_hours'    => $data['opening_hours_fr'] ?? null,
-                'how_to_reach'     => $data['how_to_reach_fr'] ?? null,
-                'notes'            => $data['notes_fr'] ?? null,
+                'name'              => $data['name_fr'] ?? null,
+                'opening_hours'     => $data['opening_hours_fr'] ?? null,
+                'notes'             => $data['notes_fr'] ?? null,
             ];
-            $context = 'Parc Relais TCL connecté aux transports (nom, temps TCL, horaires, itinéraire retour)';
+            $context = 'Parc Relais TCL connecté aux transports en commun (nom officiel, horaires d\'ouverture, remarques)';
         } else {
             // Rues gratuites & Dépose minute
             $fieldsToTranslate = [
-                'name'             => $data['name_fr'] ?? null,
-                'walking_time'     => $data['walking_time_fr'] ?? null,
-                'notes'            => $data['notes_fr'] ?? null,
+                'name'              => $data['name_fr'] ?? null,
+                'notes'             => $data['notes_fr'] ?? null,
             ];
-            $context = 'Rue ou emplacement gratuit de stationnement (nom, temps à pied, remarques)';
+            $context = 'Rue ou arrêt gratuit de stationnement (nom de la voie ou du lieu, conseils pratiques)';
         }
+
+        $dict = [];
+        foreach ($fieldsToTranslate as $key => $val) {
+            $enKey = $key . '_en';
+            if (!$force && !empty($data[$enKey]) && trim((string)$data[$enKey]) !== '') {
+                continue;
+            }
+            if ($val !== null && trim((string)$val) !== '') {
+                $dict[$key] = trim((string)$val);
+            }
+        }
+
+        if (empty($dict)) {
+            return $data;
+        }
+
+        $translated = self::translateDictWithDbConfig($db, $dict, $context, $throwOnError);
+        if (!empty($translated)) {
+            foreach ($translated as $key => $enVal) {
+                $enKey = $key . '_en';
+                $data[$enKey] = $enVal;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Traduit les informations de liaison / accès spécifiques entre un logement et un parking
+     */
+    public static function translateParkingConnection(PDO $db, array $data, bool $force = false, bool $throwOnError = false): array
+    {
+        $fieldsToTranslate = [
+            'walking_time' => $data['walking_time_fr'] ?? null,
+            'transit_time' => $data['transit_time_fr'] ?? null,
+            'how_to_reach' => $data['how_to_reach_fr'] ?? null,
+            'notes'        => $data['notes_fr'] ?? null,
+        ];
+        $context = 'Informations de trajet et d\'accès entre un logement et un stationnement (temps à pied, temps TCL, itinéraire retour)';
 
         $dict = [];
         foreach ($fieldsToTranslate as $key => $val) {

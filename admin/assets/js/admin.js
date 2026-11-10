@@ -1883,7 +1883,6 @@ const AdminApp = {
             if (cat === 'private_parking') {
                 return [
                     { key: 'name', label: 'Nom du parking privé', frId: 'location-name-fr-priv', enId: 'location-name-en', isTextarea: false },
-                    { key: 'walking_time', label: 'Temps de marche', frId: 'location-walking-fr-priv', enId: 'location-walking-en', isTextarea: false },
                     { key: 'opening_hours', label: 'Horaires d\'accès', frId: 'location-hours-fr-priv', enId: 'location-hours-en', isTextarea: false },
                     { key: 'rates', label: 'Grille tarifaire', frId: 'location-rates-fr-priv', enId: 'location-rates-en', isTextarea: true, rows: 2 },
                     { key: 'suitable_vehicles', label: 'Véhicules adaptés', frId: 'location-vehicles-fr', enId: 'location-vehicles-en', isTextarea: false },
@@ -1892,16 +1891,13 @@ const AdminApp = {
             } else if (cat === 'tcl_pr') {
                 return [
                     { key: 'name', label: 'Nom du Parc Relais TCL', frId: 'location-name-fr-tcl', enId: 'location-name-en', isTextarea: false },
-                    { key: 'transit_time', label: 'Temps en transports TCL', frId: 'location-transit-fr', enId: 'location-transit-en', isTextarea: false },
                     { key: 'opening_hours', label: 'Horaires d\'accès', frId: 'location-hours-fr-tcl', enId: 'location-hours-en', isTextarea: false },
-                    { key: 'how_to_reach', label: 'Itinéraire retour vers le logement', frId: 'location-reach-fr', enId: 'location-reach-en', isTextarea: true, rows: 2 },
                     { key: 'notes', label: 'Notes complémentaires', frId: 'location-notes-fr-tcl', enId: 'location-notes-en', isTextarea: false }
                 ];
             } else {
                 // Rues gratuites & Dépose minute
                 return [
                     { key: 'name', label: 'Nom du lieu ou de la rue', frId: 'location-name-fr-free', enId: 'location-name-en', isTextarea: false },
-                    { key: 'walking_time', label: 'Temps d\'accès à pied', frId: 'location-walking-fr-free', enId: 'location-walking-en', isTextarea: false },
                     { key: 'notes', label: 'Remarques & conseils', frId: 'location-notes-fr-free', enId: 'location-notes-en', isTextarea: false }
                 ];
             }
@@ -2275,6 +2271,21 @@ const AdminApp = {
             if (rStreet) rStreet.checked = (targetSubtype === 'free_street');
             if (rSpot) rSpot.checked = (targetSubtype === 'free_spot');
         }
+
+        // Adapter le libellé de liaison à la volée selon le mode (pied vs transport)
+        const ontheflyWalkingLabel = document.getElementById('location-onthefly-walking-label');
+        const ontheflyWalkingInput = document.getElementById('location-onthefly-walking-fr');
+        const ontheflyReachWrap = document.getElementById('location-onthefly-reach-wrap');
+
+        if (cat === 'tcl_pr') {
+            if (ontheflyWalkingLabel) ontheflyWalkingLabel.textContent = 'Temps en transports TCL';
+            if (ontheflyWalkingInput) ontheflyWalkingInput.placeholder = 'Ex: Environ 20 min en TCL (Métro D)';
+            if (ontheflyReachWrap) ontheflyReachWrap.classList.remove('hidden');
+        } else {
+            if (ontheflyWalkingLabel) ontheflyWalkingLabel.textContent = 'Temps d\'accès à pied';
+            if (ontheflyWalkingInput) ontheflyWalkingInput.placeholder = 'Ex: Environ 8 min à pied';
+            if (ontheflyReachWrap) ontheflyReachWrap.classList.add('hidden');
+        }
     },
 
     onFreeSubtypeChange(subtype) {
@@ -2528,6 +2539,7 @@ const AdminApp = {
     openLocationModal(id = 0, defaultCategory = 'free_street', isCatalog = false) {
         const modal = document.getElementById('modal-location-form');
         const titleEl = document.getElementById('modal-location-title');
+        const subEl = document.getElementById('modal-location-subtitle');
         const form = document.getElementById('location-form');
         if (!modal || !form) return;
 
@@ -2539,12 +2551,16 @@ const AdminApp = {
         document.getElementById('location-property-id').value = isCatalog ? 0 : this.state.currentPropertyId;
 
         // Réinitialiser les champs anglais masqués
-        ['location-name-en', 'location-walking-en', 'location-transit-en', 'location-hours-en', 'location-rates-en', 'location-vehicles-en', 'location-reach-en', 'location-notes-en'].forEach(fid => {
+        ['location-name-en', 'location-hours-en', 'location-rates-en', 'location-vehicles-en', 'location-notes-en'].forEach(fid => {
             const el = document.getElementById(fid);
             if (el) el.value = '';
         });
 
+        const onTheFlyEl = document.getElementById('location-on-the-fly-connection');
+
         if (id > 0) {
+            if (onTheFlyEl) onTheFlyEl.classList.add('hidden');
+
             let loc = null;
             if (isCatalog) {
                 loc = (this.state.parkingCatalogItems || []).find(l => l.id == id && (!defaultCategory || l.category === defaultCategory));
@@ -2552,10 +2568,14 @@ const AdminApp = {
             if (!loc) {
                 loc = (this.state.currentParkingLocations || []).find(l => (l.parking_item_id == id || l.id == id) && (!defaultCategory || l.category === defaultCategory));
             }
+            if (!loc) {
+                loc = (this.state.parkingCatalogItems || []).find(l => l.id == id);
+            }
 
             if (!loc) return;
-            const cat = loc.category || 'free_street';
+            const cat = loc.category || defaultCategory || 'free_street';
             titleEl.textContent = isCatalog ? `Modifier la fiche parking : ${loc.name_fr}` : `Modifier : ${loc.name_fr}`;
+            if (subEl) subEl.textContent = 'Renseignez les caractéristiques physiques du parking (indépendantes des logements).';
             if (document.getElementById('location-original-category')) {
                 document.getElementById('location-original-category').value = cat;
             }
@@ -2565,7 +2585,6 @@ const AdminApp = {
                 if (document.getElementById('location-name-fr-priv')) document.getElementById('location-name-fr-priv').value = loc.name_fr || '';
                 if (document.getElementById('location-operator')) document.getElementById('location-operator').value = loc.operator || '';
                 if (document.getElementById('location-address-priv')) document.getElementById('location-address-priv').value = loc.address || '';
-                if (document.getElementById('location-walking-fr-priv')) document.getElementById('location-walking-fr-priv').value = loc.walking_time_fr || '';
                 if (document.getElementById('location-max-height')) document.getElementById('location-max-height').value = loc.max_height || '';
                 if (document.getElementById('location-hours-fr-priv')) document.getElementById('location-hours-fr-priv').value = loc.opening_hours_fr || '';
                 if (document.getElementById('location-vehicles-fr')) document.getElementById('location-vehicles-fr').value = loc.suitable_vehicles_fr || '';
@@ -2576,44 +2595,56 @@ const AdminApp = {
                 if (document.getElementById('location-name-fr-tcl')) document.getElementById('location-name-fr-tcl').value = loc.name_fr || '';
                 if (document.getElementById('location-capacity')) document.getElementById('location-capacity').value = loc.capacity || '';
                 if (document.getElementById('location-address-tcl')) document.getElementById('location-address-tcl').value = loc.address || '';
-                if (document.getElementById('location-transit-fr')) document.getElementById('location-transit-fr').value = loc.transit_time_fr || '';
                 if (document.getElementById('location-hours-fr-tcl')) document.getElementById('location-hours-fr-tcl').value = loc.opening_hours_fr || '';
-                if (document.getElementById('location-reach-fr')) document.getElementById('location-reach-fr').value = loc.how_to_reach_fr || '';
                 if (document.getElementById('location-booking-url-tcl')) document.getElementById('location-booking-url-tcl').value = loc.booking_url || '';
                 if (document.getElementById('location-notes-fr-tcl')) document.getElementById('location-notes-fr-tcl').value = loc.notes_fr || '';
             } else {
                 if (document.getElementById('location-free-subtype')) document.getElementById('location-free-subtype').value = cat === 'free_spot' ? 'free_spot' : 'free_street';
                 if (document.getElementById('location-name-fr-free')) document.getElementById('location-name-fr-free').value = loc.name_fr || '';
                 if (document.getElementById('location-address-free')) document.getElementById('location-address-free').value = loc.address || '';
-                if (document.getElementById('location-walking-fr-free')) document.getElementById('location-walking-fr-free').value = loc.walking_time_fr || '';
                 if (document.getElementById('location-notes-fr-free')) document.getElementById('location-notes-fr-free').value = loc.notes_fr || '';
             }
 
-            // Report des champs anglais
+            // Report des champs anglais physiques
             if (document.getElementById('location-name-en')) document.getElementById('location-name-en').value = loc.name_en || '';
-            if (document.getElementById('location-walking-en')) document.getElementById('location-walking-en').value = loc.walking_time_en || '';
-            if (document.getElementById('location-transit-en')) document.getElementById('location-transit-en').value = loc.transit_time_en || '';
             if (document.getElementById('location-hours-en')) document.getElementById('location-hours-en').value = loc.opening_hours_en || '';
             if (document.getElementById('location-rates-en')) document.getElementById('location-rates-en').value = loc.rates_en || '';
             if (document.getElementById('location-vehicles-en')) document.getElementById('location-vehicles-en').value = loc.suitable_vehicles_en || '';
-            if (document.getElementById('location-reach-en')) document.getElementById('location-reach-en').value = loc.how_to_reach_en || '';
             if (document.getElementById('location-notes-en')) document.getElementById('location-notes-en').value = loc.notes_en || '';
-
-            document.getElementById('location-order').value = loc.display_order || 1;
-            document.getElementById('location-active').checked = (loc.active === undefined || loc.active == 1);
         } else {
-            titleEl.textContent = isCatalog ? 'Ajouter un parking au catalogue général' : 'Créer un emplacement à la volée';
+            // Création d'un nouveau parking
             if (document.getElementById('location-original-category')) {
                 document.getElementById('location-original-category').value = '';
             }
             this.onLocationCategoryChange(defaultCategory || 'free_street');
-            const countForCat = (this.state.currentParkingLocations || []).filter(l => {
-                if (defaultCategory === 'private_parking') return l.category === 'private_parking';
-                if (defaultCategory === 'tcl_pr') return l.category === 'tcl_pr';
-                return l.category === 'free_street' || l.category === 'free_spot';
-            }).length;
-            document.getElementById('location-order').value = countForCat + 1;
-            document.getElementById('location-active').checked = true;
+
+            if (isCatalog) {
+                if (onTheFlyEl) onTheFlyEl.classList.add('hidden');
+                titleEl.textContent = 'Ajouter un parking au catalogue';
+                if (subEl) subEl.textContent = 'Créez une fiche parking réutilisable pour vos différents hébergements.';
+            } else {
+                if (onTheFlyEl) onTheFlyEl.classList.remove('hidden');
+                titleEl.textContent = 'Créer un parking à la volée';
+                const currentProp = (this.state.properties || []).find(p => p.id == this.state.currentPropertyId);
+                const propName = currentProp ? currentProp.name : 'ce logement';
+                if (subEl) subEl.textContent = `Crée le parking dans le catalogue et l'associe immédiatement à ${propName}.`;
+                const propBadge = document.getElementById('location-on-the-fly-prop-name');
+                if (propBadge) propBadge.textContent = propName;
+
+                const countForCat = (this.state.currentParkingLocations || []).filter(l => {
+                    if (defaultCategory === 'private_parking') return l.category === 'private_parking';
+                    if (defaultCategory === 'tcl_pr') return l.category === 'tcl_pr';
+                    return l.category === 'free_street' || l.category === 'free_spot';
+                }).length;
+                const orderEl = document.getElementById('location-onthefly-order');
+                if (orderEl) orderEl.value = countForCat + 1;
+                const activeEl = document.getElementById('location-onthefly-active');
+                if (activeEl) activeEl.checked = true;
+                const walkEl = document.getElementById('location-onthefly-walking-fr');
+                if (walkEl) walkEl.value = '';
+                const reachEl = document.getElementById('location-onthefly-reach-fr');
+                if (reachEl) reachEl.value = '';
+            }
         }
 
         modal.classList.remove('hidden');
@@ -2633,7 +2664,6 @@ const AdminApp = {
             nameFr = (document.getElementById('location-name-fr-priv')?.value || '').trim();
             data.name_fr = nameFr;
             data.address = (document.getElementById('location-address-priv')?.value || '').trim();
-            data.walking_time_fr = (document.getElementById('location-walking-fr-priv')?.value || '').trim();
             data.opening_hours_fr = (document.getElementById('location-hours-fr-priv')?.value || '').trim();
             data.rates_fr = (document.getElementById('location-rates-fr-priv')?.value || '').trim();
             data.suitable_vehicles_fr = (document.getElementById('location-vehicles-fr')?.value || '').trim();
@@ -2642,15 +2672,12 @@ const AdminApp = {
             nameFr = (document.getElementById('location-name-fr-tcl')?.value || '').trim();
             data.name_fr = nameFr;
             data.address = (document.getElementById('location-address-tcl')?.value || '').trim();
-            data.transit_time_fr = (document.getElementById('location-transit-fr')?.value || '').trim();
             data.opening_hours_fr = (document.getElementById('location-hours-fr-tcl')?.value || '').trim();
-            data.how_to_reach_fr = (document.getElementById('location-reach-fr')?.value || '').trim();
             data.notes_fr = (document.getElementById('location-notes-fr-tcl')?.value || '').trim();
         } else {
             nameFr = (document.getElementById('location-name-fr-free')?.value || '').trim();
             data.name_fr = nameFr;
             data.address = (document.getElementById('location-address-free')?.value || '').trim();
-            data.walking_time_fr = (document.getElementById('location-walking-fr-free')?.value || '').trim();
             data.notes_fr = (document.getElementById('location-notes-fr-free')?.value || '').trim();
         }
 
@@ -2679,12 +2706,6 @@ const AdminApp = {
                 if (res.data.name_en !== undefined && document.getElementById('location-name-en')) {
                     document.getElementById('location-name-en').value = res.data.name_en;
                 }
-                if (res.data.walking_time_en !== undefined && document.getElementById('location-walking-en')) {
-                    document.getElementById('location-walking-en').value = res.data.walking_time_en;
-                }
-                if (res.data.transit_time_en !== undefined && document.getElementById('location-transit-en')) {
-                    document.getElementById('location-transit-en').value = res.data.transit_time_en;
-                }
                 if (res.data.opening_hours_en !== undefined && document.getElementById('location-hours-en')) {
                     document.getElementById('location-hours-en').value = res.data.opening_hours_en;
                 }
@@ -2693,9 +2714,6 @@ const AdminApp = {
                 }
                 if (res.data.suitable_vehicles_en !== undefined && document.getElementById('location-vehicles-en')) {
                     document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
-                }
-                if (res.data.how_to_reach_en !== undefined && document.getElementById('location-reach-en')) {
-                    document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
                 }
                 if (res.data.notes_en !== undefined && document.getElementById('location-notes-en')) {
                     document.getElementById('location-notes-en').value = res.data.notes_en;
@@ -2722,14 +2740,11 @@ const AdminApp = {
 
         let nameFr = '';
         let address = '';
-        let walkingTimeFr = '';
-        let transitTimeFr = '';
         let maxHeight = '';
         let capacity = '';
         let openingHoursFr = '';
         let ratesFr = '';
         let suitableVehiclesFr = '';
-        let howToReachFr = '';
         let operator = '';
         let bookingUrl = '';
         let notesFr = '';
@@ -2738,7 +2753,6 @@ const AdminApp = {
             nameFr = (document.getElementById('location-name-fr-priv')?.value || '').trim();
             operator = (document.getElementById('location-operator')?.value || '').trim();
             address = (document.getElementById('location-address-priv')?.value || '').trim();
-            walkingTimeFr = (document.getElementById('location-walking-fr-priv')?.value || '').trim();
             maxHeight = (document.getElementById('location-max-height')?.value || '').trim();
             openingHoursFr = (document.getElementById('location-hours-fr-priv')?.value || '').trim();
             suitableVehiclesFr = (document.getElementById('location-vehicles-fr')?.value || '').trim();
@@ -2749,9 +2763,7 @@ const AdminApp = {
             nameFr = (document.getElementById('location-name-fr-tcl')?.value || '').trim();
             capacity = (document.getElementById('location-capacity')?.value || '').trim();
             address = (document.getElementById('location-address-tcl')?.value || '').trim();
-            transitTimeFr = (document.getElementById('location-transit-fr')?.value || '').trim();
             openingHoursFr = (document.getElementById('location-hours-fr-tcl')?.value || '').trim();
-            howToReachFr = (document.getElementById('location-reach-fr')?.value || '').trim();
             bookingUrl = (document.getElementById('location-booking-url-tcl')?.value || '').trim();
             notesFr = (document.getElementById('location-notes-fr-tcl')?.value || '').trim();
         } else {
@@ -2759,7 +2771,6 @@ const AdminApp = {
             cat = subtypeEl ? subtypeEl.value : 'free_street';
             nameFr = (document.getElementById('location-name-fr-free')?.value || '').trim();
             address = (document.getElementById('location-address-free')?.value || '').trim();
-            walkingTimeFr = (document.getElementById('location-walking-fr-free')?.value || '').trim();
             notesFr = (document.getElementById('location-notes-fr-free')?.value || '').trim();
         }
 
@@ -2768,25 +2779,36 @@ const AdminApp = {
             return;
         }
 
+        // Champs de liaison à la volée (uniquement si création immédiate depuis la fiche d'un logement)
+        const isOnthefly = (id === 0 && !isCatalogMode);
+        let onTheFlyWalking = '';
+        let onTheFlyReach = '';
+        let onTheFlyOrder = 1;
+        let onTheFlyActive = 1;
+
+        if (isOnthefly) {
+            onTheFlyWalking = (document.getElementById('location-onthefly-walking-fr')?.value || '').trim();
+            onTheFlyReach = (document.getElementById('location-onthefly-reach-fr')?.value || '').trim();
+            onTheFlyOrder = parseInt(document.getElementById('location-onthefly-order')?.value, 10) || 1;
+            onTheFlyActive = document.getElementById('location-onthefly-active')?.checked ? 1 : 0;
+        }
+
         // Étape 1 : Si pas encore vérifié, traduction IA + Flash Check
         if (!skipReview) {
             const dataFr = {
                 name_fr: nameFr,
                 category: cat,
                 address: address,
-                walking_time_fr: walkingTimeFr,
-                transit_time_fr: transitTimeFr,
                 opening_hours_fr: openingHoursFr,
                 rates_fr: ratesFr,
                 suitable_vehicles_fr: suitableVehiclesFr,
-                how_to_reach_fr: howToReachFr,
                 notes_fr: notesFr
             };
 
             const btnSave = document.getElementById('btn-save-location');
             const iconEl = document.getElementById('btn-save-loc-icon');
             const textEl = document.getElementById('btn-save-loc-text');
-            const origText = textEl ? textEl.textContent : "Enregistrer l'emplacement";
+            const origText = textEl ? textEl.textContent : "Enregistrer le parking";
 
             try {
                 if (btnSave) btnSave.disabled = true;
@@ -2802,12 +2824,6 @@ const AdminApp = {
                     if (res.data.name_en !== undefined && document.getElementById('location-name-en')) {
                         document.getElementById('location-name-en').value = res.data.name_en;
                     }
-                    if (res.data.walking_time_en !== undefined && document.getElementById('location-walking-en')) {
-                        document.getElementById('location-walking-en').value = res.data.walking_time_en;
-                    }
-                    if (res.data.transit_time_en !== undefined && document.getElementById('location-transit-en')) {
-                        document.getElementById('location-transit-en').value = res.data.transit_time_en;
-                    }
                     if (res.data.opening_hours_en !== undefined && document.getElementById('location-hours-en')) {
                         document.getElementById('location-hours-en').value = res.data.opening_hours_en;
                     }
@@ -2816,9 +2832,6 @@ const AdminApp = {
                     }
                     if (res.data.suitable_vehicles_en !== undefined && document.getElementById('location-vehicles-en')) {
                         document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
-                    }
-                    if (res.data.how_to_reach_en !== undefined && document.getElementById('location-reach-en')) {
-                        document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
                     }
                     if (res.data.notes_en !== undefined && document.getElementById('location-notes-en')) {
                         document.getElementById('location-notes-en').value = res.data.notes_en;
@@ -2847,10 +2860,6 @@ const AdminApp = {
             name_fr: nameFr,
             name_en: (document.getElementById('location-name-en')?.value || '').trim(),
             address: address,
-            walking_time_fr: walkingTimeFr,
-            walking_time_en: (document.getElementById('location-walking-en')?.value || '').trim(),
-            transit_time_fr: transitTimeFr,
-            transit_time_en: (document.getElementById('location-transit-en')?.value || '').trim(),
             max_height: maxHeight,
             capacity: capacity,
             opening_hours_fr: openingHoursFr,
@@ -2859,14 +2868,16 @@ const AdminApp = {
             rates_en: (document.getElementById('location-rates-en')?.value || '').trim(),
             suitable_vehicles_fr: suitableVehiclesFr,
             suitable_vehicles_en: (document.getElementById('location-vehicles-en')?.value || '').trim(),
-            how_to_reach_fr: howToReachFr,
-            how_to_reach_en: (document.getElementById('location-reach-en')?.value || '').trim(),
             operator: operator,
             booking_url: bookingUrl,
             notes_fr: notesFr,
             notes_en: (document.getElementById('location-notes-en')?.value || '').trim(),
-            display_order: parseInt(document.getElementById('location-order').value, 10) || 0,
-            active: document.getElementById('location-active').checked ? 1 : 0
+            // Paramètres de liaison à la volée (uniquement si création immédiate pour un hébergement)
+            walking_time_fr: (isOnthefly && cat !== 'tcl_pr') ? onTheFlyWalking : '',
+            transit_time_fr: (isOnthefly && cat === 'tcl_pr') ? onTheFlyWalking : '',
+            how_to_reach_fr: (isOnthefly && cat === 'tcl_pr') ? onTheFlyReach : '',
+            display_order: isOnthefly ? onTheFlyOrder : 1,
+            active: isOnthefly ? onTheFlyActive : 1
         };
 
         try {

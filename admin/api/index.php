@@ -866,7 +866,9 @@ try {
 
             if ($type === 'parking_general') {
                 $result = \Cdh\Portal\Admin\AiTranslator::translateParkingGeneral($db, $inputData, true, true);
-            } elseif ($type === 'parking_location' || $type === 'parking_item' || $type === 'parking_catalog' || $type === 'parking_connection') {
+            } elseif ($type === 'parking_connection') {
+                $result = \Cdh\Portal\Admin\AiTranslator::translateParkingConnection($db, $inputData, true, true);
+            } elseif ($type === 'parking_location' || $type === 'parking_item' || $type === 'parking_catalog') {
                 $result = \Cdh\Portal\Admin\AiTranslator::translateParkingLocation($db, $inputData, true, true);
             } else {
                 http_response_code(400);

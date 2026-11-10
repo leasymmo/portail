@@ -1034,8 +1034,8 @@ class AdminRepository
             return 0;
         }
 
-        // 2. Si un logement est ciblé, crée/met à jour la liaison
-        if ($propertyId > 0) {
+        // 2. Si un logement est ciblé ET qu'il s'agit d'une création à la volée, crée la liaison initiale
+        if ($parkingItemId === 0 && $propertyId > 0) {
             $this->linkParkingToProperty($propertyId, $category, $savedCatalogId, $data);
         }
 
