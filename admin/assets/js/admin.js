@@ -184,6 +184,7 @@ const AdminApp = {
         let tab = 'dashboard';
         let propertyRef = null;
         let parkingSubtab = null;
+        let parkingMode = null;
 
         if (hash) {
             if (hash.includes('?')) {
@@ -192,6 +193,12 @@ const AdminApp = {
                 const params = new URLSearchParams(parts[1]);
                 propertyRef = params.get('property') || params.get('logement') || params.get('property_id') || params.get('id');
                 parkingSubtab = params.get('subtab');
+                const view = params.get('view') || params.get('mode');
+                if (view === 'catalog' || parkingSubtab === 'catalog') {
+                    parkingMode = 'catalog';
+                } else if (view === 'property') {
+                    parkingMode = 'property';
+                }
             } else if (hash.includes('/')) {
                 const parts = hash.split('/');
                 tab = parts[0].trim();
@@ -206,6 +213,10 @@ const AdminApp = {
             const urlParams = new URLSearchParams(window.location.search);
             propertyRef = urlParams.get('property') || urlParams.get('logement') || urlParams.get('property_id') || urlParams.get('id');
             if (!parkingSubtab) parkingSubtab = urlParams.get('subtab');
+            const view = urlParams.get('view') || urlParams.get('mode');
+            if (view === 'catalog' || parkingSubtab === 'catalog') {
+                parkingMode = 'catalog';
+            }
         }
 
         const validTabs = ['dashboard', 'properties', 'videos', 'parking', 'logs', 'users'];
@@ -213,11 +224,11 @@ const AdminApp = {
             tab = 'dashboard';
         }
 
-        return { tab, propertyRef, parkingSubtab };
+        return { tab, propertyRef, parkingSubtab, parkingMode };
     },
 
     applyRouteFromUrl(isInitial = false) {
-        const { tab, propertyRef, parkingSubtab } = this.parseRoute();
+        const { tab, propertyRef, parkingSubtab, parkingMode } = this.parseRoute();
 
         if (propertyRef && this.state.properties.length > 0) {
             const matched = this.state.properties.find(p => 
@@ -234,8 +245,14 @@ const AdminApp = {
             this.state.currentPropertyId = this.state.properties[0].id;
         }
 
+        if (parkingMode) {
+            this.state.parkingMainMode = parkingMode;
+        }
+
         if (parkingSubtab && ['general', 'locations'].includes(parkingSubtab)) {
             this.state.parkingSubtab = parkingSubtab;
+        } else if (!this.state.parkingSubtab) {
+            this.state.parkingSubtab = 'locations';
         }
 
         this.switchTab(tab, true);
@@ -245,15 +262,25 @@ const AdminApp = {
         const tab = this.state.activeTab || 'dashboard';
         let newHash = `#${tab}`;
 
-        if (['videos', 'parking'].includes(tab)) {
+        if (tab === 'parking') {
+            if (this.state.parkingMainMode === 'catalog') {
+                newHash = '#parking?view=catalog';
+            } else {
+                const prop = this.state.properties.find(p => p.id == this.state.currentPropertyId);
+                const propParam = prop ? (prop.slug || prop.id) : this.state.currentPropertyId;
+                if (propParam) {
+                    if (this.state.parkingSubtab === 'general') {
+                        newHash = `#parking?property=${encodeURIComponent(propParam)}&subtab=general`;
+                    } else {
+                        newHash = `#parking?property=${encodeURIComponent(propParam)}`;
+                    }
+                }
+            }
+        } else if (tab === 'videos') {
             const prop = this.state.properties.find(p => p.id == this.state.currentPropertyId);
             const propParam = prop ? (prop.slug || prop.id) : this.state.currentPropertyId;
             if (propParam) {
-                if (tab === 'parking' && this.state.parkingSubtab === 'locations') {
-                    newHash = `#${tab}?property=${encodeURIComponent(propParam)}&subtab=locations`;
-                } else {
-                    newHash = `#${tab}?property=${encodeURIComponent(propParam)}`;
-                }
+                newHash = `#videos?property=${encodeURIComponent(propParam)}`;
             }
         }
 
@@ -1472,15 +1499,48 @@ const AdminApp = {
         this.updatePropertySelector('parking-property-select', async (pid) => {
             this.state.currentPropertyId = pid;
             this.updateUrlHash();
-            await this.fetchAndRenderParking(pid);
+            if (this.state.parkingMainMode !== 'catalog') {
+                await this.fetchAndRenderParking(pid);
+            }
         });
 
-        // Initialiser l'état du sous-onglet actif
-        this.switchParkingSubtab(this.state.parkingSubtab || 'general', false);
+        // Charger silencieusement les données du catalogue pour maintenir les badges à jour
+        this.loadCatalogView(false);
 
-        if (this.state.currentPropertyId) {
+        // Activer le mode principal (par défaut 'property')
+        await this.switchParkingMainMode(this.state.parkingMainMode || 'property', false);
+    },
+
+    async switchParkingMainMode(mode, updateHash = true) {
+        this.state.parkingMainMode = mode || 'property';
+        if (updateHash && this.state.activeTab === 'parking') {
             this.updateUrlHash();
-            await this.fetchAndRenderParking(this.state.currentPropertyId);
+        }
+
+        const btnProp = document.getElementById('parking-mode-btn-property');
+        const btnCat = document.getElementById('parking-mode-btn-catalog');
+        const viewProp = document.getElementById('parking-view-property');
+        const viewCat = document.getElementById('parking-view-catalog');
+
+        const activeModeClass = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gold text-white shadow-md shadow-gold/20 cursor-pointer';
+        const inactiveModeClass = 'px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition flex items-center gap-2 cursor-pointer';
+
+        if (btnProp) btnProp.className = this.state.parkingMainMode === 'property' ? activeModeClass : inactiveModeClass;
+        if (btnCat) btnCat.className = this.state.parkingMainMode === 'catalog' ? activeModeClass : inactiveModeClass;
+
+        if (viewProp) viewProp.classList.toggle('hidden', this.state.parkingMainMode !== 'property');
+        if (viewCat) viewCat.classList.toggle('hidden', this.state.parkingMainMode !== 'catalog');
+
+        if (this.state.parkingMainMode === 'catalog') {
+            await this.loadCatalogView();
+        } else {
+            if (!this.state.parkingSubtab) {
+                this.state.parkingSubtab = 'locations';
+            }
+            this.switchParkingSubtab(this.state.parkingSubtab, false);
+            if (this.state.currentPropertyId) {
+                await this.fetchAndRenderParking(this.state.currentPropertyId);
+            }
         }
     },
 
@@ -1529,55 +1589,27 @@ const AdminApp = {
     },
 
     async switchParkingSubtab(subtab, updateHash = true) {
-        this.state.parkingSubtab = subtab;
+        this.state.parkingSubtab = subtab || 'locations';
         if (updateHash && this.state.activeTab === 'parking') {
             this.updateUrlHash();
         }
         const btnGeneral = document.getElementById('parking-subtab-btn-general');
         const btnLocations = document.getElementById('parking-subtab-btn-locations');
-        const btnCatalog = document.getElementById('parking-subtab-btn-catalog');
         const tabGeneral = document.getElementById('parking-subtab-general');
         const tabLocations = document.getElementById('parking-subtab-locations');
-        const tabCatalog = document.getElementById('parking-subtab-catalog');
-        const actionsProperty = document.getElementById('parking-header-actions-property');
-        const actionsCatalog = document.getElementById('parking-header-actions-catalog');
+        const addBtn = document.getElementById('btn-property-add-parking');
 
-        const activeBtnClass = 'parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-gold text-white shadow-md shadow-gold/25';
-        const inactiveBtnClass = 'parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2';
+        const activeBtnClass = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold text-white shadow-xs cursor-pointer';
+        const inactiveBtnClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white transition flex items-center gap-1.5 cursor-pointer';
 
-        if (tabGeneral) tabGeneral.classList.toggle('hidden', subtab !== 'general');
-        if (tabLocations) tabLocations.classList.toggle('hidden', subtab !== 'locations');
-        if (tabCatalog) tabCatalog.classList.toggle('hidden', subtab !== 'catalog');
+        if (tabGeneral) tabGeneral.classList.toggle('hidden', this.state.parkingSubtab !== 'general');
+        if (tabLocations) tabLocations.classList.toggle('hidden', this.state.parkingSubtab !== 'locations');
 
-        if (btnGeneral) btnGeneral.className = subtab === 'general' ? activeBtnClass : inactiveBtnClass;
-        if (btnLocations) btnLocations.className = subtab === 'locations' ? activeBtnClass : inactiveBtnClass;
-        if (btnCatalog) btnCatalog.className = subtab === 'catalog' ? activeBtnClass : inactiveBtnClass;
+        if (btnGeneral) btnGeneral.className = this.state.parkingSubtab === 'general' ? activeBtnClass : inactiveBtnClass;
+        if (btnLocations) btnLocations.className = this.state.parkingSubtab === 'locations' ? activeBtnClass : inactiveBtnClass;
 
-        if (actionsProperty && actionsCatalog) {
-            if (subtab === 'catalog') {
-                actionsProperty.classList.add('hidden');
-                actionsCatalog.classList.remove('hidden');
-            } else {
-                actionsProperty.classList.remove('hidden');
-                actionsCatalog.classList.add('hidden');
-            }
-        }
-
-        const contextPill = document.getElementById('parking-property-context-pill');
-        if (contextPill) {
-            const currentProp = (this.state.properties || []).find(p => p.id == this.state.currentPropertyId);
-            const propName = currentProp ? currentProp.name : 'Logement';
-            if (subtab === 'catalog') {
-                contextPill.innerHTML = '🌐 <span class="text-gold font-semibold">Mode catalogue</span> (fiches transversales)';
-            } else if (subtab === 'locations') {
-                contextPill.innerHTML = `📍 Emplacements pour : <span class="text-gold font-semibold">${this.escape(propName)}</span>`;
-            } else {
-                contextPill.innerHTML = `📋 Règles voirie pour : <span class="text-gold font-semibold">${this.escape(propName)}</span>`;
-            }
-        }
-
-        if (subtab === 'catalog') {
-            await this.loadCatalogView();
+        if (addBtn) {
+            addBtn.classList.toggle('hidden', this.state.parkingSubtab === 'general');
         }
     },
 
@@ -1587,8 +1619,8 @@ const AdminApp = {
             const count = (this.state.currentParkingLocations || []).length;
             badge.textContent = count;
             badge.className = count > 0
-                ? 'px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-bold'
-                : 'px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold';
+                ? 'px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold'
+                : 'px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold';
         }
     },
 
@@ -1618,9 +1650,13 @@ const AdminApp = {
     },
 
     updateParkingCatalogBadge() {
+        const count = (this.state.parkingCatalogItems || []).length;
+        const mainBadge = document.getElementById('parking-main-catalog-badge');
+        if (mainBadge) {
+            mainBadge.textContent = count;
+        }
         const badge = document.getElementById('parking-subtab-catalog-badge');
         if (badge) {
-            const count = (this.state.parkingCatalogItems || []).length;
             badge.textContent = count;
             badge.className = count > 0
                 ? 'px-2 py-0.5 rounded-full text-[10px] bg-gold/20 text-gold font-bold'
@@ -1700,6 +1736,11 @@ const AdminApp = {
         this.openLocationModal(0, cat, false);
     },
 
+    switchFromCreateToLinkModal() {
+        this.closeLocationModal();
+        this.openLinkExistingModal();
+    },
+
     renderCatalogList() {
         const container = document.getElementById('parking-catalog-list');
         const filterCat = document.getElementById('parking-catalog-filter-cat');
@@ -1730,8 +1771,8 @@ const AdminApp = {
                 container.innerHTML = `
                     <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6 space-y-3">
                         <span class="text-3xl block">🔍</span>
-                        <p class="text-base font-bold text-white">Aucun parking ne correspond à vos filtres</p>
-                        <p class="text-xs text-gray-400">Aucun résultat trouvé pour votre recherche « ${this.escape(q)} » dans la catégorie sélectionnée.</p>
+                        <p class="text-base font-bold text-white">Aucun parking ne correspond à vos critères</p>
+                        <p class="text-xs text-gray-400">Aucun résultat trouvé pour votre recherche « ${this.escape(q)} ».</p>
                         <button type="button" onclick="AdminApp.resetCatalogFilters()" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs transition cursor-pointer">
                             🔄 Réinitialiser les filtres
                         </button>
@@ -1741,10 +1782,11 @@ const AdminApp = {
                 container.innerHTML = `
                     <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6">
                         <span class="text-3xl block mb-2">🏛️</span>
-                        <p class="text-base font-bold text-white">Aucun parking trouvé dans le catalogue</p>
-                        <p class="text-xs text-gray-500 mt-1 mb-4">Créez un nouvel emplacement réutilisable pour vos hébergements.</p>
-                        <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg transition cursor-pointer">
-                            + Créer un parking dans le catalogue
+                        <p class="text-base font-bold text-white">Aucun parking dans le catalogue général</p>
+                        <p class="text-xs text-gray-500 mt-1 mb-4">Créez votre première fiche parking réutilisable pour vos hébergements.</p>
+                        <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg transition cursor-pointer inline-flex items-center gap-2">
+                            <span>➕</span>
+                            <span>Nouveau parking au catalogue</span>
                         </button>
                     </div>
                 `;
@@ -1819,22 +1861,16 @@ const AdminApp = {
                                 <a href="${this.escape(this.safeUrl(it.booking_url))}" target="_blank" rel="noopener noreferrer"
                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm">
                                     <span>🔗</span>
-                                    <span>Site / Réservation</span>
+                                    <span>Site</span>
                                 </a>
                             ` : ''}
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 ml-auto">
-                            <button type="button" onclick="AdminApp.openManageParkingLinksModal('${it.category}', ${it.id})" 
-                                    class="py-1.5 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-semibold transition flex items-center space-x-1 shadow-sm cursor-pointer"
-                                    title="Associer ou dissocier des logements">
-                                <span>🔗</span>
-                                <span>Logements (${linkedCount})</span>
-                            </button>
+                        <div class="flex items-center gap-2 ml-auto">
                             <button type="button" onclick="AdminApp.openLocationModal(${it.id}, '${it.category}', true)" 
                                     class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm cursor-pointer"
-                                    title="Modifier la fiche complète du parking dans le catalogue">
+                                    title="Modifier la fiche du parking">
                                 <span>✏️</span>
-                                <span>Fiche physique</span>
+                                <span>Modifier</span>
                             </button>
                             <button type="button" onclick="AdminApp.confirmDeleteCatalogItem(${it.id}, '${it.category}', '${this.escape(it.name_fr)}')" 
                                     class="py-1.5 px-2.5 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white border border-white/10 hover:border-red-500 text-xs font-semibold text-gray-400 hover:text-white transition flex items-center justify-center shadow-sm cursor-pointer"
@@ -2530,20 +2566,12 @@ const AdminApp = {
                                 <span>Trajet & Accès</span>
                             </button>
 
-                            <!-- Modifier la fiche physique générale dans le catalogue -->
+                            <!-- Modifier la fiche générale dans le catalogue -->
                             <button type="button" onclick="AdminApp.openLocationModal(${itemId}, '${loc.category}', true)" 
-                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-blue-500/50 hover:text-blue-400 text-xs font-semibold text-gray-300 transition flex items-center space-x-1.5 shadow-sm cursor-pointer" 
-                                    title="Modifier les caractéristiques physiques générales du parking dans le catalogue (adresse, horaires, tarifs...)">
+                                    class="py-1.5 px-3 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center space-x-1 shadow-sm cursor-pointer" 
+                                    title="Modifier les caractéristiques du parking">
                                 <span>✏️</span>
-                                <span>Fiche physique</span>
-                            </button>
-
-                            <!-- Associer à d'autres logements -->
-                            <button type="button" onclick="AdminApp.openManageParkingLinksModal('${loc.category}', ${itemId})" 
-                                    class="py-1.5 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 hover:text-purple-200 border border-purple-500/30 text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm cursor-pointer" 
-                                    title="Gérer les liaisons de ce parking avec d'autres logements">
-                                <span>🏠</span>
-                                <span>Logements</span>
+                                <span>Modifier</span>
                             </button>
 
                             <!-- Retirer de cet hébergement (sans supprimer du catalogue) -->
@@ -2564,17 +2592,11 @@ const AdminApp = {
                 <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6">
                     <span class="text-3xl block mb-2">🅿️</span>
                     <p class="text-base font-bold text-white">Aucun parking associé à cet hébergement</p>
-                    <p class="text-xs text-gray-500 mt-1 mb-4">Liez un parking existant du catalogue général ou créez-en un nouveau à la volée.</p>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <button type="button" onclick="AdminApp.openLinkExistingModal()" class="px-4 py-2 rounded-xl bg-gold text-white font-bold text-xs shadow-lg hover:bg-gold-light transition flex items-center gap-1.5">
-                            <span>🔗</span>
-                            <span>Lier un parking du catalogue</span>
-                        </button>
-                        <button type="button" onclick="AdminApp.openLocationModal(0)" class="px-4 py-2 rounded-xl bg-white/10 text-white font-bold text-xs shadow-lg hover:bg-white/20 transition flex items-center gap-1.5">
-                            <span>⚡</span>
-                            <span>Créer à la volée</span>
-                        </button>
-                    </div>
+                    <p class="text-xs text-gray-500 mt-1 mb-4">Ajoutez un parking existant du catalogue général ou créez-en un nouveau.</p>
+                    <button type="button" onclick="AdminApp.openLinkExistingModal()" class="px-5 py-2.5 rounded-xl bg-gold text-white font-bold text-xs shadow-lg shadow-gold/20 hover:bg-gold-light transition inline-flex items-center gap-2 cursor-pointer">
+                        <span>➕</span>
+                        <span>Ajouter un parking</span>
+                    </button>
                 </div>
             `;
             return;
@@ -2596,15 +2618,6 @@ const AdminApp = {
                             <h4 class="text-sm font-bold text-white">Rues gratuites & Dépose-minute</h4>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">${freeList.length}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="AdminApp.openLinkExistingModal('free_street')" class="text-xs text-gold hover:text-gold-light font-semibold transition flex items-center gap-1">
-                                <span>🔗</span> Lier
-                            </button>
-                            <span class="text-gray-600">·</span>
-                            <button type="button" onclick="AdminApp.openLocationModal(0, 'free_street')" class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition flex items-center gap-1">
-                                <span>⚡</span> Nouveau
-                            </button>
-                        </div>
                     </div>
                     ${freeList.length > 0 
                         ? `<div class="space-y-3">${freeList.map((loc, idx) => renderItemCard(loc, freeList, idx)).join('')}</div>`
@@ -2624,15 +2637,6 @@ const AdminApp = {
                             <h4 class="text-sm font-bold text-white">Parkings privés & couverts</h4>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">${privateList.length}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="AdminApp.openLinkExistingModal('private_parking')" class="text-xs text-gold hover:text-gold-light font-semibold transition flex items-center gap-1">
-                                <span>🔗</span> Lier
-                            </button>
-                            <span class="text-gray-600">·</span>
-                            <button type="button" onclick="AdminApp.openLocationModal(0, 'private_parking')" class="text-xs text-purple-400 hover:text-purple-300 font-semibold transition flex items-center gap-1">
-                                <span>⚡</span> Nouveau
-                            </button>
-                        </div>
                     </div>
                     ${privateList.length > 0 
                         ? `<div class="space-y-3">${privateList.map((loc, idx) => renderItemCard(loc, privateList, idx)).join('')}</div>`
@@ -2651,15 +2655,6 @@ const AdminApp = {
                             <span class="text-base">🚇</span>
                             <h4 class="text-sm font-bold text-white">Parcs Relais TCL (P+R)</h4>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/30">${tclList.length}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button type="button" onclick="AdminApp.openLinkExistingModal('tcl_pr')" class="text-xs text-gold hover:text-gold-light font-semibold transition flex items-center gap-1">
-                                <span>🔗</span> Lier
-                            </button>
-                            <span class="text-gray-600">·</span>
-                            <button type="button" onclick="AdminApp.openLocationModal(0, 'tcl_pr')" class="text-xs text-red-400 hover:text-red-300 font-semibold transition flex items-center gap-1">
-                                <span>⚡</span> Nouveau
-                            </button>
                         </div>
                     </div>
                     ${tclList.length > 0 
@@ -2686,6 +2681,14 @@ const AdminApp = {
         if (catalogModeEl) catalogModeEl.value = isCatalog ? '1' : '0';
 
         document.getElementById('location-property-id').value = isCatalog ? 0 : this.state.currentPropertyId;
+
+        // Afficher le switch de navigation 2-en-1 si création à la volée depuis un logement
+        const navSegments = document.getElementById('modal-location-nav-segments');
+        if (id === 0 && !isCatalog) {
+            if (navSegments) navSegments.classList.remove('hidden');
+        } else {
+            if (navSegments) navSegments.classList.add('hidden');
+        }
 
         // Réinitialiser les champs anglais masqués
         [

@@ -362,105 +362,125 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <!-- SECTION 4 : GESTION DU STATIONNEMENT                        -->
                 <!-- ----------------------------------------------------------- -->
                 <section id="section-parking" class="admin-section hidden space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- EN-TÊTE PRINCIPAL : TITRE & SWITCH DE MODE 2-EN-1 -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-night-border/70">
                         <div>
-                            <h2 class="text-xl sm:text-2xl font-bold font-serif-luxury text-white">Stationnement & Parkings</h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Configurez les règles bilingues et répertoriez les rues, parkings et P+R.</p>
+                            <h2 class="text-xl sm:text-2xl font-bold font-serif-luxury text-white flex items-center gap-2.5">
+                                <span>🅿️</span>
+                                <span>Stationnement & Parkings</span>
+                            </h2>
+                            <p class="text-xs text-gray-400 mt-1">Gérez les parkings de chaque hébergement ou enrichissez le catalogue général mutualisé.</p>
                         </div>
-                    </div>
 
-                    <!-- Sélecteur de logement -->
-                    <div id="parking-property-selector-card" class="p-4 rounded-2xl bg-night-card border border-night-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition">
-                        <label class="text-xs font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-                            <span>🏠 Choisir l'hébergement :</span>
-                            <span id="parking-property-context-pill" class="text-[10px] font-normal lowercase tracking-normal text-gray-400 bg-night px-2 py-0.5 rounded-lg border border-night-border">pour les règles & emplacements</span>
-                        </label>
-                        <select id="parking-property-select" class="py-2 px-3 rounded-xl bg-night border border-night-border text-xs text-white font-semibold focus:outline-none focus:border-gold max-w-md w-full">
-                            <!-- Rempli dynamiquement -->
-                        </select>
-                    </div>
-
-                    <!-- BANNIÈRE DE MIGRATION V2 (Visible uniquement si la base utilise encore l'ancienne table V1) -->
-                    <div id="parking-v2-migration-banner" class="hidden p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
-                        <div class="flex items-start space-x-3.5">
-                            <span class="text-2xl flex-shrink-0">🚀</span>
-                            <div>
-                                <h4 class="text-sm font-bold text-amber-300">Nouvelle architecture Stationnement V2 prête à être activée</h4>
-                                <p class="text-xs text-amber-200/80 mt-0.5 leading-relaxed">
-                                    Vos 3 tables spécialisées (rues, garages privés, P+R TCL) vont être créées. Vos emplacements actuels seront automatiquement migrés sans coupure.
-                                </p>
-                            </div>
-                        </div>
-                        <button type="button" id="btn-run-parking-migration" onclick="AdminApp.runParkingV2Migration()" 
-                                class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-night font-bold text-xs shadow-md transition flex items-center justify-center space-x-2 whitespace-nowrap cursor-pointer">
-                            <span>⚡</span>
-                            <span>Lancer la migration V2 en 1 clic</span>
-                        </button>
-                    </div>
-
-                    <!-- Sous-onglets Stationnement (Navigation segmented controls claire et intuitive) -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-night-border/70">
-                        <div class="flex flex-wrap sm:inline-flex w-full sm:w-auto p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1">
-                            <button type="button" id="parking-subtab-btn-general" onclick="AdminApp.switchParkingSubtab('general')"
-                                    class="parking-subtab-btn flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2 bg-gold text-white shadow-md shadow-gold/25"
-                                    title="Informations générales, consignes, voirie et conditions TCL">
-                                <span>📋</span>
-                                <span>Règles Générales & Voirie</span>
+                        <!-- SWITCH PRIMAIRE : PAR HÉBERGEMENT VS CATALOGUE GÉNÉRAL -->
+                        <div class="inline-flex p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1 self-start md:self-auto">
+                            <button type="button" id="parking-mode-btn-property" onclick="AdminApp.switchParkingMainMode('property')"
+                                    class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-gold text-white shadow-md shadow-gold/20 cursor-pointer">
+                                <span>🏠</span>
+                                <span>Par hébergement</span>
                             </button>
-                            <button type="button" id="parking-subtab-btn-locations" onclick="AdminApp.switchParkingSubtab('locations')"
-                                    class="parking-subtab-btn flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
-                                    title="Parkings et emplacements associés à ce logement">
-                                <span>📍</span>
-                                <span>Emplacements du logement</span>
-                                <span id="parking-subtab-locations-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-300 font-bold">0</span>
-                            </button>
-                            <button type="button" id="parking-subtab-btn-catalog" onclick="AdminApp.switchParkingSubtab('catalog')"
-                                    class="parking-subtab-btn flex-1 sm:flex-none px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
-                                    title="Catalogue centralisé de tous les parkings indépendants">
+                            <button type="button" id="parking-mode-btn-catalog" onclick="AdminApp.switchParkingMainMode('catalog')"
+                                    class="px-4 py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white transition flex items-center gap-2 cursor-pointer">
                                 <span>🏛️</span>
                                 <span>Catalogue général</span>
-                                <span id="parking-subtab-catalog-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/20 text-gold font-bold">0</span>
+                                <span id="parking-main-catalog-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/15 text-gold font-bold">0</span>
                             </button>
                         </div>
+                    </div>
 
-                        <!-- Boutons d'action pour le logement sélectionné -->
-                        <div id="parking-header-actions-property" class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
-                            <button type="button" onclick="AdminApp.openLinkExistingModal()" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer" title="Associer un parking existant du catalogue à ce logement">
-                                <span>🔗</span>
-                                <span>Lier un parking</span>
-                            </button>
-                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-night-card hover:bg-white/10 text-white border border-night-border text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer" title="Créer un nouveau parking et l'associer directement à ce logement">
+                    <!-- ============================================================== -->
+                    <!-- VUE 1 : GESTION PAR HÉBERGEMENT                              -->
+                    <!-- ============================================================== -->
+                    <div id="parking-view-property" class="space-y-5">
+                        <!-- BANNIÈRE DE MIGRATION V2 (si encore nécessaire) -->
+                        <div id="parking-v2-migration-banner" class="hidden p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+                            <div class="flex items-start space-x-3.5">
+                                <span class="text-2xl flex-shrink-0">🚀</span>
+                                <div>
+                                    <h4 class="text-sm font-bold text-amber-300">Nouvelle architecture Stationnement V2 prête</h4>
+                                    <p class="text-xs text-amber-200/80 mt-0.5 leading-relaxed">Vos tables spécialisées vont être configurées sans coupure.</p>
+                                </div>
+                            </div>
+                            <button type="button" id="btn-run-parking-migration" onclick="AdminApp.runParkingV2Migration()" 
+                                    class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-night font-bold text-xs shadow-md transition flex items-center justify-center space-x-2 whitespace-nowrap cursor-pointer">
                                 <span>⚡</span>
-                                <span>Créer à la volée</span>
+                                <span>Lancer la migration V2 en 1 clic</span>
                             </button>
                         </div>
 
-                        <!-- Boutons d'action pour le catalogue général -->
-                        <div id="parking-header-actions-catalog" class="hidden items-center space-x-2 w-full sm:w-auto">
-                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-gold/20 cursor-pointer" title="Ajouter un nouveau parking au catalogue général (indépendant)">
-                                <span>➕</span>
-                                <span>Nouveau parking au catalogue</span>
-                            </button>
-                        </div>
-                    </div>
+                        <!-- CARTE SÉLECTION DU LOGEMENT + SOUS-ONGLETS + BOUTON D'ACTION UNIQUE -->
+                        <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+                                <label class="text-xs font-bold text-gray-300 uppercase tracking-wider whitespace-nowrap flex items-center gap-2">
+                                    <span>🏠 Hébergement :</span>
+                                </label>
+                                <select id="parking-property-select" class="py-2.5 px-3.5 rounded-xl bg-night border border-night-border text-xs text-white font-semibold focus:outline-none focus:border-gold w-full sm:max-w-md cursor-pointer">
+                                    <!-- Rempli dynamiquement -->
+                                </select>
+                            </div>
 
-                    <!-- ÉTAT DE CHARGEMENT ÉLÉGANT (Affiché lors du changement d'hébergement) -->
-                    <div id="parking-loading-state" class="hidden rounded-2xl bg-night-card border border-gold/30 p-12 text-center space-y-4 shadow-xl">
-                        <div class="relative w-14 h-14 mx-auto">
-                            <div class="absolute inset-0 rounded-full border-2 border-gold/20"></div>
-                            <div class="absolute inset-0 rounded-full border-2 border-gold border-t-transparent animate-spin"></div>
-                            <div class="absolute inset-0 flex items-center justify-center text-xl">🅿️</div>
-                        </div>
-                        <div class="space-y-1">
-                            <h4 class="text-sm font-bold text-white tracking-wide">Chargement des données de stationnement...</h4>
-                            <p id="parking-loading-property-label" class="text-xs text-gray-400">Actualisation des règles et emplacements pour le logement sélectionné</p>
-                        </div>
-                    </div>
+                            <!-- SOUS-ONGLETS DU LOGEMENT & BOUTON D'AJOUT UNIQUE -->
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="inline-flex p-1 rounded-xl bg-night border border-night-border gap-1">
+                                    <button type="button" id="parking-subtab-btn-locations" onclick="AdminApp.switchParkingSubtab('locations')"
+                                            class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold text-white shadow-xs cursor-pointer">
+                                        <span>📍 Parkings</span>
+                                        <span id="parking-subtab-locations-badge" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold">0</span>
+                                    </button>
+                                    <button type="button" id="parking-subtab-btn-general" onclick="AdminApp.switchParkingSubtab('general')"
+                                            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white transition flex items-center gap-1.5 cursor-pointer">
+                                        <span>📋 Règles & Voirie</span>
+                                    </button>
+                                </div>
 
-                    <!-- CONTENEUR DES SOUS-ONGLETS -->
-                    <div id="parking-subtabs-wrapper" class="space-y-4">
-                        <!-- SOUS-ONGLET A : RÈGLES GÉNÉRALES -->
-                        <div id="parking-subtab-general" class="space-y-4">
+                                <!-- LE SEUL ET UNIQUE BOUTON D'AJOUT POUR LE LOGEMENT -->
+                                <button type="button" id="btn-property-add-parking" onclick="AdminApp.openLinkExistingModal()"
+                                        class="px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold shadow-md shadow-gold/20 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+                                    <span>➕</span>
+                                    <span>Ajouter un parking</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ÉTAT DE CHARGEMENT DU LOGEMENT -->
+                        <div id="parking-loading-state" class="hidden rounded-2xl bg-night-card border border-gold/30 p-12 text-center space-y-4 shadow-xl">
+                            <div class="relative w-14 h-14 mx-auto">
+                                <div class="absolute inset-0 rounded-full border-2 border-gold/20"></div>
+                                <div class="absolute inset-0 rounded-full border-2 border-gold border-t-transparent animate-spin"></div>
+                                <div class="absolute inset-0 flex items-center justify-center text-xl">🅿️</div>
+                            </div>
+                            <div class="space-y-1">
+                                <h4 class="text-sm font-bold text-white tracking-wide">Chargement des données...</h4>
+                                <p id="parking-loading-property-label" class="text-xs text-gray-400">Actualisation des parkings du logement sélectionné</p>
+                            </div>
+                        </div>
+
+                        <!-- CONTENEUR DES CONTENUS DU LOGEMENT -->
+                        <div id="parking-subtabs-wrapper" class="space-y-5">
+                            <!-- SOUS-ONGLET A : EMPLACEMENTS DÉTAILLÉS DU LOGEMENT (PARKINGS) -->
+                            <div id="parking-subtab-locations" class="space-y-5">
+                                <!-- Barre de filtre épurée (ZÉRO bouton superflu) -->
+                                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-night-card border border-night-border shadow-xs">
+                                    <div class="flex items-center space-x-2 w-full sm:w-auto">
+                                        <label class="text-xs font-semibold text-gray-400 whitespace-nowrap">Filtrer par type :</label>
+                                        <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="py-1.5 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold w-full sm:w-auto">
+                                            <option value="all">Tous les parkings du logement</option>
+                                            <option value="free_street">🟢 Rues gratuites & Dépose-minute</option>
+                                            <option value="private_parking">🏢 Parkings privés & couverts</option>
+                                            <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
+                                        </select>
+                                    </div>
+                                    <span class="text-xs text-gray-500 hidden sm:inline">Utilisez ▲ ▼ pour réordonner</span>
+                                </div>
+
+                                <!-- Liste des parkings associés au logement -->
+                                <div id="parking-locations-list" class="space-y-5">
+                                    <div class="py-8 text-center text-gray-400">Chargement des emplacements...</div>
+                                </div>
+                            </div>
+
+                            <!-- SOUS-ONGLET B : RÈGLES GÉNÉRALES & VOIRIE DU LOGEMENT -->
+                            <div id="parking-subtab-general" class="hidden space-y-4">
                         <form id="parking-general-form" onsubmit="AdminApp.saveParkingGeneral(event)" class="rounded-2xl bg-night-card border border-night-border p-5 sm:p-6 space-y-5 shadow-lg">
                             <!-- Introduction -->
                             <div>
@@ -535,103 +555,45 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 </button>
                             </div>
                         </form>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- SOUS-ONGLET B : EMPLACEMENTS DÉTAILLÉS (3 SECTIONS NORMALISÉES) -->
-                    <div id="parking-subtab-locations" class="hidden space-y-6">
-                        <!-- Barre d'outils et raccourcis d'ajout par catégorie -->
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-night-card border border-night-border shadow-sm">
-                            <div class="flex items-center space-x-2 w-full md:w-auto">
-                                <label class="text-xs font-semibold text-gray-400 whitespace-nowrap">Vue :</label>
-                                <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="py-2 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold w-full md:w-auto">
-                                    <option value="all">Toutes les sections (3)</option>
+                    <!-- ============================================================== -->
+                    <!-- VUE 2 : CATALOGUE GÉNÉRAL MUTUALISÉ                          -->
+                    <!-- ============================================================== -->
+                    <div id="parking-view-catalog" class="hidden space-y-5">
+                        <!-- BARRE D'OUTILS ÉPURÉE DU CATALOGUE (EXACTEMENT UN SEUL BOUTON !) -->
+                        <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
+                                <div class="relative flex-1 sm:max-w-xs">
+                                    <input type="text" id="parking-catalog-search" oninput="AdminApp.filterCatalogList()" placeholder="Rechercher par nom, adresse..."
+                                           class="w-full py-2.5 pl-8 pr-3 rounded-xl bg-night border border-night-border text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gold">
+                                    <span class="absolute left-2.5 top-3 text-gray-400 text-xs">🔍</span>
+                                </div>
+                                <select id="parking-catalog-filter-cat" onchange="AdminApp.renderCatalogList()"
+                                        class="py-2.5 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                    <option value="all">Toutes les catégories</option>
                                     <option value="free_street">🟢 Rues & Dépose-minute</option>
                                     <option value="private_parking">🏢 Parkings privés & couverts</option>
                                     <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
                                 </select>
                             </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <button type="button" onclick="AdminApp.openLocationModal(0, 'free_street')" 
-                                        class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm"
-                                        title="Ajouter une rue gratuite ou un arrêt minute">
-                                    <span>🟢</span>
-                                    <span>+ Rue / Dépose</span>
-                                </button>
-                                <button type="button" onclick="AdminApp.openLocationModal(0, 'private_parking')" 
-                                        class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm"
-                                        title="Ajouter un parking couvert ou privé (Zenpark, LPA, Q-Park...)">
-                                    <span>🏢</span>
-                                    <span>+ Parking privé</span>
-                                </button>
-                                <button type="button" onclick="AdminApp.openLocationModal(0, 'tcl_pr')" 
-                                        class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm"
-                                        title="Ajouter un Parc Relais TCL connecté">
-                                    <span>🚇</span>
-                                    <span>+ P+R TCL</span>
-                                </button>
-                            </div>
-                        </div>
 
-                        <!-- Conteneur des 3 sections spécialisées -->
-                        <div id="parking-locations-list" class="space-y-6">
-                            <div class="py-8 text-center text-gray-400">Chargement des emplacements...</div>
-                        </div>
-                    </div>
-
-                    <!-- SOUS-ONGLET C : CATALOGUE GÉNÉRAL DES PARKINGS (CENTRALISÉ) -->
-                    <div id="parking-subtab-catalog" class="hidden space-y-6">
-                        <!-- Bannière explicative du Catalogue Global -->
-                        <div class="p-4 sm:p-5 rounded-2xl bg-gold/5 border border-gold/25 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-                            <div class="flex items-start space-x-3.5">
-                                <span class="text-2xl flex-shrink-0">🌐</span>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h4 class="text-sm font-bold text-white">Catalogue Centralisé & Transversal</h4>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gold/20 text-gold border border-gold/30">Mutualisé</span>
-                                    </div>
-                                    <p class="text-xs text-gray-300 mt-0.5 leading-relaxed">
-                                        Les fiches physiques ci-dessous sont indépendantes de tout hébergement. Vous pouvez associer un même parking à plusieurs logements et personnaliser les temps de trajet pour chacun.
-                                    </p>
-                                </div>
-                            </div>
-                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center justify-center space-x-2 flex-shrink-0 cursor-pointer">
+                            <!-- LE SEUL ET UNIQUE BOUTON DU CATALOGUE -->
+                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)"
+                                    class="px-4 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold shadow-md shadow-gold/20 transition flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer">
                                 <span>➕</span>
-                                <span>Créer un parking au catalogue</span>
+                                <span>Nouveau parking au catalogue</span>
                             </button>
                         </div>
 
-                        <!-- Barre d'outils et filtre de catégorie -->
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-night-card border border-night-border shadow-sm">
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
-                                <div class="flex items-center space-x-2">
-                                    <label class="text-xs font-semibold text-gray-400 whitespace-nowrap">Catégorie :</label>
-                                    <select id="parking-catalog-filter-cat" onchange="AdminApp.renderCatalogList()" class="py-2 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                        <option value="all">Tous les parkings (Toutes catégories)</option>
-                                        <option value="free_street">🟢 Rues & Dépose-minute</option>
-                                        <option value="private_parking">🏢 Parkings privés & couverts</option>
-                                        <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
-                                    </select>
-                                </div>
-                                <div class="relative flex-1 sm:w-64">
-                                    <input type="text" id="parking-catalog-search" oninput="AdminApp.filterCatalogList()" placeholder="Rechercher par nom, adresse..." class="w-full py-2 pl-8 pr-3 rounded-xl bg-night border border-night-border text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gold">
-                                    <span class="absolute left-2.5 top-2.5 text-gray-400 text-xs">🔍</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-gold/20">
-                                    <span>➕</span>
-                                    <span>Ajouter un parking au catalogue</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Grille / Liste des parkings du catalogue -->
+                        <!-- LISTE DES PARKINGS DU CATALOGUE -->
                         <div id="parking-catalog-list" class="space-y-4">
                             <div class="py-8 text-center text-gray-400">Chargement du catalogue...</div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
                 <!-- ----------------------------------------------------------- -->
                 <!-- SECTION 5 : JOURNAL D'AUDIT (LOGS)                          -->
@@ -1087,6 +1049,16 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <button type="button" onclick="AdminApp.closeLocationModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
             </div>
 
+            <!-- SÉLECTEUR 2-EN-1 LORSQU'ON AJOUTE DEPUIS UN LOGEMENT -->
+            <div id="modal-location-nav-segments" class="hidden flex p-1 rounded-xl bg-night border border-night-border gap-1 mb-5">
+                <button type="button" onclick="AdminApp.switchFromCreateToLinkModal()" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <span>🔗</span> Choisir dans le catalogue
+                </button>
+                <button type="button" class="flex-1 py-2 px-3 rounded-lg text-xs font-bold bg-gold text-white shadow-xs cursor-default flex items-center justify-center gap-1.5">
+                    <span>➕</span> Créer un nouveau parking
+                </button>
+            </div>
+
             <form id="location-form" onsubmit="AdminApp.saveLocation(event)" class="space-y-4">
                 <input type="hidden" id="location-id" value="0">
                 <input type="hidden" id="location-property-id" value="0">
@@ -1354,12 +1326,22 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             <div class="flex items-center justify-between border-b border-night-border pb-4">
                 <div>
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>🔗</span>
-                        <span>Lier un parking du catalogue</span>
+                        <span>➕</span>
+                        <span>Ajouter un parking</span>
                     </h3>
-                    <p class="text-[11px] text-gray-400 mt-0.5">Associez un parking existant à <span id="link-existing-property-name" class="text-gold font-semibold">ce logement</span> sans le dupliquer.</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Associez un parking à <span id="link-existing-property-name" class="text-gold font-semibold">ce logement</span>.</p>
                 </div>
                 <button type="button" onclick="AdminApp.closeLinkExistingModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+
+            <!-- SÉLECTEUR 2-EN-1 : CHOISIR DU CATALOGUE OU CRÉER UN NOUVEAU -->
+            <div id="modal-link-nav-segments" class="flex p-1 rounded-xl bg-night border border-night-border gap-1">
+                <button type="button" class="flex-1 py-2 px-3 rounded-lg text-xs font-bold bg-gold text-white shadow-xs cursor-default flex items-center justify-center gap-1.5">
+                    <span>🔗</span> Choisir dans le catalogue
+                </button>
+                <button type="button" onclick="AdminApp.switchFromLinkToCreateOnTheFly()" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <span>➕</span> Créer un nouveau parking
+                </button>
             </div>
 
             <form id="link-existing-form" onsubmit="AdminApp.submitLinkExisting(event)" class="space-y-4">
@@ -1382,15 +1364,19 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <!-- Rempli dynamiquement -->
                     </select>
                     <p id="link-existing-catalog-preview" class="text-[11px] text-gray-400 mt-1 italic"></p>
-                    <div id="link-existing-empty-helper" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2">
-                        <span class="flex items-center gap-1.5">
+                    <div id="link-existing-empty-helper" class="hidden p-3 rounded-xl bg-night border border-night-border text-xs text-gray-300 flex items-center justify-between gap-2 mt-2">
+                        <span class="flex items-center gap-1.5 text-gray-400">
                             <span>💡</span>
-                            <span>Ce parking n'est pas encore dans le catalogue ?</span>
+                            <span>Ce parking n'est pas dans le catalogue ?</span>
                         </span>
-                        <button type="button" onclick="AdminApp.switchFromLinkToCreateOnTheFly()" class="px-3 py-1.5 rounded-lg bg-gold hover:bg-gold-light text-white font-bold text-xs whitespace-nowrap transition cursor-pointer self-start sm:self-auto shadow-sm">
-                            + Créer à la volée
+                        <button type="button" onclick="AdminApp.switchFromLinkToCreateOnTheFly()" class="text-xs text-gold hover:underline font-bold transition cursor-pointer">
+                            Créer un nouveau parking →
                         </button>
                     </div>
+                    <p class="text-[11px] text-gray-400 mt-1.5 flex items-center gap-1">
+                        <span>💡 Pas dans la liste ?</span>
+                        <button type="button" onclick="AdminApp.switchFromLinkToCreateOnTheFly()" class="text-gold hover:underline font-semibold cursor-pointer">Créer un nouveau parking</button>
+                    </p>
                 </div>
 
                 <!-- 3. Paramètres de connexion spécifiques à ce logement -->
