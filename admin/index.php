@@ -471,11 +471,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 <textarea id="parking-tcl-cond-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Gratuit avec aller-retour TCL validé le jour même (scan du titre à la sortie). Sans validation : 20 €."></textarea>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-300 mb-1">Lignes, métros et accès conseillés TCL</label>
-                                <input type="text" id="parking-tcl-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold" placeholder="Ex: Parkings relais Laurent Bonnevay et La Soie situés à 10-15 min en Métro A.">
-                            </div>
-
                             <!-- Champs anglais masqués (éditables directement via la vue côte-à-côte) -->
                             <div class="hidden" aria-hidden="true">
                                 <textarea id="parking-intro-en"></textarea>
@@ -485,7 +480,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                                 <input type="hidden" id="parking-street-sched-en">
                                 <textarea id="parking-street-rates-en"></textarea>
                                 <textarea id="parking-tcl-cond-en"></textarea>
-                                <input type="hidden" id="parking-tcl-notes-en">
                             </div>
 
                             <div class="pt-4 flex flex-wrap items-center justify-between gap-3 border-t border-night-border/50">
@@ -504,25 +498,43 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </form>
                     </div>
 
-                    <!-- SOUS-ONGLET B : EMPLACEMENTS DÉTAILLÉS -->
-                    <div id="parking-subtab-locations" class="hidden space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div class="flex items-center space-x-2 w-full sm:w-auto">
-                                <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="w-full sm:w-auto py-2.5 sm:py-2 px-3 rounded-xl bg-night-card border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                    <option value="all">Toutes les catégories</option>
-                                    <option value="free_street">Rues gratuites</option>
-                                    <option value="free_spot">Dépose-minute gratuit</option>
-                                    <option value="private_parking">Parkings privés & couverts</option>
-                                    <option value="tcl_pr">Parcs Relais TCL (P+R)</option>
+                    <!-- SOUS-ONGLET B : EMPLACEMENTS DÉTAILLÉS (3 SECTIONS NORMALISÉES) -->
+                    <div id="parking-subtab-locations" class="hidden space-y-6">
+                        <!-- Barre d'outils et raccourcis d'ajout par catégorie -->
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-night-card border border-night-border shadow-sm">
+                            <div class="flex items-center space-x-2 w-full md:w-auto">
+                                <label class="text-xs font-semibold text-gray-400 whitespace-nowrap">Vue :</label>
+                                <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="py-2 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold w-full md:w-auto">
+                                    <option value="all">Toutes les sections (3)</option>
+                                    <option value="free_street">🟢 Rues & Dépose-minute</option>
+                                    <option value="private_parking">🏢 Parkings privés & couverts</option>
+                                    <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center justify-center space-x-1.5 self-start sm:self-auto">
-                                <span>+</span>
-                                <span>Ajouter un emplacement</span>
-                            </button>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" onclick="AdminApp.openLocationModal(0, 'free_street')" 
+                                        class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm"
+                                        title="Ajouter une rue gratuite ou un arrêt minute">
+                                    <span>🟢</span>
+                                    <span>+ Rue / Dépose</span>
+                                </button>
+                                <button type="button" onclick="AdminApp.openLocationModal(0, 'private_parking')" 
+                                        class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-purple-500/15 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm"
+                                        title="Ajouter un parking couvert ou privé (Zenpark, LPA, Q-Park...)">
+                                    <span>🏢</span>
+                                    <span>+ Parking privé</span>
+                                </button>
+                                <button type="button" onclick="AdminApp.openLocationModal(0, 'tcl_pr')" 
+                                        class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm"
+                                        title="Ajouter un Parc Relais TCL connecté">
+                                    <span>🚇</span>
+                                    <span>+ P+R TCL</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <div id="parking-locations-list">
+                        <!-- Conteneur des 3 sections spécialisées -->
+                        <div id="parking-locations-list" class="space-y-6">
                             <div class="py-8 text-center text-gray-400">Chargement des emplacements...</div>
                         </div>
                     </div>
@@ -972,13 +984,13 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         </div>
     </div>
 
-    <!-- 4. MODALE EMPLACEMENT DE PARKING -->
+    <!-- 4. MODALE EMPLACEMENT DE PARKING (FORMULAIRE ADAPTATIF INTELLIGENT) -->
     <div id="modal-location-form" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
         <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
                 <div>
                     <h3 id="modal-location-title" class="text-base font-bold text-white">Ajouter un emplacement</h3>
-                    <p class="text-[11px] text-gray-400">Remplissez les informations en français.</p>
+                    <p id="modal-location-subtitle" class="text-[11px] text-gray-400">Renseignez uniquement les informations utiles pour cette catégorie.</p>
                 </div>
                 <button type="button" onclick="AdminApp.closeLocationModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
             </div>
@@ -986,105 +998,213 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             <form id="location-form" onsubmit="AdminApp.saveLocation(event)" class="space-y-4">
                 <input type="hidden" id="location-id" value="0">
                 <input type="hidden" id="location-property-id" value="0">
+                <input type="hidden" id="location-category" value="free_street">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Catégorie *</label>
-                        <select id="location-category" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                            <option value="free_street">Rue gratuite</option>
-                            <option value="free_spot">Dépose-minute gratuit</option>
-                            <option value="private_parking">Parking privé & couvert (Zenpark, LPA...)</option>
-                            <option value="tcl_pr">Parc Relais TCL (P+R)</option>
-                        </select>
+                <!-- SÉLECTEUR DE CATÉGORIE VISUEL EN SEGMENTS -->
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-night border border-night-border space-y-2">
+                    <label class="block text-xs font-bold text-gray-200">1. Catégorie d'emplacement *</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <label id="cat-label-free" class="flex items-center space-x-2.5 p-2.5 rounded-xl border border-night-border hover:border-emerald-500/50 bg-night-card cursor-pointer transition has-checked:border-emerald-500 has-checked:bg-emerald-500/10">
+                            <input type="radio" name="location-category-radio" value="free_street" onchange="AdminApp.onLocationCategoryChange(this.value)" class="text-emerald-500 focus:ring-0 accent-emerald-500" checked>
+                            <div class="text-xs">
+                                <span class="font-bold text-white block">🟢 Rue / Dépose</span>
+                                <span class="text-[10px] text-gray-400">100% Gratuit</span>
+                            </div>
+                        </label>
+                        <label id="cat-label-private" class="flex items-center space-x-2.5 p-2.5 rounded-xl border border-night-border hover:border-purple-500/50 bg-night-card cursor-pointer transition has-checked:border-purple-500 has-checked:bg-purple-500/10">
+                            <input type="radio" name="location-category-radio" value="private_parking" onchange="AdminApp.onLocationCategoryChange(this.value)" class="text-purple-500 focus:ring-0 accent-purple-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-white block">🏢 Parking privé</span>
+                                <span class="text-[10px] text-gray-400">Zenpark, LPA, Q-Park</span>
+                            </div>
+                        </label>
+                        <label id="cat-label-tcl" class="flex items-center space-x-2.5 p-2.5 rounded-xl border border-night-border hover:border-red-500/50 bg-night-card cursor-pointer transition has-checked:border-red-500 has-checked:bg-red-500/10">
+                            <input type="radio" name="location-category-radio" value="tcl_pr" onchange="AdminApp.onLocationCategoryChange(this.value)" class="text-red-500 focus:ring-0 accent-red-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-white block">🚇 Parc Relais TCL</span>
+                                <span class="text-[10px] text-gray-400">P+R Métro & Tram</span>
+                            </div>
+                        </label>
                     </div>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- SECTION A : CHAMPS RUES ET DÉPOSE-MINUTE GRATUITS             -->
+                <!-- ============================================================== -->
+                <div id="cat-fields-free" class="space-y-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                            <span>🟢</span> Détails de la rue gratuite ou dépose-minute
+                        </span>
+                        <div class="flex items-center gap-3 text-xs">
+                            <label class="flex items-center gap-1 text-gray-300 cursor-pointer">
+                                <input type="radio" name="location-free-subtype" value="free_street" onchange="AdminApp.onFreeSubtypeChange(this.value)" checked class="accent-emerald-500">
+                                <span>Rue gratuite</span>
+                            </label>
+                            <label class="flex items-center gap-1 text-gray-300 cursor-pointer">
+                                <input type="radio" name="location-free-subtype" value="free_spot" onchange="AdminApp.onFreeSubtypeChange(this.value)" class="accent-emerald-500">
+                                <span>Arrêt minute / Super U</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Opérateur (ex: LPA, Zenpark, TCL, Indigo)</label>
-                        <input type="text" id="location-operator" placeholder="LPA&CO"
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du lieu ou de la rue *</label>
+                        <input type="text" id="location-name-fr-free" placeholder="Ex: Rue de l'Est ou Parking Super U"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise (Génère le bouton GPS sur le portail)</label>
+                        <input type="text" id="location-address-free" placeholder="Ex: Rue de l'Est, Lyon 3e"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps d'accès à pied</label>
+                        <input type="text" id="location-walking-fr-free" placeholder="Ex: Environ 10 min à pied"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Remarques & conseils pratiques (Optionnel)</label>
+                        <input type="text" id="location-notes-fr-free" placeholder="Ex: Gratuit 7j/7 et 24h/24 ou 15 min offertes"
                                class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking ou de la rue *</label>
-                    <input type="text" id="location-name-fr" required placeholder="Rue de l'Est"
-                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                </div>
+                <!-- ============================================================== -->
+                <!-- SECTION B : CHAMPS PARKINGS PRIVÉS ET COUVERTS                -->
+                <!-- ============================================================== -->
+                <div id="cat-fields-private" class="space-y-4 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 hidden">
+                    <span class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                        <span>🏢</span> Détails du parking couvert / privé
+                    </span>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise (avec bouton GPS pour Waze / Maps)</label>
-                    <input type="text" id="location-address" placeholder="12 rue de l'Est, 69003 Lyon"
-                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche à pied</label>
-                        <input type="text" id="location-walking-fr" placeholder="Environ 5 min à pied"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du parking *</label>
+                            <input type="text" id="location-name-fr-priv" placeholder="Ex: Parking Zenpark - Ferrandière"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Opérateur</label>
+                            <input type="text" id="location-operator" placeholder="Zenpark, LPA&CO, Q-Park, Indigo..."
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Minutes de marche (pour le tri par proximité)</label>
-                        <input type="number" id="location-walking-min" placeholder="5"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise</label>
+                        <input type="text" id="location-address-priv" placeholder="Ex: 39 rue de la Cité, Lyon 3e"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche</label>
+                            <input type="text" id="location-walking-fr-priv" placeholder="Ex: 10 min à pied (4 min vélo)"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Hauteur max autorisée (Gabarit)</label>
+                            <input type="text" id="location-max-height" placeholder="Ex: 1,90 m ou 2,00 m"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires d'accès</label>
+                            <input type="text" id="location-hours-fr-priv" placeholder="Ex: 24h/24, 7j/7 (sur réservation)"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Véhicules adaptés</label>
+                            <input type="text" id="location-vehicles-fr" placeholder="Ex: Citadines, compactes, berlines et SUV"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Grille tarifaire</label>
+                        <textarea id="location-rates-fr-priv" rows="2" placeholder="Ex: 2h : 4 € · 4h : 6 € · 24h : 16 €"
+                                  class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Lien de réservation directe</label>
+                        <input type="url" id="location-booking-url-priv" placeholder="https://zenpark.com/..."
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Remarques & consignes d'accès</label>
+                        <input type="text" id="location-notes-fr-priv" placeholder="Ex: Parking souterrain sécurisé réservable sur Zenpark."
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Temps en transports en commun (TCL)</label>
-                    <input type="text" id="location-transit-fr" placeholder="Environ 10 min en Métro A"
-                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                </div>
+                <!-- ============================================================== -->
+                <!-- SECTION C : CHAMPS PARCS RELAIS TCL (P+R)                     -->
+                <!-- ============================================================== -->
+                <div id="cat-fields-tcl" class="space-y-4 p-4 rounded-2xl bg-red-500/5 border border-red-500/20 hidden">
+                    <span class="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                        <span>🚇</span> Détails du Parc Relais TCL
+                    </span>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Hauteur max autorisée (gabarit)</label>
-                        <input type="text" id="location-max-height" placeholder="1,90 m"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Nom du Parc Relais *</label>
+                            <input type="text" id="location-name-fr-tcl" placeholder="Ex: Parking Relais TCL - Mermoz-Pinel"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Capacité totale</label>
+                            <input type="text" id="location-capacity" placeholder="Ex: 416 places"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Capacité (nombre de places)</label>
-                        <input type="text" id="location-capacity" placeholder="416 places"
-                               class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse précise</label>
+                        <input type="text" id="location-address-tcl" placeholder="Ex: 3 rue Lionel-Terray, 69500 Bron"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Temps en transports TCL</label>
+                            <input type="text" id="location-transit-fr" placeholder="Ex: Environ 25 min en TCL"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires d'accès</label>
+                            <input type="text" id="location-hours-fr-tcl" placeholder="Ex: Lun-Jeu : 4h30-1h · Ven-Sam : 4h30-3h"
+                                   class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire pour rejoindre le logement</label>
+                        <textarea id="location-reach-fr" rows="2" placeholder="Ex: Prendre le Métro D jusqu'à Grange Blanche, puis le bus C13 jusqu'à Dauphiné-Lacassagne."
+                                  class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Lien fiche officielle TCL</label>
+                        <input type="url" id="location-booking-url-tcl" placeholder="https://www.tcl.fr/..."
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Notes complémentaires</label>
+                        <input type="text" id="location-notes-fr-tcl" placeholder="Ex: Le niveau 3 est réservé aux abonnés Premium."
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Horaires d'ouverture</label>
-                    <input type="text" id="location-hours-fr" placeholder="Ouvert 24h/24 et 7j/7"
-                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Grille tarifaire</label>
-                    <textarea id="location-rates-fr" rows="2" placeholder="15 min gratuites · 2h : 3 € · 24h : 24 €"
-                              class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Véhicules adaptés</label>
-                    <input type="text" id="location-vehicles-fr" placeholder="Citadines, SUV, berlines, 2 roues"
-                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire pour rejoindre le logement</label>
-                    <textarea id="location-reach-fr" rows="2" placeholder="Prendre le Métro A direction Perrache jusqu'à la station Flachet..."
-                              class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Lien de réservation / site web officiel</label>
-                    <input type="url" id="location-booking-url" placeholder="https://zenpark.com/..."
-                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Notes & remarques complémentaires</label>
-                    <input type="text" id="location-notes-fr" placeholder="Idéal pour décharger les bagages grâce aux 15 min offertes."
-                           class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                </div>
-
-                <!-- Champs anglais masqués de l'emplacement (éditables via la vue côte-à-côte) -->
+                <!-- Champs anglais masqués pour conservation bilingue -->
                 <div class="hidden" aria-hidden="true">
                     <input type="hidden" id="location-name-en">
                     <input type="hidden" id="location-walking-en">
@@ -1096,21 +1216,22 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <input type="hidden" id="location-notes-en">
                 </div>
 
+                <!-- ORDRE ET STATUT -->
                 <div class="flex items-center justify-between pt-2">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre d'affichage</label>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre dans sa section</label>
                         <input type="number" id="location-order" min="1" value="1" class="w-20 p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
                     <div class="flex items-center space-x-2 pt-4">
-                        <input type="checkbox" id="location-active" class="w-4 h-4 rounded bg-night border-night-border text-gold focus:ring-gold accent-[#ba9641]">
-                        <label for="location-active" class="text-xs font-semibold text-gray-300 cursor-pointer">Actif</label>
+                        <input type="checkbox" id="location-active" class="w-4 h-4 rounded bg-night border-night-border text-gold focus:ring-gold accent-[#ba9641]" checked>
+                        <label for="location-active" class="text-xs font-semibold text-gray-300 cursor-pointer">Actif (Visible sur le portail)</label>
                     </div>
                 </div>
 
                 <div class="pt-4 border-t border-night-border flex flex-wrap items-center justify-between gap-3">
                     <button type="button" onclick="AdminApp.openDirectReviewModal('parking_location')" 
                             class="text-xs text-gray-400 hover:text-gold flex items-center space-x-1.5 transition py-1"
-                            title="Ouvrir la vue côte-à-côte pour consulter ou ajuster manuellement la version anglaise">
+                            title="Ouvrir la vue côte-à-côte pour vérifier ou modifier la version anglaise">
                         <span>✏️</span>
                         <span>Saisir l'anglais manuellement (Vue côte-à-côte)</span>
                     </button>

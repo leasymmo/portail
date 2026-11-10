@@ -509,10 +509,13 @@ try {
         // ----------------------------------------------------------------------
         case 'parking_get':
             $propertyId = (int)($_GET['property_id'] ?? 0);
+            $sections = $repo->getParkingSectionsByProperty($propertyId);
+            $allLocations = $repo->getParkingLocationsByProperty($propertyId);
             echo json_encode([
                 'ok'        => true,
                 'general'   => $repo->getParkingByProperty($propertyId),
-                'locations' => $repo->getParkingLocationsByProperty($propertyId)
+                'locations' => $allLocations,
+                'sections'  => $sections
             ], JSON_UNESCAPED_UNICODE);
             exit;
 
@@ -529,49 +532,61 @@ try {
             exit;
 
         case 'parking_location_save':
-            $data = $body['location'] ?? $_POST;
+        case 'parking_item_save':
+            $data = $body['location'] ?? ($body['item'] ?? $_POST);
             $id = isset($data['id']) ? (int)$data['id'] : 0;
 
             if (empty($data['property_id']) || empty($data['name_fr']) || empty($data['category'])) {
                 http_response_code(400);
-                echo json_encode(['ok' => false, 'error' => 'Le logement, le nom du parking et la catégorie sont obligatoires.']);
+                echo json_encode(['ok' => false, 'error' => 'Le logement, le nom de l\'emplacement et la catégorie sont obligatoires.']);
                 exit;
             }
 
-            if ($id > 0) {
-                $ok = $repo->updateParkingLocation($id, $data);
-                echo json_encode(['ok' => $ok, 'id' => $id, 'message' => 'Emplacement mis à jour.']);
+            $savedId = $repo->saveParkingItem($data);
+            if ($savedId > 0) {
+                $msg = $id > 0 ? 'Emplacement mis à jour avec succès.' : 'Emplacement ajouté avec succès.';
+                echo json_encode(['ok' => true, 'id' => $savedId, 'message' => $msg]);
             } else {
-                $newId = $repo->createParkingLocation($data);
-                echo json_encode(['ok' => true, 'id' => $newId, 'message' => 'Emplacement ajouté.']);
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'error' => 'Erreur lors de l\'enregistrement de l\'emplacement.']);
             }
             exit;
 
         case 'parking_location_reorder':
+        case 'parking_item_reorder':
             $orderList = $body['order'] ?? [];
+            $category = $body['category'] ?? null;
             if (!is_array($orderList)) {
                 http_response_code(400);
                 echo json_encode(['ok' => false, 'error' => 'Données d\'ordre invalides.']);
                 exit;
             }
-            $ok = $repo->reorderParkingLocations($orderList);
+            if ($category) {
+                $ok = $repo->reorderParkingItems($category, $orderList);
+            } else {
+                $ok = $repo->reorderParkingLocations($orderList);
+            }
             echo json_encode(['ok' => $ok]);
             exit;
 
         case 'parking_location_toggle':
+        case 'parking_item_toggle':
             $id = (int)($body['id'] ?? ($_POST['id'] ?? 0));
-            $ok = $repo->toggleParkingLocationActive($id);
+            $category = $body['category'] ?? null;
+            $ok = $repo->toggleParkingLocationActive($id, $category);
             echo json_encode(['ok' => $ok]);
             exit;
 
         case 'parking_location_delete':
+        case 'parking_item_delete':
             if ($currentUser['role'] === 'editor') {
                 http_response_code(403);
                 echo json_encode(['ok' => false, 'error' => 'Suppression non autorisée pour le rôle éditeur.']);
                 exit;
             }
             $id = (int)($body['id'] ?? ($_POST['id'] ?? 0));
-            $ok = $repo->deleteParkingLocation($id);
+            $category = $body['category'] ?? null;
+            $ok = $repo->deleteParkingLocation($id, $category);
             echo json_encode(['ok' => $ok, 'message' => 'Emplacement supprimé.']);
             exit;
 
@@ -722,7 +737,7 @@ try {
 
             if ($type === 'parking_general') {
                 $result = \Cdh\Portal\Admin\AiTranslator::translateParkingGeneral($db, $inputData, true, true);
-            } elseif ($type === 'parking_location') {
+            } elseif ($type === 'parking_location' || $type === 'parking_item') {
                 $result = \Cdh\Portal\Admin\AiTranslator::translateParkingLocation($db, $inputData, true, true);
             } else {
                 http_response_code(400);

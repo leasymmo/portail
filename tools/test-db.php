@@ -53,9 +53,14 @@ $propertiesCount = 0;
 $videosCount = 0;
 $parkingsCount = 0;
 $locationsCount = 0;
+$freeSpotsCount = 0;
+$privateLotsCount = 0;
+$tclPrsCount = 0;
 $tablesExist = false;
 $parkingTablesExist = false;
+$parkingV2Ready = false;
 $canMigrateParking = false;
+$canMigrateParkingV2 = false;
 $videoTableName = 'videos';
 
 if ($pdoConnected && $pdoInstance) {
@@ -86,16 +91,27 @@ if ($pdoConnected && $pdoInstance) {
             $canAutoInstall = file_exists(APP_ROOT . '/database/install.sql');
         }
 
-        // Vérification des tables de stationnement
-        $stmtParkings = $pdoInstance->query("SHOW TABLES LIKE 'property_parkings'");
-        $hasParkingsTable = $stmtParkings->rowCount() > 0;
-        $stmtLocations = $pdoInstance->query("SHOW TABLES LIKE 'parking_locations'");
-        $hasLocationsTable = $stmtLocations->rowCount() > 0;
+        // Vérification des tables de stationnement V2
+        $hasParkingsTable = $pdoInstance->query("SHOW TABLES LIKE 'property_parkings'")->rowCount() > 0;
+        $hasFreeSpots = $pdoInstance->query("SHOW TABLES LIKE 'parking_free_spots'")->rowCount() > 0;
+        $hasPrivateLots = $pdoInstance->query("SHOW TABLES LIKE 'parking_private_lots'")->rowCount() > 0;
+        $hasTclPrs = $pdoInstance->query("SHOW TABLES LIKE 'parking_tcl_prs'")->rowCount() > 0;
+        $hasLocations = $pdoInstance->query("SHOW TABLES LIKE 'parking_locations'")->rowCount() > 0;
 
-        if ($hasParkingsTable && $hasLocationsTable) {
+        if ($hasParkingsTable && $hasFreeSpots && $hasPrivateLots && $hasTclPrs) {
             $parkingTablesExist = true;
+            $parkingV2Ready = true;
+            $parkingsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM property_parkings")->fetchColumn();
+            $freeSpotsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_free_spots")->fetchColumn();
+            $privateLotsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_private_lots")->fetchColumn();
+            $tclPrsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_tcl_prs")->fetchColumn();
+            $locationsCount = $freeSpotsCount + $privateLotsCount + $tclPrsCount;
+        } elseif ($hasParkingsTable && $hasLocations) {
+            $parkingTablesExist = true;
+            $parkingV2Ready = false;
             $parkingsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM property_parkings")->fetchColumn();
             $locationsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_locations")->fetchColumn();
+            $canMigrateParkingV2 = file_exists(APP_ROOT . '/database/migration_parking_v2_refactor.sql');
         } else {
             $canMigrateParking = $tablesExist && file_exists(APP_ROOT . '/database/seed_parkings.sql');
         }
@@ -119,30 +135,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $pdoConn
                     $propertiesCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM properties")->fetchColumn();
                     $videosCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM videos")->fetchColumn();
                     $parkingsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM property_parkings")->fetchColumn();
-                    $locationsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_locations")->fetchColumn();
+                    $freeSpotsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_free_spots")->fetchColumn();
+                    $privateLotsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_private_lots")->fetchColumn();
+                    $tclPrsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_tcl_prs")->fetchColumn();
+                    $locationsCount = $freeSpotsCount + $privateLotsCount + $tclPrsCount;
                     $tablesExist = true;
                     $parkingTablesExist = true;
+                    $parkingV2Ready = true;
                     $canAutoInstall = false;
                 } catch (Exception $e) {
                     $autoInstallError = $e->getMessage();
                 }
             }
         }
-    } elseif ($_POST['action'] === 'run_parking_migration') {
+    } elseif ($_POST['action'] === 'run_parking_migration_v2' || $_POST['action'] === 'run_parking_migration') {
         try {
-            $schemaFile = APP_ROOT . '/database/schema.sql';
+            $v2File = APP_ROOT . '/database/migration_parking_v2_refactor.sql';
             $seedFile = APP_ROOT . '/database/seed_parkings.sql';
-            if (file_exists($schemaFile)) {
-                $pdoInstance->exec(file_get_contents($schemaFile));
+            if (file_exists($v2File)) {
+                $pdoInstance->exec(file_get_contents($v2File));
             }
             if (file_exists($seedFile)) {
                 $pdoInstance->exec(file_get_contents($seedFile));
             }
             $autoInstallDone = true;
             $parkingTablesExist = true;
+            $parkingV2Ready = true;
             $canMigrateParking = false;
+            $canMigrateParkingV2 = false;
             $parkingsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM property_parkings")->fetchColumn();
-            $locationsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_locations")->fetchColumn();
+            $freeSpotsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_free_spots")->fetchColumn();
+            $privateLotsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_private_lots")->fetchColumn();
+            $tclPrsCount = (int)$pdoInstance->query("SELECT COUNT(*) FROM parking_tcl_prs")->fetchColumn();
+            $locationsCount = $freeSpotsCount + $privateLotsCount + $tclPrsCount;
         } catch (Exception $e) {
             $autoInstallError = $e->getMessage();
         }
@@ -277,27 +302,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $pdoConn
                 <div class="flex items-start space-x-3 p-4 rounded-2xl <?= $parkingTablesExist && $parkingsCount > 0 ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200' ?>">
                     <span class="text-xl"><?= $parkingTablesExist && $parkingsCount > 0 ? '🅿️' : 'ℹ️' ?></span>
                     <div class="flex-1">
-                        <h2 class="text-sm font-bold text-gray-900">Module Stationnement (FR & EN)</h2>
-                        <?php if ($parkingTablesExist && $parkingsCount > 0): ?>
+                        <h2 class="text-sm font-bold text-gray-900">Module Stationnement (FR & EN) — <?= $parkingV2Ready ? 'Architecture V2 Spécialisée' : 'Standard' ?></h2>
+                        <?php if ($parkingV2Ready && $parkingsCount > 0): ?>
                             <p class="text-xs text-gray-600 mt-0.5">
-                                Module opérationnel : <strong><?= $parkingsCount ?></strong> fiches et <strong><?= $locationsCount ?></strong> emplacements répertoriés (rues gratuites, parkings privés, P+R).
+                                Structure normalisée active : <strong><?= $parkingsCount ?></strong> fiches et <strong><?= $locationsCount ?></strong> emplacements au total :
                             </p>
-                            <p class="text-[11px] text-green-700 font-semibold mt-1">
-                                ✓ Tables <code>property_parkings</code> et <code>parking_locations</code> prêtes !
+                            <ul class="text-[11px] text-gray-700 mt-1 space-y-0.5 list-disc list-inside">
+                                <li>🟢 <strong><?= $freeSpotsCount ?></strong> rues et dépose-minute (<code>parking_free_spots</code>)</li>
+                                <li>🏢 <strong><?= $privateLotsCount ?></strong> parkings privés et couverts (<code>parking_private_lots</code>)</li>
+                                <li>🚇 <strong><?= $tclPrsCount ?></strong> Parcs Relais TCL connectés (<code>parking_tcl_prs</code>)</li>
+                            </ul>
+                            <p class="text-[11px] text-green-700 font-semibold mt-1.5">
+                                ✓ Tables spécialisées et vue <code>parking_locations</code> opérationnelles !
                             </p>
+                        <?php elseif ($parkingTablesExist && $parkingsCount > 0): ?>
+                            <p class="text-xs text-gray-600 mt-0.5">
+                                Module opérationnel (ancienne table `parking_locations`) : <strong><?= $parkingsCount ?></strong> fiches et <strong><?= $locationsCount ?></strong> emplacements.
+                            </p>
+                            <?php if ($canMigrateParkingV2): ?>
+                                <form method="POST" class="mt-3">
+                                    <input type="hidden" name="action" value="run_parking_migration_v2">
+                                    <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2">
+                                        <span>⚡</span> Mettre à niveau vers l'Architecture V2 Normalisée (1 clic)
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         <?php else: ?>
                             <p class="text-xs text-gray-600 mt-0.5">
                                 <?= $tablesExist ? "Les tables de stationnement ne sont pas encore installées." : "En attente de l'installation de la base." ?>
                             </p>
-                        <?php endif; ?>
-
-                        <?php if ($canMigrateParking): ?>
-                            <form method="POST" class="mt-3">
-                                <input type="hidden" name="action" value="run_parking_migration">
-                                <button type="submit" class="px-4 py-2 bg-[#28344c] hover:bg-[#1e2739] text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2">
-                                    <span>🅿️</span> Activer le module Stationnement (1 clic)
-                                </button>
-                            </form>
+                            <?php if ($canMigrateParking): ?>
+                                <form method="POST" class="mt-3">
+                                    <input type="hidden" name="action" value="run_parking_migration_v2">
+                                    <button type="submit" class="px-4 py-2 bg-[#28344c] hover:bg-[#1e2739] text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-2">
+                                        <span>🅿️</span> Activer le module Stationnement V2 (1 clic)
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>

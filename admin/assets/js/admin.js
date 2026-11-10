@@ -1579,8 +1579,6 @@ const AdminApp = {
         document.getElementById('parking-street-app').value = gen.street_parking_app || 'EasyPark';
         document.getElementById('parking-tcl-cond-fr').value = gen.tcl_conditions_fr || '';
         document.getElementById('parking-tcl-cond-en').value = gen.tcl_conditions_en || '';
-        document.getElementById('parking-tcl-notes-fr').value = gen.tcl_notes_fr || '';
-        document.getElementById('parking-tcl-notes-en').value = gen.tcl_notes_en || '';
     },
 
     getTranslationFieldDefinitions(type) {
@@ -1639,76 +1637,36 @@ const AdminApp = {
                     enId: 'parking-tcl-cond-en',
                     isTextarea: true,
                     rows: 2
-                },
-                {
-                    key: 'tcl_notes',
-                    label: 'Lignes, métros et accès conseillés TCL',
-                    frId: 'parking-tcl-notes-fr',
-                    enId: 'parking-tcl-notes-en',
-                    isTextarea: false
                 }
             ];
-        } else if (type === 'parking_location') {
-            return [
-                {
-                    key: 'name',
-                    label: 'Nom du parking ou de la rue',
-                    frId: 'location-name-fr',
-                    enId: 'location-name-en',
-                    isTextarea: false
-                },
-                {
-                    key: 'walking_time',
-                    label: 'Temps de marche à pied',
-                    frId: 'location-walking-fr',
-                    enId: 'location-walking-en',
-                    isTextarea: false
-                },
-                {
-                    key: 'transit_time',
-                    label: 'Temps en transports en commun (TCL)',
-                    frId: 'location-transit-fr',
-                    enId: 'location-transit-en',
-                    isTextarea: false
-                },
-                {
-                    key: 'opening_hours',
-                    label: 'Horaires d\'ouverture',
-                    frId: 'location-hours-fr',
-                    enId: 'location-hours-en',
-                    isTextarea: false
-                },
-                {
-                    key: 'rates',
-                    label: 'Tarifs et modalités',
-                    frId: 'location-rates-fr',
-                    enId: 'location-rates-en',
-                    isTextarea: true,
-                    rows: 2
-                },
-                {
-                    key: 'suitable_vehicles',
-                    label: 'Véhicules adaptés',
-                    frId: 'location-vehicles-fr',
-                    enId: 'location-vehicles-en',
-                    isTextarea: false
-                },
-                {
-                    key: 'how_to_reach',
-                    label: 'Itinéraire pour rejoindre le logement',
-                    frId: 'location-reach-fr',
-                    enId: 'location-reach-en',
-                    isTextarea: true,
-                    rows: 2
-                },
-                {
-                    key: 'notes',
-                    label: 'Notes & remarques complémentaires',
-                    frId: 'location-notes-fr',
-                    enId: 'location-notes-en',
-                    isTextarea: false
-                }
-            ];
+        } else if (type === 'parking_location' || type === 'parking_item') {
+            const cat = (document.getElementById('location-category') ? document.getElementById('location-category').value : 'free_street');
+            
+            if (cat === 'private_parking') {
+                return [
+                    { key: 'name', label: 'Nom du parking privé', frId: 'location-name-fr-priv', enId: 'location-name-en', isTextarea: false },
+                    { key: 'walking_time', label: 'Temps de marche', frId: 'location-walking-fr-priv', enId: 'location-walking-en', isTextarea: false },
+                    { key: 'opening_hours', label: 'Horaires d\'accès', frId: 'location-hours-fr-priv', enId: 'location-hours-en', isTextarea: false },
+                    { key: 'rates', label: 'Grille tarifaire', frId: 'location-rates-fr-priv', enId: 'location-rates-en', isTextarea: true, rows: 2 },
+                    { key: 'suitable_vehicles', label: 'Véhicules adaptés', frId: 'location-vehicles-fr', enId: 'location-vehicles-en', isTextarea: false },
+                    { key: 'notes', label: 'Remarques pratiques', frId: 'location-notes-fr-priv', enId: 'location-notes-en', isTextarea: false }
+                ];
+            } else if (cat === 'tcl_pr') {
+                return [
+                    { key: 'name', label: 'Nom du Parc Relais TCL', frId: 'location-name-fr-tcl', enId: 'location-name-en', isTextarea: false },
+                    { key: 'transit_time', label: 'Temps en transports TCL', frId: 'location-transit-fr', enId: 'location-transit-en', isTextarea: false },
+                    { key: 'opening_hours', label: 'Horaires d\'accès', frId: 'location-hours-fr-tcl', enId: 'location-hours-en', isTextarea: false },
+                    { key: 'how_to_reach', label: 'Itinéraire retour vers le logement', frId: 'location-reach-fr', enId: 'location-reach-en', isTextarea: true, rows: 2 },
+                    { key: 'notes', label: 'Notes complémentaires', frId: 'location-notes-fr-tcl', enId: 'location-notes-en', isTextarea: false }
+                ];
+            } else {
+                // Rues gratuites & Dépose minute
+                return [
+                    { key: 'name', label: 'Nom du lieu ou de la rue', frId: 'location-name-fr-free', enId: 'location-name-en', isTextarea: false },
+                    { key: 'walking_time', label: 'Temps d\'accès à pied', frId: 'location-walking-fr-free', enId: 'location-walking-en', isTextarea: false },
+                    { key: 'notes', label: 'Remarques & conseils', frId: 'location-notes-fr-free', enId: 'location-notes-en', isTextarea: false }
+                ];
+            }
         }
         return [];
     },
@@ -1902,8 +1860,7 @@ const AdminApp = {
             street_parking_info_fr: document.getElementById('parking-street-info-fr').value.trim(),
             street_parking_schedule_fr: document.getElementById('parking-street-sched-fr').value.trim(),
             street_parking_rates_fr: document.getElementById('parking-street-rates-fr').value.trim(),
-            tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim(),
-            tcl_notes_fr: document.getElementById('parking-tcl-notes-fr').value.trim()
+            tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim()
         };
 
         const hasContent = Object.values(data).some(v => v.length > 0);
@@ -1936,7 +1893,6 @@ const AdminApp = {
                 if (res.data.street_parking_schedule_en !== undefined) document.getElementById('parking-street-sched-en').value = res.data.street_parking_schedule_en;
                 if (res.data.street_parking_rates_en !== undefined) document.getElementById('parking-street-rates-en').value = res.data.street_parking_rates_en;
                 if (res.data.tcl_conditions_en !== undefined) document.getElementById('parking-tcl-cond-en').value = res.data.tcl_conditions_en;
-                if (res.data.tcl_notes_en !== undefined) document.getElementById('parking-tcl-notes-en').value = res.data.tcl_notes_en;
             }
 
             // Ouvrir la modale de revue bilingue côte à côte
@@ -1964,8 +1920,7 @@ const AdminApp = {
                 street_parking_info_fr: document.getElementById('parking-street-info-fr').value.trim(),
                 street_parking_schedule_fr: document.getElementById('parking-street-sched-fr').value.trim(),
                 street_parking_rates_fr: document.getElementById('parking-street-rates-fr').value.trim(),
-                tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim(),
-                tcl_notes_fr: document.getElementById('parking-tcl-notes-fr').value.trim()
+                tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim()
             };
 
             const hasFrenchContent = Object.values(dataFr).some(v => v.length > 0);
@@ -1993,7 +1948,6 @@ const AdminApp = {
                         if (res.data.street_parking_schedule_en !== undefined) document.getElementById('parking-street-sched-en').value = res.data.street_parking_schedule_en;
                         if (res.data.street_parking_rates_en !== undefined) document.getElementById('parking-street-rates-en').value = res.data.street_parking_rates_en;
                         if (res.data.tcl_conditions_en !== undefined) document.getElementById('parking-tcl-cond-en').value = res.data.tcl_conditions_en;
-                        if (res.data.tcl_notes_en !== undefined) document.getElementById('parking-tcl-notes-en').value = res.data.tcl_notes_en;
                     }
 
                     // Ouvre la vérification flash
@@ -2025,9 +1979,7 @@ const AdminApp = {
             street_parking_rates_en: document.getElementById('parking-street-rates-en').value.trim(),
             street_parking_app: document.getElementById('parking-street-app').value.trim() || 'EasyPark',
             tcl_conditions_fr: document.getElementById('parking-tcl-cond-fr').value.trim(),
-            tcl_conditions_en: document.getElementById('parking-tcl-cond-en').value.trim(),
-            tcl_notes_fr: document.getElementById('parking-tcl-notes-fr').value.trim(),
-            tcl_notes_en: document.getElementById('parking-tcl-notes-en').value.trim()
+            tcl_conditions_en: document.getElementById('parking-tcl-cond-en').value.trim()
         };
 
         try {
@@ -2043,16 +1995,52 @@ const AdminApp = {
         }
     },
 
+    onLocationCategoryChange(cat) {
+        const catInput = document.getElementById('location-category');
+        if (catInput) catInput.value = cat;
+
+        // Synchroniser les radios
+        const radios = document.getElementsByName('location-category-radio');
+        radios.forEach(r => {
+            r.checked = (r.value === cat || (r.value === 'free_street' && (cat === 'free_spot' || cat === 'free_street')));
+        });
+
+        const catFree = document.getElementById('cat-fields-free');
+        const catPriv = document.getElementById('cat-fields-private');
+        const catTcl = document.getElementById('cat-fields-tcl');
+
+        if (cat === 'private_parking') {
+            if (catFree) catFree.classList.add('hidden');
+            if (catPriv) catPriv.classList.remove('hidden');
+            if (catTcl) catTcl.classList.add('hidden');
+        } else if (cat === 'tcl_pr') {
+            if (catFree) catFree.classList.add('hidden');
+            if (catPriv) catPriv.classList.add('hidden');
+            if (catTcl) catTcl.classList.remove('hidden');
+        } else {
+            // free_street ou free_spot
+            if (catFree) catFree.classList.remove('hidden');
+            if (catPriv) catPriv.classList.add('hidden');
+            if (catTcl) catTcl.classList.add('hidden');
+            const subtypeEl = document.getElementById('location-free-subtype');
+            if (subtypeEl) {
+                subtypeEl.value = (cat === 'free_spot' ? 'free_spot' : 'free_street');
+            }
+        }
+    },
+
+    onFreeSubtypeChange(subtype) {
+        const catInput = document.getElementById('location-category');
+        if (catInput) catInput.value = subtype;
+    },
+
     renderParkingLocationsList() {
         const container = document.getElementById('parking-locations-list');
         const filterCat = document.getElementById('parking-locations-filter-cat');
         if (!container) return;
 
         const cat = filterCat ? filterCat.value : 'all';
-        let list = this.state.currentParkingLocations;
-        if (cat !== 'all') {
-            list = list.filter(l => l.category === cat);
-        }
+        const allLocs = this.state.currentParkingLocations || [];
 
         const catLabels = {
             free_street: { label: 'Rue gratuite', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
@@ -2061,99 +2049,193 @@ const AdminApp = {
             tcl_pr: { label: 'Parc Relais TCL (P+R)', color: 'bg-red-500/10 text-red-400 border-red-500/30' }
         };
 
-        if (list.length === 0) {
+        const renderItemCard = (loc, listForCat, idx) => {
+            const badge = catLabels[loc.category] || { label: loc.category, color: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
+            const hasAddress = (loc.address && loc.address.trim().length > 0);
+            return `
+                <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 transition shadow-lg group">
+                    <!-- EN-TÊTE / NOM DE L'EMPLACEMENT & STATUT -->
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+                            <!-- Poignée d'ordre ▲ / ▼ -->
+                            <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
+                                <button type="button" onclick="AdminApp.moveLocation(${loc.id}, -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
+                                <button type="button" onclick="AdminApp.moveLocation(${loc.id}, 1)" ${idx === listForCat.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center flex-wrap gap-2 mb-1">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badge.color}">${badge.label}</span>
+                                    ${loc.operator ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold/15 text-gold border border-gold/30">${this.escape(loc.operator)}</span>` : ''}
+                                    <h5 class="text-sm sm:text-base font-bold text-white group-hover:text-gold transition break-words">
+                                        ${this.escape(loc.name_fr)}
+                                    </h5>
+                                </div>
+                                <p class="text-xs text-gray-400 flex items-center gap-1.5 break-words">
+                                    <span>🇬🇧</span>
+                                    <span class="italic">${this.escape(loc.name_en || loc.name_fr)}</span>
+                                </p>
+                                
+                                <!-- Métriques adaptées à la catégorie -->
+                                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                                    ${loc.walking_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚶 ${this.escape(loc.walking_time_fr)}</span>` : ''}
+                                    ${loc.transit_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚇 ${this.escape(loc.transit_time_fr)}</span>` : ''}
+                                    ${loc.max_height ? `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-semibold">↕️ Max ${this.escape(loc.max_height)}</span>` : ''}
+                                    ${loc.capacity ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚗 ${this.escape(loc.capacity)}</span>` : ''}
+                                    ${loc.opening_hours_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-400">🕒 ${this.escape(loc.opening_hours_fr)}</span>` : ''}
+                                    ${loc.rates_fr ? `<span class="px-2.5 py-1 rounded-xl bg-gold/10 border border-gold/30 text-gold font-semibold">💶 ${this.escape(loc.rates_fr)}</span>` : ''}
+                                    ${loc.address ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-400 truncate max-w-xs" title="${this.escape(loc.address)}">📍 ${this.escape(loc.address)}</span>` : ''}
+                                </div>
+
+                                ${loc.notes_fr ? `<p class="mt-2 text-xs text-gray-400 italic">💡 ${this.escape(loc.notes_fr)}</p>` : ''}
+                                ${loc.how_to_reach_fr ? `<p class="mt-1 text-xs text-blue-300/90 bg-blue-950/40 p-2 rounded-xl border border-blue-900/40">🚇 <strong>Accès retour :</strong> ${this.escape(loc.how_to_reach_fr)}</p>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Statut Actif / Masqué -->
+                        <div class="flex-shrink-0">
+                            <button type="button" onclick="AdminApp.toggleLocationStatus(${loc.id})" title="Cliquer pour basculer la visibilité"
+                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${loc.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
+                                ${loc.active == 1 ? '● Actif' : '○ Masqué'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- BARRE D'ACTIONS -->
+                    <div class="pt-3 mt-3.5 border-t border-night-border/50 grid grid-cols-12 gap-2">
+                        ${hasAddress ? `
+                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" rel="noopener noreferrer"
+                               class="${loc.booking_url ? 'col-span-3' : 'col-span-6'} py-2 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1.5 shadow-sm">
+                                <span>🗺️</span>
+                                <span>Maps</span>
+                            </a>
+                        ` : `
+                            <div class="${loc.booking_url ? 'col-span-3' : 'col-span-6'} py-2 px-2 rounded-xl bg-night/50 border border-night-border/40 text-[11px] text-gray-500 italic flex items-center justify-center">
+                                <span>Sans adresse</span>
+                            </div>
+                        `}
+
+                        ${loc.booking_url ? `
+                            <a href="${loc.booking_url}" target="_blank" rel="noopener noreferrer"
+                               class="col-span-3 py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm"
+                               title="Lien réservation ou fiche officielle">
+                                <span>🔗</span>
+                                <span>Lien</span>
+                            </a>
+                        ` : ''}
+
+                        <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" 
+                                class="${loc.booking_url ? 'col-span-4' : 'col-span-4'} py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm" title="Modifier l'emplacement">
+                            <span>✏️</span>
+                            <span>Modifier</span>
+                        </button>
+                        <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id})" 
+                                class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet emplacement">
+                            <span>🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        };
+
+        if (allLocs.length === 0) {
             container.innerHTML = `
                 <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6">
                     <span class="text-3xl block mb-2">🅿️</span>
-                    <p class="text-base font-bold text-white">Aucun emplacement répertorié pour cette catégorie</p>
+                    <p class="text-base font-bold text-white">Aucun emplacement répertorié pour cet hébergement</p>
                     <p class="text-xs text-gray-500 mt-1 mb-4">Ajoutez des rues gratuites, des garages privés ou des P+R TCL.</p>
-                    <button type="button" onclick="AdminApp.openLocationModal(0)" class="px-4 py-2 rounded-xl bg-gold text-white font-bold text-xs shadow-lg shadow-gold/20 hover:bg-gold-light transition">
-                        + Ajouter un emplacement
-                    </button>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button type="button" onclick="AdminApp.openLocationModal(0, 'free_street')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-lg hover:bg-emerald-500 transition">
+                            + Rue / Dépose
+                        </button>
+                        <button type="button" onclick="AdminApp.openLocationModal(0, 'private_parking')" class="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs shadow-lg hover:bg-purple-500 transition">
+                            + Parking privé
+                        </button>
+                        <button type="button" onclick="AdminApp.openLocationModal(0, 'tcl_pr')" class="px-4 py-2 rounded-xl bg-red-600 text-white font-bold text-xs shadow-lg hover:bg-red-500 transition">
+                            + P+R TCL
+                        </button>
+                    </div>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = `
-            <div class="space-y-3.5">
-                ${list.map((loc, idx) => {
-                    const badge = catLabels[loc.category] || { label: loc.category, color: 'bg-gray-500/10 text-gray-400 border-gray-500/30' };
-                    const hasAddress = (loc.address && loc.address.trim().length > 0);
-                    return `
-                        <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border hover:border-gold/30 transition shadow-lg group">
-                            <!-- LIGNE 1 : EN-TÊTE / NOM DE L'EMPLACEMENT & STATUT (S'affiche en pleine largeur sans être écrasé) -->
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
-                                    <!-- Poignée d'ordre ▲ / ▼ -->
-                                    <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
-                                        <button type="button" onclick="AdminApp.moveLocation(${loc.id}, -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
-                                        <button type="button" onclick="AdminApp.moveLocation(${loc.id}, 1)" ${idx === list.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
-                                    </div>
+        const freeList = allLocs.filter(l => l.category === 'free_street' || l.category === 'free_spot');
+        const privateList = allLocs.filter(l => l.category === 'private_parking');
+        const tclList = allLocs.filter(l => l.category === 'tcl_pr');
 
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center flex-wrap gap-2 mb-1">
-                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badge.color}">${badge.label}</span>
-                                            <h5 class="text-sm sm:text-base font-bold text-white group-hover:text-gold transition break-words">
-                                                ${this.escape(loc.name_fr)}
-                                            </h5>
-                                        </div>
-                                        <p class="text-xs text-gray-400 flex items-center gap-1.5 break-words">
-                                            <span>🇬🇧</span>
-                                            <span class="italic">${this.escape(loc.name_en || loc.name_fr)}</span>
-                                        </p>
-                                        
-                                        <!-- Métriques claires (temps à pied, transports, capacité, adresse) -->
-                                        <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                                            ${loc.walking_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚶 ${this.escape(loc.walking_time_fr)}</span>` : ''}
-                                            ${loc.transit_time_fr ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚇 ${this.escape(loc.transit_time_fr)}</span>` : ''}
-                                            ${loc.capacity ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-300">🚗 ${this.escape(loc.capacity)}</span>` : ''}
-                                            ${loc.address ? `<span class="px-2.5 py-1 rounded-xl bg-night border border-night-border/80 text-gray-400 truncate max-w-xs" title="${this.escape(loc.address)}">📍 ${this.escape(loc.address)}</span>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
+        let html = '';
 
-                                <!-- Statut Actif / Masqué -->
-                                <div class="flex-shrink-0">
-                                    <button type="button" onclick="AdminApp.toggleLocationStatus(${loc.id})" title="Cliquer pour basculer la visibilité"
-                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${loc.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
-                                        ${loc.active == 1 ? '● Actif' : '○ Masqué'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- LIGNE 2 : BARRE D'ACTIONS (Grille 12 colonnes sans chevauchement) -->
-                            <div class="pt-3 mt-3.5 border-t border-night-border/50 grid grid-cols-12 gap-2">
-                                ${hasAddress ? `
-                                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}" target="_blank" rel="noopener noreferrer"
-                                       class="col-span-6 py-2 px-2.5 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1.5 shadow-sm">
-                                        <span>🗺️</span>
-                                        <span>Maps</span>
-                                    </a>
-                                ` : `
-                                    <div class="col-span-6 py-2 px-2 rounded-xl bg-night/50 border border-night-border/40 text-[11px] text-gray-500 italic flex items-center justify-center">
-                                        <span>Sans adresse</span>
-                                    </div>
-                                `}
-
-                                <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" 
-                                        class="col-span-4 py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm" title="Modifier l'emplacement">
-                                    <span>✏️</span>
-                                    <span>Modifier</span>
-                                </button>
-                                <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id})" 
-                                        class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet emplacement">
-                                    <span>🗑️</span>
-                                </button>
-                            </div>
+        // Section 1 : Rues et Dépose
+        if (cat === 'all' || cat === 'free_street') {
+            html += `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-night-border">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">🟢</span>
+                            <h4 class="text-sm font-bold text-white">Rues gratuites & Dépose-minute</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">${freeList.length}</span>
                         </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
+                        <button type="button" onclick="AdminApp.openLocationModal(0, 'free_street')" class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold transition">
+                            + Ajouter une rue
+                        </button>
+                    </div>
+                    ${freeList.length > 0 
+                        ? `<div class="space-y-3">${freeList.map((loc, idx) => renderItemCard(loc, freeList, idx)).join('')}</div>`
+                        : `<p class="text-xs text-gray-500 italic py-3 text-center bg-night/50 rounded-xl border border-night-border/40">Aucune rue gratuite configurée.</p>`
+                    }
+                </div>
+            `;
+        }
+
+        // Section 2 : Parkings privés & couverts
+        if (cat === 'all' || cat === 'private_parking') {
+            html += `
+                <div class="space-y-3 ${cat === 'all' ? 'pt-4' : ''}">
+                    <div class="flex items-center justify-between pb-2 border-b border-night-border">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">🏢</span>
+                            <h4 class="text-sm font-bold text-white">Parkings privés & couverts</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30">${privateList.length}</span>
+                        </div>
+                        <button type="button" onclick="AdminApp.openLocationModal(0, 'private_parking')" class="text-xs text-purple-400 hover:text-purple-300 font-semibold transition">
+                            + Ajouter un parking privé
+                        </button>
+                    </div>
+                    ${privateList.length > 0 
+                        ? `<div class="space-y-3">${privateList.map((loc, idx) => renderItemCard(loc, privateList, idx)).join('')}</div>`
+                        : `<p class="text-xs text-gray-500 italic py-3 text-center bg-night/50 rounded-xl border border-night-border/40">Aucun parking privé configuré.</p>`
+                    }
+                </div>
+            `;
+        }
+
+        // Section 3 : Parcs Relais TCL
+        if (cat === 'all' || cat === 'tcl_pr') {
+            html += `
+                <div class="space-y-3 ${cat === 'all' ? 'pt-4' : ''}">
+                    <div class="flex items-center justify-between pb-2 border-b border-night-border">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base">🚇</span>
+                            <h4 class="text-sm font-bold text-white">Parcs Relais TCL (P+R)</h4>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/30">${tclList.length}</span>
+                        </div>
+                        <button type="button" onclick="AdminApp.openLocationModal(0, 'tcl_pr')" class="text-xs text-red-400 hover:text-red-300 font-semibold transition">
+                            + Ajouter un P+R TCL
+                        </button>
+                    </div>
+                    ${tclList.length > 0 
+                        ? `<div class="space-y-3">${tclList.map((loc, idx) => renderItemCard(loc, tclList, idx)).join('')}</div>`
+                        : `<p class="text-xs text-gray-500 italic py-3 text-center bg-night/50 rounded-xl border border-night-border/40">Aucun Parc Relais TCL configuré.</p>`
+                    }
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
     },
 
-    openLocationModal(id = 0) {
+    openLocationModal(id = 0, defaultCategory = 'free_street') {
         const modal = document.getElementById('modal-location-form');
         const titleEl = document.getElementById('modal-location-title');
         const form = document.getElementById('location-form');
@@ -2163,40 +2245,68 @@ const AdminApp = {
         document.getElementById('location-id').value = id;
         document.getElementById('location-property-id').value = this.state.currentPropertyId;
 
-        if (id > 0) {
-            const loc = this.state.currentParkingLocations.find(l => l.id == id);
-            if (!loc) return;
-            titleEl.textContent = `Modifier : ${loc.name_fr}`;
-            document.getElementById('location-category').value = loc.category || 'free_street';
-            document.getElementById('location-name-fr').value = loc.name_fr || '';
-            document.getElementById('location-name-en').value = loc.name_en || '';
-            document.getElementById('location-address').value = loc.address || '';
-            document.getElementById('location-walking-fr').value = loc.walking_time_fr || '';
-            document.getElementById('location-walking-en').value = loc.walking_time_en || '';
-            document.getElementById('location-walking-min').value = loc.walking_minutes || '';
-            document.getElementById('location-transit-fr').value = loc.transit_time_fr || '';
-            document.getElementById('location-transit-en').value = loc.transit_time_en || '';
-            document.getElementById('location-max-height').value = loc.max_height || '';
-            document.getElementById('location-capacity').value = loc.capacity || '';
-            document.getElementById('location-hours-fr').value = loc.opening_hours_fr || '';
-            document.getElementById('location-hours-en').value = loc.opening_hours_en || '';
-            document.getElementById('location-rates-fr').value = loc.rates_fr || '';
-            document.getElementById('location-rates-en').value = loc.rates_en || '';
-            document.getElementById('location-vehicles-fr').value = loc.suitable_vehicles_fr || '';
-            document.getElementById('location-vehicles-en').value = loc.suitable_vehicles_en || '';
-            document.getElementById('location-reach-fr').value = loc.how_to_reach_fr || '';
-            document.getElementById('location-reach-en').value = loc.how_to_reach_en || '';
-            document.getElementById('location-operator').value = loc.operator || '';
-            document.getElementById('location-booking-url').value = loc.booking_url || '';
-            document.getElementById('location-notes-fr').value = loc.notes_fr || '';
-            document.getElementById('location-notes-en').value = loc.notes_en || '';
-            document.getElementById('location-order').value = loc.display_order || 0;
-            document.getElementById('location-active').checked = (loc.active == 1);
+        // Réinitialiser les champs anglais masqués
+        ['location-name-en', 'location-walking-en', 'location-transit-en', 'location-hours-en', 'location-rates-en', 'location-vehicles-en', 'location-reach-en', 'location-notes-en'].forEach(fid => {
+            const el = document.getElementById(fid);
+            if (el) el.value = '';
+        });
 
+        if (id > 0) {
+            const loc = (this.state.currentParkingLocations || []).find(l => l.id == id);
+            if (!loc) return;
+            const cat = loc.category || 'free_street';
+            titleEl.textContent = `Modifier : ${loc.name_fr}`;
+            this.onLocationCategoryChange(cat);
+
+            if (cat === 'private_parking') {
+                if (document.getElementById('location-name-fr-priv')) document.getElementById('location-name-fr-priv').value = loc.name_fr || '';
+                if (document.getElementById('location-operator')) document.getElementById('location-operator').value = loc.operator || '';
+                if (document.getElementById('location-address-priv')) document.getElementById('location-address-priv').value = loc.address || '';
+                if (document.getElementById('location-walking-fr-priv')) document.getElementById('location-walking-fr-priv').value = loc.walking_time_fr || '';
+                if (document.getElementById('location-max-height')) document.getElementById('location-max-height').value = loc.max_height || '';
+                if (document.getElementById('location-hours-fr-priv')) document.getElementById('location-hours-fr-priv').value = loc.opening_hours_fr || '';
+                if (document.getElementById('location-vehicles-fr')) document.getElementById('location-vehicles-fr').value = loc.suitable_vehicles_fr || '';
+                if (document.getElementById('location-rates-fr-priv')) document.getElementById('location-rates-fr-priv').value = loc.rates_fr || '';
+                if (document.getElementById('location-booking-url-priv')) document.getElementById('location-booking-url-priv').value = loc.booking_url || '';
+                if (document.getElementById('location-notes-fr-priv')) document.getElementById('location-notes-fr-priv').value = loc.notes_fr || '';
+            } else if (cat === 'tcl_pr') {
+                if (document.getElementById('location-name-fr-tcl')) document.getElementById('location-name-fr-tcl').value = loc.name_fr || '';
+                if (document.getElementById('location-capacity')) document.getElementById('location-capacity').value = loc.capacity || '';
+                if (document.getElementById('location-address-tcl')) document.getElementById('location-address-tcl').value = loc.address || '';
+                if (document.getElementById('location-transit-fr')) document.getElementById('location-transit-fr').value = loc.transit_time_fr || '';
+                if (document.getElementById('location-hours-fr-tcl')) document.getElementById('location-hours-fr-tcl').value = loc.opening_hours_fr || '';
+                if (document.getElementById('location-reach-fr')) document.getElementById('location-reach-fr').value = loc.how_to_reach_fr || '';
+                if (document.getElementById('location-booking-url-tcl')) document.getElementById('location-booking-url-tcl').value = loc.booking_url || '';
+                if (document.getElementById('location-notes-fr-tcl')) document.getElementById('location-notes-fr-tcl').value = loc.notes_fr || '';
+            } else {
+                if (document.getElementById('location-free-subtype')) document.getElementById('location-free-subtype').value = cat === 'free_spot' ? 'free_spot' : 'free_street';
+                if (document.getElementById('location-name-fr-free')) document.getElementById('location-name-fr-free').value = loc.name_fr || '';
+                if (document.getElementById('location-address-free')) document.getElementById('location-address-free').value = loc.address || '';
+                if (document.getElementById('location-walking-fr-free')) document.getElementById('location-walking-fr-free').value = loc.walking_time_fr || '';
+                if (document.getElementById('location-notes-fr-free')) document.getElementById('location-notes-fr-free').value = loc.notes_fr || '';
+            }
+
+            // Report des champs anglais
+            if (document.getElementById('location-name-en')) document.getElementById('location-name-en').value = loc.name_en || '';
+            if (document.getElementById('location-walking-en')) document.getElementById('location-walking-en').value = loc.walking_time_en || '';
+            if (document.getElementById('location-transit-en')) document.getElementById('location-transit-en').value = loc.transit_time_en || '';
+            if (document.getElementById('location-hours-en')) document.getElementById('location-hours-en').value = loc.opening_hours_en || '';
+            if (document.getElementById('location-rates-en')) document.getElementById('location-rates-en').value = loc.rates_en || '';
+            if (document.getElementById('location-vehicles-en')) document.getElementById('location-vehicles-en').value = loc.suitable_vehicles_en || '';
+            if (document.getElementById('location-reach-en')) document.getElementById('location-reach-en').value = loc.how_to_reach_en || '';
+            if (document.getElementById('location-notes-en')) document.getElementById('location-notes-en').value = loc.notes_en || '';
+
+            document.getElementById('location-order').value = loc.display_order || 1;
+            document.getElementById('location-active').checked = (loc.active == 1);
         } else {
-            titleEl.textContent = 'Ajouter un emplacement de stationnement';
-            document.getElementById('location-category').value = 'free_street';
-            document.getElementById('location-order').value = this.state.currentParkingLocations.length + 1;
+            titleEl.textContent = 'Ajouter un emplacement';
+            this.onLocationCategoryChange(defaultCategory);
+            const countForCat = (this.state.currentParkingLocations || []).filter(l => {
+                if (defaultCategory === 'private_parking') return l.category === 'private_parking';
+                if (defaultCategory === 'tcl_pr') return l.category === 'tcl_pr';
+                return l.category === 'free_street' || l.category === 'free_spot';
+            }).length;
+            document.getElementById('location-order').value = countForCat + 1;
             document.getElementById('location-active').checked = true;
         }
 
@@ -2209,24 +2319,39 @@ const AdminApp = {
     },
 
     async previewTranslateLocation() {
-        const nameFr = document.getElementById('location-name-fr').value.trim();
+        const cat = document.getElementById('location-category').value;
+        let nameFr = '';
+        let data = { category: cat };
+
+        if (cat === 'private_parking') {
+            nameFr = (document.getElementById('location-name-fr-priv')?.value || '').trim();
+            data.name_fr = nameFr;
+            data.address = (document.getElementById('location-address-priv')?.value || '').trim();
+            data.walking_time_fr = (document.getElementById('location-walking-fr-priv')?.value || '').trim();
+            data.opening_hours_fr = (document.getElementById('location-hours-fr-priv')?.value || '').trim();
+            data.rates_fr = (document.getElementById('location-rates-fr-priv')?.value || '').trim();
+            data.suitable_vehicles_fr = (document.getElementById('location-vehicles-fr')?.value || '').trim();
+            data.notes_fr = (document.getElementById('location-notes-fr-priv')?.value || '').trim();
+        } else if (cat === 'tcl_pr') {
+            nameFr = (document.getElementById('location-name-fr-tcl')?.value || '').trim();
+            data.name_fr = nameFr;
+            data.address = (document.getElementById('location-address-tcl')?.value || '').trim();
+            data.transit_time_fr = (document.getElementById('location-transit-fr')?.value || '').trim();
+            data.opening_hours_fr = (document.getElementById('location-hours-fr-tcl')?.value || '').trim();
+            data.how_to_reach_fr = (document.getElementById('location-reach-fr')?.value || '').trim();
+            data.notes_fr = (document.getElementById('location-notes-fr-tcl')?.value || '').trim();
+        } else {
+            nameFr = (document.getElementById('location-name-fr-free')?.value || '').trim();
+            data.name_fr = nameFr;
+            data.address = (document.getElementById('location-address-free')?.value || '').trim();
+            data.walking_time_fr = (document.getElementById('location-walking-fr-free')?.value || '').trim();
+            data.notes_fr = (document.getElementById('location-notes-fr-free')?.value || '').trim();
+        }
+
         if (!nameFr) {
             this.showToast('Veuillez renseigner au moins le nom du lieu en français.', 'warning');
             return;
         }
-
-        const data = {
-            name_fr: nameFr,
-            category: document.getElementById('location-category').value,
-            address: document.getElementById('location-address').value.trim(),
-            walking_time_fr: document.getElementById('location-walking-fr').value.trim(),
-            transit_time_fr: document.getElementById('location-transit-fr').value.trim(),
-            opening_hours_fr: document.getElementById('location-hours-fr').value.trim(),
-            rates_fr: document.getElementById('location-rates-fr').value.trim(),
-            suitable_vehicles_fr: document.getElementById('location-vehicles-fr').value.trim(),
-            how_to_reach_fr: document.getElementById('location-reach-fr').value.trim(),
-            notes_fr: document.getElementById('location-notes-fr').value.trim()
-        };
 
         const btn = document.getElementById('btn-preview-translate-loc');
         const btnIcon = document.getElementById('btn-preview-loc-icon');
@@ -2245,14 +2370,30 @@ const AdminApp = {
             });
 
             if (res.data) {
-                if (res.data.name_en !== undefined) document.getElementById('location-name-en').value = res.data.name_en;
-                if (res.data.walking_time_en !== undefined) document.getElementById('location-walking-en').value = res.data.walking_time_en;
-                if (res.data.transit_time_en !== undefined) document.getElementById('location-transit-en').value = res.data.transit_time_en;
-                if (res.data.opening_hours_en !== undefined) document.getElementById('location-hours-en').value = res.data.opening_hours_en;
-                if (res.data.rates_en !== undefined) document.getElementById('location-rates-en').value = res.data.rates_en;
-                if (res.data.suitable_vehicles_en !== undefined) document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
-                if (res.data.how_to_reach_en !== undefined) document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
-                if (res.data.notes_en !== undefined) document.getElementById('location-notes-en').value = res.data.notes_en;
+                if (res.data.name_en !== undefined && document.getElementById('location-name-en')) {
+                    document.getElementById('location-name-en').value = res.data.name_en;
+                }
+                if (res.data.walking_time_en !== undefined && document.getElementById('location-walking-en')) {
+                    document.getElementById('location-walking-en').value = res.data.walking_time_en;
+                }
+                if (res.data.transit_time_en !== undefined && document.getElementById('location-transit-en')) {
+                    document.getElementById('location-transit-en').value = res.data.transit_time_en;
+                }
+                if (res.data.opening_hours_en !== undefined && document.getElementById('location-hours-en')) {
+                    document.getElementById('location-hours-en').value = res.data.opening_hours_en;
+                }
+                if (res.data.rates_en !== undefined && document.getElementById('location-rates-en')) {
+                    document.getElementById('location-rates-en').value = res.data.rates_en;
+                }
+                if (res.data.suitable_vehicles_en !== undefined && document.getElementById('location-vehicles-en')) {
+                    document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
+                }
+                if (res.data.how_to_reach_en !== undefined && document.getElementById('location-reach-en')) {
+                    document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
+                }
+                if (res.data.notes_en !== undefined && document.getElementById('location-notes-en')) {
+                    document.getElementById('location-notes-en').value = res.data.notes_en;
+                }
             }
 
             // Ouvrir la modale de revue bilingue côte-à-côte
@@ -2270,32 +2411,75 @@ const AdminApp = {
     async saveLocation(e, skipReview = false) {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
         const id = parseInt(document.getElementById('location-id').value, 10);
-        const nameFr = document.getElementById('location-name-fr').value.trim();
+        let cat = document.getElementById('location-category').value || 'free_street';
+
+        let nameFr = '';
+        let address = '';
+        let walkingTimeFr = '';
+        let transitTimeFr = '';
+        let maxHeight = '';
+        let capacity = '';
+        let openingHoursFr = '';
+        let ratesFr = '';
+        let suitableVehiclesFr = '';
+        let howToReachFr = '';
+        let operator = '';
+        let bookingUrl = '';
+        let notesFr = '';
+
+        if (cat === 'private_parking') {
+            nameFr = (document.getElementById('location-name-fr-priv')?.value || '').trim();
+            operator = (document.getElementById('location-operator')?.value || '').trim();
+            address = (document.getElementById('location-address-priv')?.value || '').trim();
+            walkingTimeFr = (document.getElementById('location-walking-fr-priv')?.value || '').trim();
+            maxHeight = (document.getElementById('location-max-height')?.value || '').trim();
+            openingHoursFr = (document.getElementById('location-hours-fr-priv')?.value || '').trim();
+            suitableVehiclesFr = (document.getElementById('location-vehicles-fr')?.value || '').trim();
+            ratesFr = (document.getElementById('location-rates-fr-priv')?.value || '').trim();
+            bookingUrl = (document.getElementById('location-booking-url-priv')?.value || '').trim();
+            notesFr = (document.getElementById('location-notes-fr-priv')?.value || '').trim();
+        } else if (cat === 'tcl_pr') {
+            nameFr = (document.getElementById('location-name-fr-tcl')?.value || '').trim();
+            capacity = (document.getElementById('location-capacity')?.value || '').trim();
+            address = (document.getElementById('location-address-tcl')?.value || '').trim();
+            transitTimeFr = (document.getElementById('location-transit-fr')?.value || '').trim();
+            openingHoursFr = (document.getElementById('location-hours-fr-tcl')?.value || '').trim();
+            howToReachFr = (document.getElementById('location-reach-fr')?.value || '').trim();
+            bookingUrl = (document.getElementById('location-booking-url-tcl')?.value || '').trim();
+            notesFr = (document.getElementById('location-notes-fr-tcl')?.value || '').trim();
+        } else {
+            const subtypeEl = document.getElementById('location-free-subtype');
+            cat = subtypeEl ? subtypeEl.value : 'free_street';
+            nameFr = (document.getElementById('location-name-fr-free')?.value || '').trim();
+            address = (document.getElementById('location-address-free')?.value || '').trim();
+            walkingTimeFr = (document.getElementById('location-walking-fr-free')?.value || '').trim();
+            notesFr = (document.getElementById('location-notes-fr-free')?.value || '').trim();
+        }
 
         if (!nameFr) {
             this.showToast('Veuillez renseigner au moins le nom du lieu en français.', 'warning');
             return;
         }
 
-        // Étape 1 : Si pas encore vérifié, on traduit via l'IA et on ouvre le Flash Check (3 secondes)
+        // Étape 1 : Si pas encore vérifié, traduction IA + Flash Check
         if (!skipReview) {
             const dataFr = {
                 name_fr: nameFr,
-                category: document.getElementById('location-category').value,
-                address: document.getElementById('location-address').value.trim(),
-                walking_time_fr: document.getElementById('location-walking-fr').value.trim(),
-                transit_time_fr: document.getElementById('location-transit-fr').value.trim(),
-                opening_hours_fr: document.getElementById('location-hours-fr').value.trim(),
-                rates_fr: document.getElementById('location-rates-fr').value.trim(),
-                suitable_vehicles_fr: document.getElementById('location-vehicles-fr').value.trim(),
-                how_to_reach_fr: document.getElementById('location-reach-fr').value.trim(),
-                notes_fr: document.getElementById('location-notes-fr').value.trim()
+                category: cat,
+                address: address,
+                walking_time_fr: walkingTimeFr,
+                transit_time_fr: transitTimeFr,
+                opening_hours_fr: openingHoursFr,
+                rates_fr: ratesFr,
+                suitable_vehicles_fr: suitableVehiclesFr,
+                how_to_reach_fr: howToReachFr,
+                notes_fr: notesFr
             };
 
             const btnSave = document.getElementById('btn-save-location');
             const iconEl = document.getElementById('btn-save-loc-icon');
             const textEl = document.getElementById('btn-save-loc-text');
-            const origText = textEl ? textEl.textContent : 'Enregistrer l\'emplacement';
+            const origText = textEl ? textEl.textContent : "Enregistrer l'emplacement";
 
             try {
                 if (btnSave) btnSave.disabled = true;
@@ -2308,14 +2492,30 @@ const AdminApp = {
                 });
 
                 if (res.data) {
-                    if (res.data.name_en !== undefined) document.getElementById('location-name-en').value = res.data.name_en;
-                    if (res.data.walking_time_en !== undefined) document.getElementById('location-walking-en').value = res.data.walking_time_en;
-                    if (res.data.transit_time_en !== undefined) document.getElementById('location-transit-en').value = res.data.transit_time_en;
-                    if (res.data.opening_hours_en !== undefined) document.getElementById('location-hours-en').value = res.data.opening_hours_en;
-                    if (res.data.rates_en !== undefined) document.getElementById('location-rates-en').value = res.data.rates_en;
-                    if (res.data.suitable_vehicles_en !== undefined) document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
-                    if (res.data.how_to_reach_en !== undefined) document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
-                    if (res.data.notes_en !== undefined) document.getElementById('location-notes-en').value = res.data.notes_en;
+                    if (res.data.name_en !== undefined && document.getElementById('location-name-en')) {
+                        document.getElementById('location-name-en').value = res.data.name_en;
+                    }
+                    if (res.data.walking_time_en !== undefined && document.getElementById('location-walking-en')) {
+                        document.getElementById('location-walking-en').value = res.data.walking_time_en;
+                    }
+                    if (res.data.transit_time_en !== undefined && document.getElementById('location-transit-en')) {
+                        document.getElementById('location-transit-en').value = res.data.transit_time_en;
+                    }
+                    if (res.data.opening_hours_en !== undefined && document.getElementById('location-hours-en')) {
+                        document.getElementById('location-hours-en').value = res.data.opening_hours_en;
+                    }
+                    if (res.data.rates_en !== undefined && document.getElementById('location-rates-en')) {
+                        document.getElementById('location-rates-en').value = res.data.rates_en;
+                    }
+                    if (res.data.suitable_vehicles_en !== undefined && document.getElementById('location-vehicles-en')) {
+                        document.getElementById('location-vehicles-en').value = res.data.suitable_vehicles_en;
+                    }
+                    if (res.data.how_to_reach_en !== undefined && document.getElementById('location-reach-en')) {
+                        document.getElementById('location-reach-en').value = res.data.how_to_reach_en;
+                    }
+                    if (res.data.notes_en !== undefined && document.getElementById('location-notes-en')) {
+                        document.getElementById('location-notes-en').value = res.data.notes_en;
+                    }
                 }
 
                 // Ouvre la vérification flash
@@ -2334,29 +2534,28 @@ const AdminApp = {
         const data = {
             id,
             property_id: parseInt(document.getElementById('location-property-id').value, 10),
-            category: document.getElementById('location-category').value,
+            category: cat,
             name_fr: nameFr,
-            name_en: document.getElementById('location-name-en').value.trim(),
-            address: document.getElementById('location-address').value.trim(),
-            walking_time_fr: document.getElementById('location-walking-fr').value.trim(),
-            walking_time_en: document.getElementById('location-walking-en').value.trim(),
-            walking_minutes: parseInt(document.getElementById('location-walking-min').value, 10) || null,
-            transit_time_fr: document.getElementById('location-transit-fr').value.trim(),
-            transit_time_en: document.getElementById('location-transit-en').value.trim(),
-            max_height: document.getElementById('location-max-height').value.trim(),
-            capacity: document.getElementById('location-capacity').value.trim(),
-            opening_hours_fr: document.getElementById('location-hours-fr').value.trim(),
-            opening_hours_en: document.getElementById('location-hours-en').value.trim(),
-            rates_fr: document.getElementById('location-rates-fr').value.trim(),
-            rates_en: document.getElementById('location-rates-en').value.trim(),
-            suitable_vehicles_fr: document.getElementById('location-vehicles-fr').value.trim(),
-            suitable_vehicles_en: document.getElementById('location-vehicles-en').value.trim(),
-            how_to_reach_fr: document.getElementById('location-reach-fr').value.trim(),
-            how_to_reach_en: document.getElementById('location-reach-en').value.trim(),
-            operator: document.getElementById('location-operator').value.trim(),
-            booking_url: document.getElementById('location-booking-url').value.trim(),
-            notes_fr: document.getElementById('location-notes-fr').value.trim(),
-            notes_en: document.getElementById('location-notes-en').value.trim(),
+            name_en: (document.getElementById('location-name-en')?.value || '').trim(),
+            address: address,
+            walking_time_fr: walkingTimeFr,
+            walking_time_en: (document.getElementById('location-walking-en')?.value || '').trim(),
+            transit_time_fr: transitTimeFr,
+            transit_time_en: (document.getElementById('location-transit-en')?.value || '').trim(),
+            max_height: maxHeight,
+            capacity: capacity,
+            opening_hours_fr: openingHoursFr,
+            opening_hours_en: (document.getElementById('location-hours-en')?.value || '').trim(),
+            rates_fr: ratesFr,
+            rates_en: (document.getElementById('location-rates-en')?.value || '').trim(),
+            suitable_vehicles_fr: suitableVehiclesFr,
+            suitable_vehicles_en: (document.getElementById('location-vehicles-en')?.value || '').trim(),
+            how_to_reach_fr: howToReachFr,
+            how_to_reach_en: (document.getElementById('location-reach-en')?.value || '').trim(),
+            operator: operator,
+            booking_url: bookingUrl,
+            notes_fr: notesFr,
+            notes_en: (document.getElementById('location-notes-en')?.value || '').trim(),
             display_order: parseInt(document.getElementById('location-order').value, 10) || 0,
             active: document.getElementById('location-active').checked ? 1 : 0
         };
@@ -2373,21 +2572,32 @@ const AdminApp = {
     },
 
     async moveLocation(id, direction) {
-        const list = [...this.state.currentParkingLocations];
+        const item = (this.state.currentParkingLocations || []).find(l => l.id == id);
+        if (!item) return;
+
+        const cat = item.category;
+        const isFree = (cat === 'free_street' || cat === 'free_spot');
+        const list = (this.state.currentParkingLocations || []).filter(l => {
+            if (isFree) return (l.category === 'free_street' || l.category === 'free_spot');
+            return l.category === cat;
+        });
+
         const idx = list.findIndex(l => l.id == id);
         if (idx < 0) return;
 
         const targetIdx = idx + direction;
         if (targetIdx < 0 || targetIdx >= list.length) return;
 
-        const item = list.splice(idx, 1)[0];
-        list.splice(targetIdx, 0, item);
+        const moved = list.splice(idx, 1)[0];
+        list.splice(targetIdx, 0, moved);
 
         const orderArray = list.map(l => l.id);
         try {
-            await this.apiRequest('api/index.php?action=parking_location_reorder', 'POST', { order: orderArray });
-            this.state.currentParkingLocations = list;
-            this.renderParkingLocationsList();
+            await this.apiRequest('api/index.php?action=parking_location_reorder', 'POST', {
+                category: isFree ? 'free' : cat,
+                order: orderArray
+            });
+            await this.fetchAndRenderParking(this.state.currentPropertyId);
             this.showToast('Ordre des emplacements actualisé.');
         } catch (err) {
             this.showToast(err.message, 'error');
@@ -2395,10 +2605,11 @@ const AdminApp = {
     },
 
     async toggleLocationStatus(id) {
+        const item = (this.state.currentParkingLocations || []).find(l => l.id == id);
+        const cat = item ? item.category : null;
         try {
-            await this.apiRequest('api/index.php?action=parking_location_toggle', 'POST', { id });
-            const loc = this.state.currentParkingLocations.find(l => l.id == id);
-            if (loc) loc.active = (loc.active == 1 ? 0 : 1);
+            await this.apiRequest('api/index.php?action=parking_location_toggle', 'POST', { id, category: cat });
+            if (item) item.active = (item.active == 1 ? 0 : 1);
             this.renderParkingLocationsList();
             this.showToast('Statut de l\'emplacement actualisé.');
         } catch (err) {
@@ -2409,14 +2620,15 @@ const AdminApp = {
     confirmDeleteLocation(id, name = null) {
         const loc = (this.state.currentParkingLocations || []).find(l => l.id == id);
         const resolvedName = name || (loc ? loc.name_fr : 'cet emplacement');
+        const cat = loc ? loc.category : null;
 
         this.confirmAction(
             `Supprimer ${resolvedName} ?`,
             `L'emplacement de parking sera retiré de la liste pour cet hébergement.`,
             async () => {
                 try {
-                    await this.apiRequest('api/index.php?action=parking_location_delete', 'POST', { id });
-                    this.showToast(`Emplacement ${resolvedName} supprimé.`);
+                    await this.apiRequest('api/index.php?action=parking_location_delete', 'POST', { id, category: cat });
+                    this.showToast(`Emplacement « ${resolvedName} » supprimé.`);
                     await this.fetchAndRenderParking(this.state.currentPropertyId);
                     await this.loadInitialData();
                 } catch (err) {

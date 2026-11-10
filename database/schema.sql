@@ -68,41 +68,52 @@ CREATE TABLE IF NOT EXISTS `property_parkings` (
     `street_parking_app` VARCHAR(100) NOT NULL DEFAULT 'EasyPark' COMMENT 'Application mobile recommandée',
     `tcl_conditions_fr` TEXT DEFAULT NULL COMMENT 'Conditions d''utilisation des P+R TCL (FR)',
     `tcl_conditions_en` TEXT DEFAULT NULL COMMENT 'Conditions d''utilisation des P+R TCL (EN)',
-    `tcl_notes_fr` TEXT DEFAULT NULL COMMENT 'Notes complémentaires P+R TCL (FR)',
-    `tcl_notes_en` TEXT DEFAULT NULL COMMENT 'Notes complémentaires P+R TCL (EN)',
-    `pdf_fr_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien vers la fiche PDF FR',
-    `pdf_en_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien vers la fiche PDF EN',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_property_parkings_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------------------
--- Table : parking_locations (Lieux détaillés : rues gratuites, garages, P+R)
+-- Table : parking_free_spots (Rues et dépose-minute gratuits)
 -- ------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `parking_locations` (
+CREATE TABLE IF NOT EXISTS `parking_free_spots` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers la table properties',
-    `category` ENUM('free_street', 'free_spot', 'private_parking', 'tcl_pr') NOT NULL COMMENT 'Type d''emplacement',
-    `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du lieu / rue / parking (FR)',
-    `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du lieu / rue / parking (EN)',
+    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
+    `spot_type` ENUM('street', 'spot') NOT NULL DEFAULT 'street' COMMENT 'street = rue gratuite, spot = arrêt minute / court',
+    `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du lieu / rue (FR)',
+    `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du lieu / rue (EN)',
+    `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse précise ou repère GPS',
+    `walking_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (FR)',
+    `walking_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (EN)',
+    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (FR)',
+    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (EN)',
+    `display_order` INT NOT NULL DEFAULT 0 COMMENT 'Ordre d''affichage',
+    `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif, 0 = masqué',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_pfs_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
+    INDEX `idx_pfs_property_order` (`property_id`, `display_order`, `active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------------------------
+-- Table : parking_private_lots (Parkings privés et couverts)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `parking_private_lots` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
+    `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du parking (FR)',
+    `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du parking (EN)',
+    `operator` VARCHAR(100) DEFAULT NULL COMMENT 'Opérateur (Zenpark, LPA&CO, Q-Park, Indigo...)',
     `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse précise du parking',
     `walking_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (FR)',
     `walking_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (EN)',
-    `walking_minutes` INT UNSIGNED DEFAULT NULL COMMENT 'Minutes à pied pour le tri',
-    `transit_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports (FR)',
-    `transit_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports (EN)',
-    `max_height` VARCHAR(50) DEFAULT NULL COMMENT 'Gabarit / hauteur max (ex: 1.90 m)',
-    `capacity` VARCHAR(100) DEFAULT NULL COMMENT 'Capacité totale (ex: 416 places)',
+    `max_height` VARCHAR(50) DEFAULT NULL COMMENT 'Hauteur max / gabarit (ex: 1.90 m)',
     `opening_hours_fr` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (FR)',
     `opening_hours_en` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (EN)',
     `rates_fr` TEXT DEFAULT NULL COMMENT 'Grille tarifaire (FR)',
     `rates_en` TEXT DEFAULT NULL COMMENT 'Grille tarifaire (EN)',
     `suitable_vehicles_fr` VARCHAR(255) DEFAULT NULL COMMENT 'Véhicules adaptés (FR)',
     `suitable_vehicles_en` VARCHAR(255) DEFAULT NULL COMMENT 'Véhicules adaptés (EN)',
-    `how_to_reach_fr` TEXT DEFAULT NULL COMMENT 'Itinéraire retour vers le logement (FR)',
-    `how_to_reach_en` TEXT DEFAULT NULL COMMENT 'Itinéraire retour vers le logement (EN)',
-    `operator` VARCHAR(100) DEFAULT NULL COMMENT 'Opérateur (Zenpark, LPA&CO, Q-Park, TCL, etc.)',
     `booking_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien de réservation directe',
     `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (FR)',
     `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (EN)',
@@ -110,9 +121,88 @@ CREATE TABLE IF NOT EXISTS `parking_locations` (
     `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif, 0 = masqué',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_parking_locations_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
-    INDEX `idx_parking_locations_prop_cat` (`property_id`, `category`, `display_order`, `active`)
+    CONSTRAINT `fk_ppl_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
+    INDEX `idx_ppl_property_order` (`property_id`, `display_order`, `active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------------------------
+-- Table : parking_tcl_prs (Parcs Relais TCL - P+R)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `parking_tcl_prs` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
+    `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du P+R (FR)',
+    `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du P+R (EN)',
+    `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse précise du P+R',
+    `transit_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports (FR)',
+    `transit_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports (EN)',
+    `capacity` VARCHAR(100) DEFAULT NULL COMMENT 'Capacité totale (ex: 416 places)',
+    `opening_hours_fr` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (FR)',
+    `opening_hours_en` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (EN)',
+    `how_to_reach_fr` TEXT DEFAULT NULL COMMENT 'Itinéraire retour vers le logement (FR)',
+    `how_to_reach_en` TEXT DEFAULT NULL COMMENT 'Itinéraire retour vers le logement (EN)',
+    `booking_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien officiel TCL',
+    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (FR)',
+    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (EN)',
+    `display_order` INT NOT NULL DEFAULT 0 COMMENT 'Ordre d''affichage',
+    `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif, 0 = masqué',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_ptp_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
+    INDEX `idx_ptp_property_order` (`property_id`, `display_order`, `active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------------------------
+-- Vue : parking_locations (Rétrocompatibilité avec l'ancien schéma unifié)
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE VIEW `parking_locations` AS
+SELECT 
+    id, property_id,
+    CASE WHEN spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category,
+    name_fr, name_en, address,
+    walking_time_fr, walking_time_en,
+    NULL AS walking_minutes,
+    NULL AS transit_time_fr, NULL AS transit_time_en,
+    NULL AS max_height, NULL AS capacity,
+    NULL AS opening_hours_fr, NULL AS opening_hours_en,
+    NULL AS rates_fr, NULL AS rates_en,
+    NULL AS suitable_vehicles_fr, NULL AS suitable_vehicles_en,
+    NULL AS how_to_reach_fr, NULL AS how_to_reach_en,
+    NULL AS operator, NULL AS booking_url,
+    notes_fr, notes_en, display_order, active, created_at, updated_at
+FROM `parking_free_spots`
+UNION ALL
+SELECT 
+    id, property_id,
+    'private_parking' AS category,
+    name_fr, name_en, address,
+    walking_time_fr, walking_time_en,
+    NULL AS walking_minutes,
+    NULL AS transit_time_fr, NULL AS transit_time_en,
+    max_height, NULL AS capacity,
+    opening_hours_fr, opening_hours_en,
+    rates_fr, rates_en,
+    suitable_vehicles_fr, suitable_vehicles_en,
+    NULL AS how_to_reach_fr, NULL AS how_to_reach_en,
+    operator, booking_url,
+    notes_fr, notes_en, display_order, active, created_at, updated_at
+FROM `parking_private_lots`
+UNION ALL
+SELECT 
+    id, property_id,
+    'tcl_pr' AS category,
+    name_fr, name_en, address,
+    NULL AS walking_time_fr, NULL AS walking_time_en,
+    NULL AS walking_minutes,
+    transit_time_fr, transit_time_en,
+    NULL AS max_height, capacity,
+    opening_hours_fr, opening_hours_en,
+    NULL AS rates_fr, NULL AS rates_en,
+    NULL AS suitable_vehicles_fr, NULL AS suitable_vehicles_en,
+    how_to_reach_fr, how_to_reach_en,
+    'TCL' AS operator, booking_url,
+    notes_fr, notes_en, display_order, active, created_at, updated_at
+FROM `parking_tcl_prs`;
 
 -- ------------------------------------------------------------------------------
 -- Table : admin_users (Comptes administrateurs du back-office)

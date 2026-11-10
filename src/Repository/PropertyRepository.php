@@ -77,22 +77,94 @@ class PropertyRepository
     }
 
     /**
-     * Récupère la liste des emplacements de stationnement (rues, garages, P+R)
+     * Récupère la liste structurée des emplacements de stationnement
+     * (Rues gratuites, parkings privés/couverts et Parcs Relais TCL)
      */
-    public static function findParkingLocationsByPropertyId(int $propertyId): array
+    public static function findParkingStructuredByPropertyId(int $propertyId): array
     {
         try {
             $pdo = Database::getConnection();
-            $stmt = $pdo->prepare("
-                SELECT * FROM parking_locations 
-                WHERE property_id = :property_id AND active = 1 
-                ORDER BY display_order ASC, walking_minutes ASC, id ASC
+
+            // Tables spécialisées V2
+            $stmtFree = $pdo->prepare("
+                SELECT *, CASE WHEN spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category 
+                FROM parking_free_spots 
+                WHERE property_id = :pid AND active = 1 
+                ORDER BY display_order ASC, id ASC
             ");
-            $stmt->execute([':property_id' => $propertyId]);
-            return $stmt->fetchAll();
+            $stmtFree->execute([':pid' => $propertyId]);
+            $free = $stmtFree->fetchAll();
+
+            $stmtPriv = $pdo->prepare("
+                SELECT *, 'private_parking' AS category 
+                FROM parking_private_lots 
+                WHERE property_id = :pid AND active = 1 
+                ORDER BY display_order ASC, id ASC
+            ");
+            $stmtPriv->execute([':pid' => $propertyId]);
+            $priv = $stmtPriv->fetchAll();
+
+            $stmtTcl = $pdo->prepare("
+                SELECT *, 'tcl_pr' AS category 
+                FROM parking_tcl_prs 
+                WHERE property_id = :pid AND active = 1 
+                ORDER BY display_order ASC, id ASC
+            ");
+            $stmtTcl->execute([':pid' => $propertyId]);
+            $tcl = $stmtTcl->fetchAll();
+
+            $freeStreets = array_values(array_filter($free, fn($s) => ($s['spot_type'] ?? '') !== 'spot'));
+            $freeSpots = array_values(array_filter($free, fn($s) => ($s['spot_type'] ?? '') === 'spot'));
+
+            return [
+                'free_spots'      => $free,
+                'private_lots'    => $priv,
+                'tcl_prs'         => $tcl,
+                'free_street'     => $freeStreets,
+                'free_spot'       => $freeSpots,
+                'private_parking' => $priv,
+                'tcl_pr'          => $tcl,
+                'all'             => array_merge($free, $priv, $tcl)
+            ];
         } catch (\PDOException $e) {
-            return [];
+            // Repli sur l'ancienne table ou vue parking_locations
+            try {
+                $pdo = Database::getConnection();
+                $stmt = $pdo->prepare("
+                    SELECT * FROM parking_locations 
+                    WHERE property_id = :property_id AND active = 1 
+                    ORDER BY display_order ASC, id ASC
+                ");
+                $stmt->execute([':property_id' => $propertyId]);
+                $all = $stmt->fetchAll();
+
+                return [
+                    'free_spots'      => array_values(array_filter($all, fn($l) => in_array($l['category'] ?? '', ['free_street', 'free_spot']))),
+                    'private_lots'    => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'private_parking')),
+                    'tcl_prs'         => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'tcl_pr')),
+                    'free_street'     => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'free_street')),
+                    'free_spot'       => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'free_spot')),
+                    'private_parking' => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'private_parking')),
+                    'tcl_pr'          => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'tcl_pr')),
+                    'all'             => $all
+                ];
+            } catch (\PDOException $e2) {
+                return [
+                    'free_spots' => [], 'private_lots' => [], 'tcl_prs' => [],
+                    'free_street' => [], 'free_spot' => [], 'private_parking' => [], 'tcl_pr' => [],
+                    'all' => []
+                ];
+            }
         }
+    }
+
+    /**
+     * Récupère la liste de tous les emplacements de stationnement actifs
+     */
+    public static function findParkingLocationsByPropertyId(int $propertyId): array
+    {
+        $structured = self::findParkingStructuredByPropertyId($propertyId);
+        return $structured['all'] ?? [];
     }
 
     /**

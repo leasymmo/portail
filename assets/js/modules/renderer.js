@@ -410,10 +410,17 @@ export const PropertyRenderer = {
         const isEn = I18n.currentLang === 'en';
         const gen = parking.general || {};
         const locs = parking.locations || {};
-        const freeStreets = locs.free_street || [];
-        const freeSpots = locs.free_spot || [];
-        const privateParkings = locs.private_parking || [];
-        const tclPrs = locs.tcl_pr || [];
+
+        // Prise en charge des tables V2 spécialisées avec fallback rétrocompatible
+        let freeStreets = locs.free_street || [];
+        let freeSpots = locs.free_spot || [];
+        if ((!freeStreets.length && !freeSpots.length) && Array.isArray(locs.free_spots)) {
+            freeSpots = locs.free_spots.filter(s => s.spot_type === 'spot');
+            freeStreets = locs.free_spots.filter(s => s.spot_type !== 'spot');
+        }
+
+        const privateParkings = locs.private_parking || locs.private_lots || [];
+        const tclPrs = locs.tcl_pr || locs.tcl_prs || [];
 
         let html = '';
 

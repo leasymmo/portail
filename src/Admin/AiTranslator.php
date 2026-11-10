@@ -293,7 +293,6 @@ class AiTranslator
             'street_parking_schedule'=> $data['street_parking_schedule_fr'] ?? null,
             'street_parking_rates'   => $data['street_parking_rates_fr'] ?? null,
             'tcl_conditions'         => $data['tcl_conditions_fr'] ?? null,
-            'tcl_notes'              => $data['tcl_notes_fr'] ?? null,
         ];
 
         $dict = [];
@@ -324,22 +323,44 @@ class AiTranslator
     }
 
     /**
-     * Traduit les champs d'un lieu de stationnement
+     * Traduit les champs d'un lieu de stationnement selon sa catégorie
+     * (Rues gratuites, parking privé ou P+R TCL)
      * Reçoit le tableau (avec champs *_fr) et remplit les versions *_en
      * Si $force = false, les champs *_en déjà renseignés sont préservés.
      */
     public static function translateParkingLocation(PDO $db, array $data, bool $force = false, bool $throwOnError = false): array
     {
-        $fieldsToTranslate = [
-            'name'             => $data['name_fr'] ?? null,
-            'walking_time'     => $data['walking_time_fr'] ?? null,
-            'transit_time'     => $data['transit_time_fr'] ?? null,
-            'opening_hours'    => $data['opening_hours_fr'] ?? null,
-            'rates'            => $data['rates_fr'] ?? null,
-            'suitable_vehicles'=> $data['suitable_vehicles_fr'] ?? null,
-            'how_to_reach'     => $data['how_to_reach_fr'] ?? null,
-            'notes'            => $data['notes_fr'] ?? null,
-        ];
+        $category = $data['category'] ?? 'free_street';
+
+        // Sélection ciblée des champs selon le type d'emplacement pour éliminer toute hallucination
+        if ($category === 'private_parking') {
+            $fieldsToTranslate = [
+                'name'             => $data['name_fr'] ?? null,
+                'walking_time'     => $data['walking_time_fr'] ?? null,
+                'opening_hours'    => $data['opening_hours_fr'] ?? null,
+                'rates'            => $data['rates_fr'] ?? null,
+                'suitable_vehicles'=> $data['suitable_vehicles_fr'] ?? null,
+                'notes'            => $data['notes_fr'] ?? null,
+            ];
+            $context = 'Parking privé couvert (nom, temps à pied, horaires, tarifs, véhicules)';
+        } elseif ($category === 'tcl_pr') {
+            $fieldsToTranslate = [
+                'name'             => $data['name_fr'] ?? null,
+                'transit_time'     => $data['transit_time_fr'] ?? null,
+                'opening_hours'    => $data['opening_hours_fr'] ?? null,
+                'how_to_reach'     => $data['how_to_reach_fr'] ?? null,
+                'notes'            => $data['notes_fr'] ?? null,
+            ];
+            $context = 'Parc Relais TCL connecté aux transports (nom, temps TCL, horaires, itinéraire retour)';
+        } else {
+            // Rues gratuites & Dépose minute
+            $fieldsToTranslate = [
+                'name'             => $data['name_fr'] ?? null,
+                'walking_time'     => $data['walking_time_fr'] ?? null,
+                'notes'            => $data['notes_fr'] ?? null,
+            ];
+            $context = 'Rue ou emplacement gratuit de stationnement (nom, temps à pied, remarques)';
+        }
 
         $dict = [];
         foreach ($fieldsToTranslate as $key => $val) {
@@ -356,7 +377,7 @@ class AiTranslator
             return $data;
         }
 
-        $translated = self::translateDictWithDbConfig($db, $dict, 'Fiche détaillée de lieu de stationnement', $throwOnError);
+        $translated = self::translateDictWithDbConfig($db, $dict, $context, $throwOnError);
         if (!empty($translated)) {
             foreach ($translated as $key => $enVal) {
                 $enKey = $key . '_en';
