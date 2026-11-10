@@ -379,6 +379,24 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </select>
                     </div>
 
+                    <!-- BANNIÈRE DE MIGRATION V2 (Visible uniquement si la base utilise encore l'ancienne table V1) -->
+                    <div id="parking-v2-migration-banner" class="hidden p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+                        <div class="flex items-start space-x-3.5">
+                            <span class="text-2xl flex-shrink-0">🚀</span>
+                            <div>
+                                <h4 class="text-sm font-bold text-amber-300">Nouvelle architecture Stationnement V2 prête à être activée</h4>
+                                <p class="text-xs text-amber-200/80 mt-0.5 leading-relaxed">
+                                    Vos 3 tables spécialisées (rues, garages privés, P+R TCL) et la vue unifiée vont être créées. Vos emplacements actuels seront automatiquement migrés sans coupure.
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-run-parking-migration" onclick="AdminApp.runParkingV2Migration()" 
+                                class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-night font-bold text-xs shadow-md transition flex items-center justify-center space-x-2 whitespace-nowrap cursor-pointer">
+                            <span>⚡</span>
+                            <span>Lancer la migration V2 en 1 clic</span>
+                        </button>
+                    </div>
+
                     <!-- Sous-onglets Stationnement (Navigation segmented controls claire et intuitive) -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-night-border/70">
                         <div class="grid grid-cols-1 sm:inline-flex w-full sm:w-auto p-1.5 rounded-2xl bg-night-card border border-night-border shadow-inner gap-1">

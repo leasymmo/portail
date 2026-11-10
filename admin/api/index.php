@@ -512,11 +512,25 @@ try {
             $sections = $repo->getParkingSectionsByProperty($propertyId);
             $allLocations = $repo->getParkingLocationsByProperty($propertyId);
             echo json_encode([
-                'ok'        => true,
-                'general'   => $repo->getParkingByProperty($propertyId),
-                'locations' => $allLocations,
-                'sections'  => $sections
+                'ok'          => true,
+                'v2_migrated' => $repo->isParkingV2Migrated(),
+                'general'     => $repo->getParkingByProperty($propertyId),
+                'locations'   => $allLocations,
+                'sections'    => $sections
             ], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'parking_migrate_v2':
+            if ($currentUser['role'] === 'editor') {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'Action réservée aux administrateurs.']);
+                exit;
+            }
+            $result = $repo->runParkingV2Migration();
+            if (!$result['ok']) {
+                http_response_code(500);
+            }
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
             exit;
 
         case 'parking_general_save':

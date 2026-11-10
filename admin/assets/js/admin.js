@@ -1505,6 +1505,16 @@ const AdminApp = {
             this.state.currentParkingGeneral = res.general || null;
             this.state.currentParkingLocations = res.locations || [];
 
+            // Affichage de la bannière si la V2 n'a pas encore été migrée
+            const banner = document.getElementById('parking-v2-migration-banner');
+            if (banner) {
+                if (res.v2_migrated === false) {
+                    banner.classList.remove('hidden');
+                } else {
+                    banner.classList.add('hidden');
+                }
+            }
+
             this.fillParkingGeneralForm();
             this.renderParkingLocationsList();
             this.updateParkingLocationsBadge();
@@ -1560,6 +1570,41 @@ const AdminApp = {
                 ? 'px-2 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-bold'
                 : 'px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold';
         }
+    },
+
+    async runParkingV2Migration() {
+        const btn = document.getElementById('btn-run-parking-migration');
+        const origContent = btn ? btn.innerHTML : '';
+
+        this.confirmAction(
+            "Lancer la migration Stationnement V2 ?",
+            "Les 3 nouvelles tables spécialisées et la vue unifiée vont être créées. Tous vos emplacements existants seront automatiquement migrés sans coupure ni perte.",
+            async () => {
+                try {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span>⏳</span><span>Migration en cours...</span>';
+                    }
+                    const res = await this.apiRequest('api/index.php?action=parking_migrate_v2', 'POST');
+                    if (res.ok) {
+                        this.showToast(res.message || 'Migration V2 réussie !', 'success');
+                        const banner = document.getElementById('parking-v2-migration-banner');
+                        if (banner) banner.classList.add('hidden');
+                        await this.fetchAndRenderParking(this.state.currentPropertyId);
+                        await this.loadInitialData();
+                    } else {
+                        this.showToast(res.error || 'Erreur lors de la migration.', 'error');
+                    }
+                } catch (err) {
+                    this.showToast(err.message, 'error');
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = origContent;
+                    }
+                }
+            }
+        );
     },
 
     fillParkingGeneralForm() {
