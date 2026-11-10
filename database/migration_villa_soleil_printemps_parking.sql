@@ -40,7 +40,7 @@ INSERT INTO `property_parkings` (
   'Free 24/7',
   'Gratuit (zone non payante)',
   'Free (unmetered zone)',
-  NULL,
+  'EasyPark',
   'Pour vous rendre facilement au centre de Lyon en Tramway T3 (Part-Dieu en 20 min), le Parc Relais TCL de Meyzieu Gare est gratuit avec un titre de transport TCL aller-retour validé dans la journée.',
   'To easily reach downtown Lyon via Tramway T3 (Part-Dieu in 20 min), the TCL Meyzieu Gare Park & Ride is free with a same-day validated round-trip TCL ticket.'
 ) ON DUPLICATE KEY UPDATE

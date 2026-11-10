@@ -50,7 +50,7 @@ try {
                     19, :intro_fr, :intro_en, :rule_fr, :rule_en,
                     :free_notes_fr, :free_notes_en, :street_info_fr, :street_info_en,
                     :sched_fr, :sched_en, :rates_fr, :rates_en,
-                    NULL, :tcl_fr, :tcl_en
+                    'EasyPark', :tcl_fr, :tcl_en
                 ) ON DUPLICATE KEY UPDATE
                     intro_fr = VALUES(intro_fr), intro_en = VALUES(intro_en),
                     important_rule_fr = VALUES(important_rule_fr), important_rule_en = VALUES(important_rule_en),
