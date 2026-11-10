@@ -683,6 +683,7 @@ export const PropertyRenderer = {
                 const name = isEn ? (pr.name_en || pr.name_fr) : pr.name_fr;
                 const hours = isEn ? (pr.opening_hours_en || pr.opening_hours_fr) : pr.opening_hours_fr;
                 const transit = isEn ? (pr.transit_time_en || pr.transit_time_fr) : pr.transit_time_fr;
+                const walk = isEn ? (pr.walking_time_en || pr.walking_time_fr) : pr.walking_time_fr;
                 const reach = isEn ? (pr.how_to_reach_en || pr.how_to_reach_fr) : pr.how_to_reach_fr;
                 const notes = isEn ? (pr.notes_en || pr.notes_fr) : pr.notes_fr;
                 const mapsQuery = encodeURIComponent(pr.address || name);
@@ -699,6 +700,7 @@ export const PropertyRenderer = {
 
                         <div class="flex flex-wrap gap-1.5 text-[10px]">
                             ${transit ? `<span class="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-300 font-semibold">⏱️ ${Utils.escapeHtml(transit)}</span>` : ''}
+                            ${walk ? `<span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300 font-medium">🚶 ${Utils.escapeHtml(walk)}</span>` : ''}
                             ${hours ? `<span class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300">🕒 ${Utils.escapeHtml(hours)}</span>` : ''}
                         </div>
 

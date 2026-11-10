@@ -153,6 +153,8 @@ class PropertyRepository
                     c.address,
                     a.transit_time_fr,
                     a.transit_time_en,
+                    a.walking_time_fr,
+                    a.walking_time_en,
                     c.opening_hours_fr,
                     c.opening_hours_en,
                     a.how_to_reach_fr,
