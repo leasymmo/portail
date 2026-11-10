@@ -44,9 +44,7 @@ class AdminRepository
                        (SELECT COUNT(*) FROM parking_tcl_prs)
             ')->fetchColumn(),
             'active_locations'  => (int)$this->db->query('
-                SELECT (SELECT COUNT(*) FROM parking_free_spots WHERE active = 1) + 
-                       (SELECT COUNT(*) FROM parking_private_lots WHERE active = 1) + 
-                       (SELECT COUNT(*) FROM parking_tcl_prs WHERE active = 1)
+                SELECT COUNT(*) FROM property_parking_associations WHERE active = 1
             ')->fetchColumn(),
             'total_admins'      => (int)$this->db->query('SELECT COUNT(*) FROM admin_users WHERE active = 1')->fetchColumn(),
         ];
@@ -62,11 +60,7 @@ class AdminRepository
         $stmt = $this->db->query('
             SELECT p.*,
                    (SELECT COUNT(*) FROM videos v WHERE v.property_id = p.id) as videos_count,
-                   (
-                       (SELECT COUNT(*) FROM parking_free_spots pfs WHERE pfs.property_id = p.id) +
-                       (SELECT COUNT(*) FROM parking_private_lots ppl WHERE ppl.property_id = p.id) +
-                       (SELECT COUNT(*) FROM parking_tcl_prs ptp WHERE ptp.property_id = p.id)
-                   ) as parking_locations_count,
+                   (SELECT COUNT(*) FROM property_parking_associations ppa WHERE ppa.property_id = p.id) as parking_locations_count,
                    (SELECT id FROM property_parkings pp WHERE pp.property_id = p.id LIMIT 1) as parking_id
             FROM properties p
             ORDER BY p.name ASC
@@ -376,32 +370,94 @@ class AdminRepository
     /**
      * Récupère les emplacements sous forme structurée en 3 sections distinctes
      */
+    /**
+     * Récupère les emplacements sous forme structurée en 3 sections distinctes
+     * (Architecture V3 : jointure entre catalogue physique et associations du logement)
+     */
     public function getParkingSectionsByProperty(int $propertyId): array
     {
         try {
             $stmtFree = $this->db->prepare("
-                SELECT *, CASE WHEN spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category 
-                FROM parking_free_spots 
-                WHERE property_id = :pid 
-                ORDER BY display_order ASC, id ASC
+                SELECT 
+                    c.id,
+                    a.id AS association_id,
+                    a.property_id,
+                    c.spot_type,
+                    c.name_fr,
+                    c.name_en,
+                    c.address,
+                    a.walking_time_fr,
+                    a.walking_time_en,
+                    COALESCE(a.notes_fr, c.notes_fr) AS notes_fr,
+                    COALESCE(a.notes_en, c.notes_en) AS notes_en,
+                    a.display_order,
+                    a.active,
+                    CASE WHEN c.spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category
+                FROM property_parking_associations a
+                JOIN parking_free_spots c ON c.id = a.parking_item_id
+                WHERE a.property_id = :pid 
+                ORDER BY a.display_order ASC, a.id ASC
             ");
             $stmtFree->execute(['pid' => $propertyId]);
             $free = $stmtFree->fetchAll();
 
             $stmtPriv = $this->db->prepare("
-                SELECT *, 'private_parking' AS category 
-                FROM parking_private_lots 
-                WHERE property_id = :pid 
-                ORDER BY display_order ASC, id ASC
+                SELECT 
+                    c.id,
+                    a.id AS association_id,
+                    a.property_id,
+                    c.name_fr,
+                    c.name_en,
+                    c.operator,
+                    c.address,
+                    a.walking_time_fr,
+                    a.walking_time_en,
+                    c.max_height,
+                    c.opening_hours_fr,
+                    c.opening_hours_en,
+                    c.rates_fr,
+                    c.rates_en,
+                    c.suitable_vehicles_fr,
+                    c.suitable_vehicles_en,
+                    c.booking_url,
+                    COALESCE(a.notes_fr, c.notes_fr) AS notes_fr,
+                    COALESCE(a.notes_en, c.notes_en) AS notes_en,
+                    a.display_order,
+                    a.active,
+                    'private_parking' AS category
+                FROM property_parking_associations a
+                JOIN parking_private_lots c ON c.id = a.parking_item_id
+                WHERE a.property_id = :pid 
+                ORDER BY a.display_order ASC, a.id ASC
             ");
             $stmtPriv->execute(['pid' => $propertyId]);
             $priv = $stmtPriv->fetchAll();
 
             $stmtTcl = $this->db->prepare("
-                SELECT *, 'tcl_pr' AS category 
-                FROM parking_tcl_prs 
-                WHERE property_id = :pid 
-                ORDER BY display_order ASC, id ASC
+                SELECT 
+                    c.id,
+                    a.id AS association_id,
+                    a.property_id,
+                    c.name_fr,
+                    c.name_en,
+                    c.capacity,
+                    c.address,
+                    a.transit_time_fr,
+                    a.transit_time_en,
+                    c.opening_hours_fr,
+                    c.opening_hours_en,
+                    a.how_to_reach_fr,
+                    a.how_to_reach_en,
+                    c.booking_url,
+                    COALESCE(a.notes_fr, c.notes_fr) AS notes_fr,
+                    COALESCE(a.notes_en, c.notes_en) AS notes_en,
+                    a.display_order,
+                    a.active,
+                    'tcl_pr' AS category
+                FROM property_parking_associations a
+                JOIN parking_tcl_prs c ON c.id = a.parking_item_id
+                WHERE a.property_id = :pid 
+                ORDER BY a.display_order ASC, a.id ASC
             ");
             $stmtTcl->execute(['pid' => $propertyId]);
             $tcl = $stmtTcl->fetchAll();
@@ -421,12 +477,94 @@ class AdminRepository
     }
 
     /**
-     * Récupère la liste de tous les emplacements (avec catégorie) pour le logement
+     * Récupère la liste de tous les emplacements associés à un logement
      */
     public function getParkingLocationsByProperty(int $propertyId): array
     {
         $sections = $this->getParkingSectionsByProperty($propertyId);
         return array_merge($sections['free_spots'] ?? [], $sections['private_lots'] ?? [], $sections['tcl_prs'] ?? []);
+    }
+
+    /**
+     * Récupère tous les parkings du catalogue centralisé avec leurs logements liés
+     */
+    public function getAllCatalogParkingItems(?string $categoryFilter = null): array
+    {
+        $items = [];
+
+        // 1. Rues gratuites & Dépose
+        if (!$categoryFilter || in_array($categoryFilter, ['free_street', 'free_spot', 'free'])) {
+            $stmt = $this->db->query("
+                SELECT *, CASE WHEN spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category 
+                FROM parking_free_spots 
+                ORDER BY name_fr ASC
+            ");
+            $free = $stmt->fetchAll();
+            foreach ($free as &$row) {
+                $row['category_group'] = 'free';
+            }
+            $items = array_merge($items, $free);
+        }
+
+        // 2. Parkings privés
+        if (!$categoryFilter || $categoryFilter === 'private_parking') {
+            $stmt = $this->db->query("
+                SELECT *, 'private_parking' AS category 
+                FROM parking_private_lots 
+                ORDER BY name_fr ASC
+            ");
+            $priv = $stmt->fetchAll();
+            foreach ($priv as &$row) {
+                $row['category_group'] = 'private_parking';
+            }
+            $items = array_merge($items, $priv);
+        }
+
+        // 3. Parcs Relais TCL
+        if (!$categoryFilter || $categoryFilter === 'tcl_pr') {
+            $stmt = $this->db->query("
+                SELECT *, 'tcl_pr' AS category 
+                FROM parking_tcl_prs 
+                ORDER BY name_fr ASC
+            ");
+            $tcl = $stmt->fetchAll();
+            foreach ($tcl as &$row) {
+                $row['category_group'] = 'tcl_pr';
+            }
+            $items = array_merge($items, $tcl);
+        }
+
+        // Récupérer les liaisons pour chaque parking du catalogue
+        $stmtLinks = $this->db->prepare("
+            SELECT 
+                a.id AS association_id,
+                a.property_id,
+                p.name AS property_name,
+                p.slug AS property_slug,
+                a.walking_time_fr,
+                a.walking_time_en,
+                a.transit_time_fr,
+                a.transit_time_en,
+                a.how_to_reach_fr,
+                a.how_to_reach_en,
+                a.notes_fr,
+                a.notes_en,
+                a.display_order,
+                a.active
+            FROM property_parking_associations a
+            JOIN properties p ON p.id = a.property_id
+            WHERE a.category = :cat AND a.parking_item_id = :item_id
+            ORDER BY a.display_order ASC, p.name ASC
+        ");
+
+        foreach ($items as &$item) {
+            $cat = $item['category'];
+            $stmtLinks->execute(['cat' => $cat, 'item_id' => $item['id']]);
+            $item['linked_properties'] = $stmtLinks->fetchAll();
+            $item['links_count'] = count($item['linked_properties']);
+        }
+
+        return $items;
     }
 
     public function saveParkingGeneral(int $propertyId, array $data): bool
@@ -486,7 +624,7 @@ class AdminRepository
     }
 
     /**
-     * Recherche un emplacement par son identifiant et optionnellement sa catégorie
+     * Recherche un emplacement au catalogue par son ID et sa catégorie
      */
     public function findParkingItemById(int $id, ?string $category = null): ?array
     {
@@ -534,139 +672,68 @@ class AdminRepository
     }
 
     /**
-     * Enregistre (crée ou met à jour) un emplacement dans sa table dédiée selon sa catégorie
+     * Enregistre un parking directement dans le catalogue physique (sans lier obligatoirement à un logement)
      */
-    public function saveParkingItem(array $data): int
+    public function saveParkingCatalogItem(array $data): int
     {
         $id = isset($data['id']) ? (int)$data['id'] : 0;
         $category = $data['category'] ?? 'free_street';
-        $propertyId = (int)($data['property_id'] ?? 0);
 
-        // Détection et gestion propre du changement de catégorie (migration entre tables dédiées)
-        $originalCategory = !empty($data['original_category']) ? $data['original_category'] : null;
-        if ($id > 0) {
-            $isOldFree = in_array($originalCategory, ['free_street', 'free_spot'], true);
-            $isNewFree = in_array($category, ['free_street', 'free_spot'], true);
-
-            $targetTableChanged = false;
-            if ($originalCategory) {
-                if ($isOldFree !== $isNewFree || (!$isOldFree && !$isNewFree && $originalCategory !== $category)) {
-                    $targetTableChanged = true;
-                }
-            } else {
-                $destTable = $isNewFree ? 'parking_free_spots' : ($category === 'private_parking' ? 'parking_private_lots' : 'parking_tcl_prs');
-                $stmtCheck = $this->db->prepare("SELECT COUNT(*) FROM `{$destTable}` WHERE id = :id");
-                $stmtCheck->execute(['id' => $id]);
-                if ((int)$stmtCheck->fetchColumn() === 0) {
-                    $targetTableChanged = true;
-                }
-            }
-
-            if ($targetTableChanged) {
-                if ($originalCategory) {
-                    $this->deleteParkingLocation($id, $originalCategory);
-                } else {
-                    foreach (['parking_free_spots', 'parking_private_lots', 'parking_tcl_prs'] as $t) {
-                        $destTbl = $isNewFree ? 'parking_free_spots' : ($category === 'private_parking' ? 'parking_private_lots' : 'parking_tcl_prs');
-                        if ($t !== $destTbl) {
-                            $this->db->prepare("DELETE FROM `{$t}` WHERE id = :id")->execute(['id' => $id]);
-                        }
-                    }
-                }
-                $id = 0;
-            }
-        }
-
-        // Traduction automatique intelligente ciblée par type
+        // Traduction automatique intelligente
         $data = AiTranslator::translateParkingLocation($this->db, $data);
 
         if (in_array($category, ['free_street', 'free_spot'])) {
-            // Table : parking_free_spots
             $spotType = ($category === 'free_spot') ? 'spot' : 'street';
-            $order = isset($data['display_order']) ? (int)$data['display_order'] : 0;
-            if ($order <= 0 && $id <= 0) {
-                $stmtOrder = $this->db->prepare('SELECT COALESCE(MAX(display_order), 0) + 1 FROM parking_free_spots WHERE property_id = :pid');
-                $stmtOrder->execute(['pid' => $propertyId]);
-                $order = (int)$stmtOrder->fetchColumn();
-            }
-
             if ($id > 0) {
-                $old = $this->findParkingItemById($id, $category);
-                $stmt = $this->db->prepare('
+                $stmt = $this->db->prepare("
                     UPDATE parking_free_spots SET
                         spot_type = :spot_type,
                         name_fr = :name_fr,
                         name_en = :name_en,
                         address = :address,
-                        walking_time_fr = :walking_fr,
-                        walking_time_en = :walking_en,
                         notes_fr = :notes_fr,
-                        notes_en = :notes_en,
-                        display_order = :order,
-                        active = :active
+                        notes_en = :notes_en
                     WHERE id = :id
-                ');
+                ");
                 $stmt->execute([
-                    'id'          => $id,
-                    'spot_type'   => $spotType,
-                    'name_fr'     => trim($data['name_fr']),
-                    'name_en'     => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
-                    'address'     => !empty($data['address']) ? trim($data['address']) : null,
-                    'walking_fr'  => !empty($data['walking_time_fr']) ? trim($data['walking_time_fr']) : null,
-                    'walking_en'  => !empty($data['walking_time_en']) ? trim($data['walking_time_en']) : null,
-                    'notes_fr'    => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
-                    'notes_en'    => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
-                    'order'       => $order > 0 ? $order : (int)($old['display_order'] ?? 1),
-                    'active'      => isset($data['active']) ? (int)$data['active'] : (int)($old['active'] ?? 1)
+                    'id'        => $id,
+                    'spot_type' => $spotType,
+                    'name_fr'   => trim($data['name_fr']),
+                    'name_en'   => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
+                    'address'   => !empty($data['address']) ? trim($data['address']) : null,
+                    'notes_fr'  => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
+                    'notes_en'  => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
                 ]);
-                ActivityLogger::log('update', 'parking_free_spot', $id, $data['name_fr']);
+                ActivityLogger::log('update', 'parking_free_spots', $id, $data['name_fr']);
                 return $id;
             } else {
-                $stmt = $this->db->prepare('
+                $stmt = $this->db->prepare("
                     INSERT INTO parking_free_spots (
-                        property_id, spot_type, name_fr, name_en, address,
-                        walking_time_fr, walking_time_en, notes_fr, notes_en, display_order, active
+                        spot_type, name_fr, name_en, address, notes_fr, notes_en
                     ) VALUES (
-                        :pid, :spot_type, :name_fr, :name_en, :address,
-                        :walking_fr, :walking_en, :notes_fr, :notes_en, :order, :active
+                        :spot_type, :name_fr, :name_en, :address, :notes_fr, :notes_en
                     )
-                ');
+                ");
                 $stmt->execute([
-                    'pid'         => $propertyId,
-                    'spot_type'   => $spotType,
-                    'name_fr'     => trim($data['name_fr']),
-                    'name_en'     => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
-                    'address'     => !empty($data['address']) ? trim($data['address']) : null,
-                    'walking_fr'  => !empty($data['walking_time_fr']) ? trim($data['walking_time_fr']) : null,
-                    'walking_en'  => !empty($data['walking_time_en']) ? trim($data['walking_time_en']) : null,
-                    'notes_fr'    => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
-                    'notes_en'    => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
-                    'order'       => $order > 0 ? $order : 1,
-                    'active'      => isset($data['active']) ? (int)$data['active'] : 1
+                    'spot_type' => $spotType,
+                    'name_fr'   => trim($data['name_fr']),
+                    'name_en'   => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
+                    'address'   => !empty($data['address']) ? trim($data['address']) : null,
+                    'notes_fr'  => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
+                    'notes_en'  => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
                 ]);
                 $newId = (int)$this->db->lastInsertId();
-                ActivityLogger::log('create', 'parking_free_spot', $newId, $data['name_fr']);
+                ActivityLogger::log('create', 'parking_free_spots', $newId, $data['name_fr']);
                 return $newId;
             }
         } elseif ($category === 'private_parking') {
-            // Table : parking_private_lots
-            $order = isset($data['display_order']) ? (int)$data['display_order'] : 0;
-            if ($order <= 0 && $id <= 0) {
-                $stmtOrder = $this->db->prepare('SELECT COALESCE(MAX(display_order), 0) + 1 FROM parking_private_lots WHERE property_id = :pid');
-                $stmtOrder->execute(['pid' => $propertyId]);
-                $order = (int)$stmtOrder->fetchColumn();
-            }
-
             if ($id > 0) {
-                $old = $this->findParkingItemById($id, $category);
-                $stmt = $this->db->prepare('
+                $stmt = $this->db->prepare("
                     UPDATE parking_private_lots SET
                         name_fr = :name_fr,
                         name_en = :name_en,
                         operator = :operator,
                         address = :address,
-                        walking_time_fr = :walking_fr,
-                        walking_time_en = :walking_en,
                         max_height = :max_height,
                         opening_hours_fr = :hours_fr,
                         opening_hours_en = :hours_en,
@@ -676,19 +743,15 @@ class AdminRepository
                         suitable_vehicles_en = :vehicles_en,
                         booking_url = :booking_url,
                         notes_fr = :notes_fr,
-                        notes_en = :notes_en,
-                        display_order = :order,
-                        active = :active
+                        notes_en = :notes_en
                     WHERE id = :id
-                ');
+                ");
                 $stmt->execute([
                     'id'          => $id,
                     'name_fr'     => trim($data['name_fr']),
                     'name_en'     => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
                     'operator'    => !empty($data['operator']) ? trim($data['operator']) : null,
                     'address'     => !empty($data['address']) ? trim($data['address']) : null,
-                    'walking_fr'  => !empty($data['walking_time_fr']) ? trim($data['walking_time_fr']) : null,
-                    'walking_en'  => !empty($data['walking_time_en']) ? trim($data['walking_time_en']) : null,
                     'max_height'  => !empty($data['max_height']) ? trim($data['max_height']) : null,
                     'hours_fr'    => !empty($data['opening_hours_fr']) ? trim($data['opening_hours_fr']) : null,
                     'hours_en'    => !empty($data['opening_hours_en']) ? trim($data['opening_hours_en']) : null,
@@ -699,35 +762,28 @@ class AdminRepository
                     'booking_url' => !empty($data['booking_url']) ? trim($data['booking_url']) : null,
                     'notes_fr'    => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
                     'notes_en'    => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
-                    'order'       => $order > 0 ? $order : (int)($old['display_order'] ?? 1),
-                    'active'      => isset($data['active']) ? (int)$data['active'] : (int)($old['active'] ?? 1)
                 ]);
-                ActivityLogger::log('update', 'parking_private_lot', $id, $data['name_fr']);
+                ActivityLogger::log('update', 'parking_private_lots', $id, $data['name_fr']);
                 return $id;
             } else {
-                $stmt = $this->db->prepare('
+                $stmt = $this->db->prepare("
                     INSERT INTO parking_private_lots (
-                        property_id, name_fr, name_en, operator, address,
-                        walking_time_fr, walking_time_en, max_height,
+                        name_fr, name_en, operator, address, max_height,
                         opening_hours_fr, opening_hours_en, rates_fr, rates_en,
                         suitable_vehicles_fr, suitable_vehicles_en, booking_url,
-                        notes_fr, notes_en, display_order, active
+                        notes_fr, notes_en
                     ) VALUES (
-                        :pid, :name_fr, :name_en, :operator, :address,
-                        :walking_fr, :walking_en, :max_height,
+                        :name_fr, :name_en, :operator, :address, :max_height,
                         :hours_fr, :hours_en, :rates_fr, :rates_en,
                         :vehicles_fr, :vehicles_en, :booking_url,
-                        :notes_fr, :notes_en, :order, :active
+                        :notes_fr, :notes_en
                     )
-                ');
+                ");
                 $stmt->execute([
-                    'pid'         => $propertyId,
                     'name_fr'     => trim($data['name_fr']),
                     'name_en'     => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
                     'operator'    => !empty($data['operator']) ? trim($data['operator']) : null,
                     'address'     => !empty($data['address']) ? trim($data['address']) : null,
-                    'walking_fr'  => !empty($data['walking_time_fr']) ? trim($data['walking_time_fr']) : null,
-                    'walking_en'  => !empty($data['walking_time_en']) ? trim($data['walking_time_en']) : null,
                     'max_height'  => !empty($data['max_height']) ? trim($data['max_height']) : null,
                     'hours_fr'    => !empty($data['opening_hours_fr']) ? trim($data['opening_hours_fr']) : null,
                     'hours_en'    => !empty($data['opening_hours_en']) ? trim($data['opening_hours_en']) : null,
@@ -738,103 +794,252 @@ class AdminRepository
                     'booking_url' => !empty($data['booking_url']) ? trim($data['booking_url']) : null,
                     'notes_fr'    => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
                     'notes_en'    => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
-                    'order'       => $order > 0 ? $order : 1,
-                    'active'      => isset($data['active']) ? (int)$data['active'] : 1
                 ]);
                 $newId = (int)$this->db->lastInsertId();
-                ActivityLogger::log('create', 'parking_private_lot', $newId, $data['name_fr']);
+                ActivityLogger::log('create', 'parking_private_lots', $newId, $data['name_fr']);
                 return $newId;
             }
         } elseif ($category === 'tcl_pr') {
-            // Table : parking_tcl_prs
-            $order = isset($data['display_order']) ? (int)$data['display_order'] : 0;
-            if ($order <= 0 && $id <= 0) {
-                $stmtOrder = $this->db->prepare('SELECT COALESCE(MAX(display_order), 0) + 1 FROM parking_tcl_prs WHERE property_id = :pid');
-                $stmtOrder->execute(['pid' => $propertyId]);
-                $order = (int)$stmtOrder->fetchColumn();
-            }
-
             if ($id > 0) {
-                $old = $this->findParkingItemById($id, $category);
-                $stmt = $this->db->prepare('
+                $stmt = $this->db->prepare("
                     UPDATE parking_tcl_prs SET
                         name_fr = :name_fr,
                         name_en = :name_en,
                         address = :address,
-                        transit_time_fr = :transit_fr,
-                        transit_time_en = :transit_en,
                         capacity = :capacity,
                         opening_hours_fr = :hours_fr,
                         opening_hours_en = :hours_en,
-                        how_to_reach_fr = :reach_fr,
-                        how_to_reach_en = :reach_en,
                         booking_url = :booking_url,
                         notes_fr = :notes_fr,
-                        notes_en = :notes_en,
-                        display_order = :order,
-                        active = :active
+                        notes_en = :notes_en
                     WHERE id = :id
-                ');
+                ");
                 $stmt->execute([
                     'id'          => $id,
                     'name_fr'     => trim($data['name_fr']),
                     'name_en'     => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
                     'address'     => !empty($data['address']) ? trim($data['address']) : null,
-                    'transit_fr'  => !empty($data['transit_time_fr']) ? trim($data['transit_time_fr']) : null,
-                    'transit_en'  => !empty($data['transit_time_en']) ? trim($data['transit_time_en']) : null,
                     'capacity'    => !empty($data['capacity']) ? trim($data['capacity']) : null,
                     'hours_fr'    => !empty($data['opening_hours_fr']) ? trim($data['opening_hours_fr']) : null,
                     'hours_en'    => !empty($data['opening_hours_en']) ? trim($data['opening_hours_en']) : null,
-                    'reach_fr'    => !empty($data['how_to_reach_fr']) ? trim($data['how_to_reach_fr']) : null,
-                    'reach_en'    => !empty($data['how_to_reach_en']) ? trim($data['how_to_reach_en']) : null,
                     'booking_url' => !empty($data['booking_url']) ? trim($data['booking_url']) : null,
                     'notes_fr'    => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
                     'notes_en'    => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
-                    'order'       => $order > 0 ? $order : (int)($old['display_order'] ?? 1),
-                    'active'      => isset($data['active']) ? (int)$data['active'] : (int)($old['active'] ?? 1)
                 ]);
-                ActivityLogger::log('update', 'parking_tcl_pr', $id, $data['name_fr']);
+                ActivityLogger::log('update', 'parking_tcl_prs', $id, $data['name_fr']);
                 return $id;
             } else {
-                $stmt = $this->db->prepare('
+                $stmt = $this->db->prepare("
                     INSERT INTO parking_tcl_prs (
-                        property_id, name_fr, name_en, address,
-                        transit_time_fr, transit_time_en, capacity,
-                        opening_hours_fr, opening_hours_en, how_to_reach_fr, how_to_reach_en,
-                        booking_url, notes_fr, notes_en, display_order, active
+                        name_fr, name_en, address, capacity,
+                        opening_hours_fr, opening_hours_en,
+                        booking_url, notes_fr, notes_en
                     ) VALUES (
-                        :pid, :name_fr, :name_en, :address,
-                        :transit_fr, :transit_en, :capacity,
-                        :hours_fr, :hours_en, :reach_fr, :reach_en,
-                        :booking_url, :notes_fr, :notes_en, :order, :active
+                        :name_fr, :name_en, :address, :capacity,
+                        :hours_fr, :hours_en,
+                        :booking_url, :notes_fr, :notes_en
                     )
-                ');
+                ");
                 $stmt->execute([
-                    'pid'         => $propertyId,
                     'name_fr'     => trim($data['name_fr']),
                     'name_en'     => !empty($data['name_en']) ? trim($data['name_en']) : trim($data['name_fr']),
                     'address'     => !empty($data['address']) ? trim($data['address']) : null,
-                    'transit_fr'  => !empty($data['transit_time_fr']) ? trim($data['transit_time_fr']) : null,
-                    'transit_en'  => !empty($data['transit_time_en']) ? trim($data['transit_time_en']) : null,
                     'capacity'    => !empty($data['capacity']) ? trim($data['capacity']) : null,
                     'hours_fr'    => !empty($data['opening_hours_fr']) ? trim($data['opening_hours_fr']) : null,
                     'hours_en'    => !empty($data['opening_hours_en']) ? trim($data['opening_hours_en']) : null,
-                    'reach_fr'    => !empty($data['how_to_reach_fr']) ? trim($data['how_to_reach_fr']) : null,
-                    'reach_en'    => !empty($data['how_to_reach_en']) ? trim($data['how_to_reach_en']) : null,
                     'booking_url' => !empty($data['booking_url']) ? trim($data['booking_url']) : null,
                     'notes_fr'    => !empty($data['notes_fr']) ? trim($data['notes_fr']) : null,
                     'notes_en'    => !empty($data['notes_en']) ? trim($data['notes_en']) : null,
-                    'order'       => $order > 0 ? $order : 1,
-                    'active'      => isset($data['active']) ? (int)$data['active'] : 1
                 ]);
                 $newId = (int)$this->db->lastInsertId();
-                ActivityLogger::log('create', 'parking_tcl_pr', $newId, $data['name_fr']);
+                ActivityLogger::log('create', 'parking_tcl_prs', $newId, $data['name_fr']);
                 return $newId;
             }
         }
 
-        // Repli si catégorie non reconnue
         return 0;
+    }
+
+    /**
+     * Enregistre ou met à jour la liaison entre un logement et un parking
+     */
+    public function linkParkingToProperty(int $propertyId, string $category, int $parkingItemId, array $connectionData = []): int
+    {
+        $order = isset($connectionData['display_order']) ? (int)$connectionData['display_order'] : 0;
+        if ($order <= 0) {
+            $stmtOrder = $this->db->prepare("
+                SELECT COALESCE(MAX(display_order), 0) + 1 
+                FROM property_parking_associations 
+                WHERE property_id = :pid
+            ");
+            $stmtOrder->execute(['pid' => $propertyId]);
+            $order = (int)$stmtOrder->fetchColumn();
+        }
+
+        $active = isset($connectionData['active']) ? (int)$connectionData['active'] : 1;
+
+        $stmt = $this->db->prepare("
+            INSERT INTO property_parking_associations (
+                property_id, category, parking_item_id,
+                walking_time_fr, walking_time_en, transit_time_fr, transit_time_en,
+                how_to_reach_fr, how_to_reach_en, notes_fr, notes_en,
+                display_order, active
+            ) VALUES (
+                :pid, :cat, :item_id,
+                :walking_fr, :walking_en, :transit_fr, :transit_en,
+                :reach_fr, :reach_en, :notes_fr, :notes_en,
+                :order, :active
+            ) ON DUPLICATE KEY UPDATE
+                walking_time_fr = VALUES(walking_time_fr),
+                walking_time_en = VALUES(walking_time_en),
+                transit_time_fr = VALUES(transit_time_fr),
+                transit_time_en = VALUES(transit_time_en),
+                how_to_reach_fr = VALUES(how_to_reach_fr),
+                how_to_reach_en = VALUES(how_to_reach_en),
+                notes_fr = VALUES(notes_fr),
+                notes_en = VALUES(notes_en),
+                display_order = VALUES(display_order),
+                active = VALUES(active)
+        ");
+
+        $stmt->execute([
+            'pid'        => $propertyId,
+            'cat'        => $category,
+            'item_id'    => $parkingItemId,
+            'walking_fr' => !empty($connectionData['walking_time_fr']) ? trim($connectionData['walking_time_fr']) : null,
+            'walking_en' => !empty($connectionData['walking_time_en']) ? trim($connectionData['walking_time_en']) : (!empty($connectionData['walking_time_fr']) ? trim($connectionData['walking_time_fr']) : null),
+            'transit_fr' => !empty($connectionData['transit_time_fr']) ? trim($connectionData['transit_time_fr']) : null,
+            'transit_en' => !empty($connectionData['transit_time_en']) ? trim($connectionData['transit_time_en']) : (!empty($connectionData['transit_time_fr']) ? trim($connectionData['transit_time_fr']) : null),
+            'reach_fr'   => !empty($connectionData['how_to_reach_fr']) ? trim($connectionData['how_to_reach_fr']) : null,
+            'reach_en'   => !empty($connectionData['how_to_reach_en']) ? trim($connectionData['how_to_reach_en']) : (!empty($connectionData['how_to_reach_fr']) ? trim($connectionData['how_to_reach_fr']) : null),
+            'notes_fr'   => !empty($connectionData['notes_fr']) ? trim($connectionData['notes_fr']) : null,
+            'notes_en'   => !empty($connectionData['notes_en']) ? trim($connectionData['notes_en']) : null,
+            'order'      => $order > 0 ? $order : 1,
+            'active'     => $active
+        ]);
+
+        $assocId = (int)$this->db->lastInsertId();
+        if ($assocId === 0) {
+            $stmtGet = $this->db->prepare("SELECT id FROM property_parking_associations WHERE property_id = :pid AND category = :cat AND parking_item_id = :item_id LIMIT 1");
+            $stmtGet->execute(['pid' => $propertyId, 'cat' => $category, 'item_id' => $parkingItemId]);
+            $assocId = (int)$stmtGet->fetchColumn();
+        }
+
+        ActivityLogger::log('link', 'property_parking_associations', $assocId, "Liaison Parking #{$parkingItemId} -> Logement #{$propertyId}");
+        return $assocId;
+    }
+
+    /**
+     * Dissocie un parking d'un logement (retire l'association sans supprimer le parking du catalogue)
+     */
+    public function unlinkParkingFromProperty(int $associationId): bool
+    {
+        try {
+            $stmt = $this->db->prepare("DELETE FROM property_parking_associations WHERE id = :id");
+            $ok = $stmt->execute(['id' => $associationId]);
+            if ($ok) {
+                ActivityLogger::log('unlink', 'property_parking_associations', $associationId, "Dissociation parking");
+            }
+            return $ok;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Met à jour les informations de liaison d'un parking pour un logement précis
+     */
+    public function updateParkingAssociation(int $associationId, array $data): bool
+    {
+        try {
+            $stmt = $this->db->prepare("
+                UPDATE property_parking_associations SET
+                    walking_time_fr = :walking_fr,
+                    walking_time_en = :walking_en,
+                    transit_time_fr = :transit_fr,
+                    transit_time_en = :transit_en,
+                    how_to_reach_fr = :reach_fr,
+                    how_to_reach_en = :reach_en,
+                    display_order = :order,
+                    active = :active
+                WHERE id = :id
+            ");
+            return $stmt->execute([
+                'id'         => $associationId,
+                'walking_fr' => !empty($data['walking_time_fr']) ? trim($data['walking_time_fr']) : null,
+                'walking_en' => !empty($data['walking_time_en']) ? trim($data['walking_time_en']) : null,
+                'transit_fr' => !empty($data['transit_time_fr']) ? trim($data['transit_time_fr']) : null,
+                'transit_en' => !empty($data['transit_time_en']) ? trim($data['transit_time_en']) : null,
+                'reach_fr'   => !empty($data['how_to_reach_fr']) ? trim($data['how_to_reach_fr']) : null,
+                'reach_en'   => !empty($data['how_to_reach_en']) ? trim($data['how_to_reach_en']) : null,
+                'order'      => isset($data['display_order']) ? (int)$data['display_order'] : 1,
+                'active'     => isset($data['active']) ? (int)$data['active'] : 1
+            ]);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Synchronise l'ensemble des logements reliés à un parking (association inverse depuis le catalogue)
+     */
+    public function saveParkingItemPropertiesLinks(string $category, int $parkingItemId, array $links): bool
+    {
+        $this->db->beginTransaction();
+        try {
+            // Logements autorisés à conserver
+            $keptPropertyIds = [];
+            foreach ($links as $link) {
+                $pid = (int)($link['property_id'] ?? 0);
+                if ($pid <= 0) continue;
+                $keptPropertyIds[] = $pid;
+
+                $this->linkParkingToProperty($pid, $category, $parkingItemId, $link);
+            }
+
+            // Supprimer les liaisons qui ont été décochées
+            if (empty($keptPropertyIds)) {
+                $stmtDel = $this->db->prepare("DELETE FROM property_parking_associations WHERE category = :cat AND parking_item_id = :item_id");
+                $stmtDel->execute(['cat' => $category, 'item_id' => $parkingItemId]);
+            } else {
+                $inClause = implode(',', array_map('intval', $keptPropertyIds));
+                $stmtDel = $this->db->prepare("
+                    DELETE FROM property_parking_associations 
+                    WHERE category = :cat AND parking_item_id = :item_id AND property_id NOT IN ({$inClause})
+                ");
+                $stmtDel->execute(['cat' => $category, 'item_id' => $parkingItemId]);
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            return false;
+        }
+    }
+
+    /**
+     * Enregistre un parking et l'associe immédiatement à un logement (création / édition à la volée)
+     */
+    public function saveParkingItem(array $data): int
+    {
+        $propertyId = (int)($data['property_id'] ?? 0);
+        $category = $data['category'] ?? 'free_street';
+        $parkingItemId = isset($data['parking_item_id']) ? (int)$data['parking_item_id'] : (isset($data['id']) ? (int)$data['id'] : 0);
+
+        // 1. Enregistre au catalogue
+        $data['id'] = $parkingItemId;
+        $savedCatalogId = $this->saveParkingCatalogItem($data);
+        if ($savedCatalogId <= 0) {
+            return 0;
+        }
+
+        // 2. Si un logement est ciblé, crée/met à jour la liaison
+        if ($propertyId > 0) {
+            $this->linkParkingToProperty($propertyId, $category, $savedCatalogId, $data);
+        }
+
+        return $savedCatalogId;
     }
 
     public function createParkingLocation(array $data): int
@@ -849,20 +1054,16 @@ class AdminRepository
         return $savedId > 0;
     }
 
-    public function reorderParkingItems(string $category, array $orderList): bool
+    /**
+     * Réordonne les liaisons pour un logement donné
+     */
+    public function reorderParkingItems(string $category, array $orderList, int $propertyId = 0): bool
     {
-        $table = 'parking_free_spots';
-        if ($category === 'private_parking') {
-            $table = 'parking_private_lots';
-        } elseif ($category === 'tcl_pr') {
-            $table = 'parking_tcl_prs';
-        }
-
         $this->db->beginTransaction();
         try {
-            $stmt = $this->db->prepare("UPDATE `{$table}` SET display_order = :order WHERE id = :id");
-            foreach ($orderList as $order => $id) {
-                $stmt->execute(['order' => (int)$order + 1, 'id' => (int)$id]);
+            $stmt = $this->db->prepare("UPDATE property_parking_associations SET display_order = :order WHERE id = :assoc_id");
+            foreach ($orderList as $order => $assocId) {
+                $stmt->execute(['order' => (int)$order + 1, 'assoc_id' => (int)$assocId]);
             }
             $this->db->commit();
             return true;
@@ -874,21 +1075,56 @@ class AdminRepository
 
     public function reorderParkingLocations(array $orderList): bool
     {
-        // Réordonne de façon sécurisée par catégorie si possible
+        return $this->reorderParkingItems('all', $orderList);
+    }
+
+    /**
+     * Bascule la visibilité (actif/masqué) d'une association de parking
+     */
+    public function toggleParkingLocationActive(int $associationId, ?string $category = null): bool
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT active FROM property_parking_associations WHERE id = :id LIMIT 1");
+            $stmt->execute(['id' => $associationId]);
+            $current = $stmt->fetchColumn();
+            if ($current === false) return false;
+
+            $newStatus = (int)$current === 1 ? 0 : 1;
+            $stmtUp = $this->db->prepare("UPDATE property_parking_associations SET active = :status WHERE id = :id");
+            $ok = $stmtUp->execute(['status' => $newStatus, 'id' => $associationId]);
+            if ($ok) {
+                ActivityLogger::log('toggle', 'property_parking_associations', $associationId, "Visibilité liaison parking", ['active' => $newStatus]);
+            }
+            return $ok;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Supprime définitivement un parking du catalogue physique et toutes ses liaisons associées
+     */
+    public function deleteParkingCatalogItem(string $category, int $parkingItemId): bool
+    {
+        $table = 'parking_free_spots';
+        if ($category === 'private_parking') {
+            $table = 'parking_private_lots';
+        } elseif ($category === 'tcl_pr') {
+            $table = 'parking_tcl_prs';
+        }
+
         $this->db->beginTransaction();
         try {
-            foreach ($orderList as $order => $id) {
-                // Tente la mise à jour sur les 3 tables
-                $stmt1 = $this->db->prepare("UPDATE parking_free_spots SET display_order = :order WHERE id = :id");
-                $stmt1->execute(['order' => (int)$order + 1, 'id' => (int)$id]);
+            // 1. Supprime les liaisons
+            $stmtAssoc = $this->db->prepare("DELETE FROM property_parking_associations WHERE category = :cat AND parking_item_id = :item_id");
+            $stmtAssoc->execute(['cat' => $category, 'item_id' => $parkingItemId]);
 
-                $stmt2 = $this->db->prepare("UPDATE parking_private_lots SET display_order = :order WHERE id = :id");
-                $stmt2->execute(['order' => (int)$order + 1, 'id' => (int)$id]);
+            // 2. Supprime l'entrée du catalogue
+            $stmtCat = $this->db->prepare("DELETE FROM `{$table}` WHERE id = :id");
+            $stmtCat->execute(['id' => $parkingItemId]);
 
-                $stmt3 = $this->db->prepare("UPDATE parking_tcl_prs SET display_order = :order WHERE id = :id");
-                $stmt3->execute(['order' => (int)$order + 1, 'id' => (int)$id]);
-            }
             $this->db->commit();
+            ActivityLogger::log('delete', $table, $parkingItemId, "Suppression complète catalogue #{$parkingItemId}");
             return true;
         } catch (Throwable $e) {
             $this->db->rollBack();
@@ -896,56 +1132,19 @@ class AdminRepository
         }
     }
 
-    public function toggleParkingLocationActive(int $id, ?string $category = null): bool
-    {
-        $item = $this->findParkingItemById($id, $category);
-        if (!$item) return false;
-
-        $cat = $item['category'] ?? $category ?? 'free_street';
-        $newStatus = (int)$item['active'] === 1 ? 0 : 1;
-
-        $table = 'parking_free_spots';
-        if ($cat === 'private_parking') {
-            $table = 'parking_private_lots';
-        } elseif ($cat === 'tcl_pr') {
-            $table = 'parking_tcl_prs';
-        }
-
-        try {
-            $stmt = $this->db->prepare("UPDATE `{$table}` SET active = :status WHERE id = :id");
-            $ok = $stmt->execute(['status' => $newStatus, 'id' => $id]);
-            if ($ok) {
-                ActivityLogger::log('toggle', $table, $id, $item['name_fr'], ['active' => $newStatus]);
-            }
-            return $ok;
-        } catch (Throwable $e) {
-            return false;
-        }
-    }
-
     public function deleteParkingLocation(int $id, ?string $category = null): bool
     {
-        $item = $this->findParkingItemById($id, $category);
-        if (!$item) return false;
-
-        $cat = $item['category'] ?? $category ?? 'free_street';
-        $table = 'parking_free_spots';
-        if ($cat === 'private_parking') {
-            $table = 'parking_private_lots';
-        } elseif ($cat === 'tcl_pr') {
-            $table = 'parking_tcl_prs';
+        // Si l'ID passé correspond à une liaison d'association
+        $stmtCheck = $this->db->prepare("SELECT category, parking_item_id FROM property_parking_associations WHERE id = :id LIMIT 1");
+        $stmtCheck->execute(['id' => $id]);
+        $row = $stmtCheck->fetch();
+        if ($row) {
+            return $this->unlinkParkingFromProperty($id);
         }
 
-        try {
-            $stmt = $this->db->prepare("DELETE FROM `{$table}` WHERE id = :id");
-            $ok = $stmt->execute(['id' => $id]);
-            if ($ok) {
-                ActivityLogger::log('delete', $table, $id, $item['name_fr']);
-            }
-            return $ok;
-        } catch (Throwable $e) {
-            return false;
-        }
+        // Sinon supprime du catalogue
+        $cat = $category ?? 'free_street';
+        return $this->deleteParkingCatalogItem($cat, $id);
     }
 
     // --------------------------------------------------------------------------

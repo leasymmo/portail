@@ -408,17 +408,37 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             </button>
                             <button type="button" id="parking-subtab-btn-locations" onclick="AdminApp.switchParkingSubtab('locations')"
                                     class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
-                                    title="Rues gratuites, dépose-minute, parkings couverts privés et P+R">
+                                    title="Parkings et emplacements associés à ce logement">
                                 <span>📍</span>
-                                <span>Emplacements & Garages</span>
+                                <span>Emplacements du logement</span>
                                 <span id="parking-subtab-locations-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-white/10 text-gray-300 font-bold">0</span>
+                            </button>
+                            <button type="button" id="parking-subtab-btn-catalog" onclick="AdminApp.switchParkingSubtab('catalog')"
+                                    class="parking-subtab-btn px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center justify-center space-x-2"
+                                    title="Catalogue centralisé de tous les parkings indépendants">
+                                <span>🏛️</span>
+                                <span>Catalogue général</span>
+                                <span id="parking-subtab-catalog-badge" class="px-2 py-0.5 rounded-full text-[10px] bg-gold/20 text-gold font-bold">0</span>
                             </button>
                         </div>
 
-                        <div class="flex items-center space-x-2 w-full sm:w-auto">
-                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm">
+                        <!-- Boutons d'action pour le logement sélectionné -->
+                        <div id="parking-header-actions-property" class="flex items-center space-x-2 w-full sm:w-auto">
+                            <button type="button" onclick="AdminApp.openLinkExistingModal()" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-gold/15 hover:bg-gold text-gold hover:text-white border border-gold/40 text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm" title="Associer un parking existant du catalogue à ce logement">
+                                <span>🔗</span>
+                                <span>Lier un parking</span>
+                            </button>
+                            <button type="button" onclick="AdminApp.openLocationModal(0)" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-night-card hover:bg-white/10 text-white border border-night-border text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-sm" title="Créer un nouveau parking et l'associer directement à ce logement">
+                                <span>⚡</span>
+                                <span>Créer à la volée</span>
+                            </button>
+                        </div>
+
+                        <!-- Boutons d'action pour le catalogue général -->
+                        <div id="parking-header-actions-catalog" class="hidden items-center space-x-2 w-full sm:w-auto">
+                            <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-gold/20" title="Ajouter un nouveau parking au catalogue général (indépendant)">
                                 <span>➕</span>
-                                <span>Ajouter un emplacement</span>
+                                <span>Nouveau parking au catalogue</span>
                             </button>
                         </div>
                     </div>
@@ -554,6 +574,39 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <!-- Conteneur des 3 sections spécialisées -->
                         <div id="parking-locations-list" class="space-y-6">
                             <div class="py-8 text-center text-gray-400">Chargement des emplacements...</div>
+                        </div>
+                    </div>
+
+                    <!-- SOUS-ONGLET C : CATALOGUE GÉNÉRAL DES PARKINGS (CENTRALISÉ) -->
+                    <div id="parking-subtab-catalog" class="hidden space-y-6">
+                        <!-- Barre d'outils et filtre de catégorie -->
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-2xl bg-night-card border border-night-border shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
+                                <div class="flex items-center space-x-2">
+                                    <label class="text-xs font-semibold text-gray-400 whitespace-nowrap">Catégorie :</label>
+                                    <select id="parking-catalog-filter-cat" onchange="AdminApp.renderCatalogList()" class="py-2 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                                        <option value="all">Tous les parkings (Toutes catégories)</option>
+                                        <option value="free_street">🟢 Rues & Dépose-minute</option>
+                                        <option value="private_parking">🏢 Parkings privés & couverts</option>
+                                        <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
+                                    </select>
+                                </div>
+                                <div class="relative flex-1 sm:w-64">
+                                    <input type="text" id="parking-catalog-search" oninput="AdminApp.filterCatalogList()" placeholder="Rechercher par nom, adresse..." class="w-full py-2 pl-8 pr-3 rounded-xl bg-night border border-night-border text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gold">
+                                    <span class="absolute left-2.5 top-2.5 text-gray-400 text-xs">🔍</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="AdminApp.openLocationModal(0, null, true)" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gold hover:bg-gold-light text-white text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-gold/20">
+                                    <span>➕</span>
+                                    <span>Ajouter un parking au catalogue</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grille / Liste des parkings du catalogue -->
+                        <div id="parking-catalog-list" class="space-y-4">
+                            <div class="py-8 text-center text-gray-400">Chargement du catalogue...</div>
                         </div>
                     </div>
                 </div>
@@ -1016,6 +1069,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
             <form id="location-form" onsubmit="AdminApp.saveLocation(event)" class="space-y-4">
                 <input type="hidden" id="location-id" value="0">
                 <input type="hidden" id="location-property-id" value="0">
+                <input type="hidden" id="location-is-catalog-mode" value="0">
                 <input type="hidden" id="location-category" value="free_street">
                 <input type="hidden" id="location-original-category" value="">
 
@@ -1267,7 +1321,204 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
         </div>
     </div>
 
-    <!-- 5. MODALE UTILISATEUR ADMINISTRATEUR -->
+    <!-- 4b. MODALE LIER UN PARKING DU CATALOGUE AU LOGEMENT ACTUEL -->
+    <div id="modal-link-existing-parking" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto space-y-5">
+            <div class="flex items-center justify-between border-b border-night-border pb-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>🔗</span>
+                        <span>Lier un parking du catalogue</span>
+                    </h3>
+                    <p class="text-[11px] text-gray-400 mt-0.5">Associez un parking existant à <span id="link-existing-property-name" class="text-gold font-semibold">ce logement</span> sans le dupliquer.</p>
+                </div>
+                <button type="button" onclick="AdminApp.closeLinkExistingModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+
+            <form id="link-existing-form" onsubmit="AdminApp.submitLinkExisting(event)" class="space-y-4">
+                <input type="hidden" id="link-existing-property-id" value="0">
+
+                <!-- 1. Sélection de la catégorie -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">1. Catégorie de parking *</label>
+                    <select id="link-existing-category" onchange="AdminApp.onLinkCategoryChange(this.value)" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <option value="free_street">🟢 Rue gratuite ou dépose-minute</option>
+                        <option value="private_parking">🏢 Parking privé ou couvert (Zenpark, LPA...)</option>
+                        <option value="tcl_pr">🚇 Parc Relais TCL (P+R)</option>
+                    </select>
+                </div>
+
+                <!-- 2. Sélection du parking dans le catalogue -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1.5">2. Choisir le parking dans le catalogue *</label>
+                    <select id="link-existing-item-select" onchange="AdminApp.onLinkItemSelectChange()" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                    <p id="link-existing-catalog-preview" class="text-[11px] text-gray-400 mt-1 italic"></p>
+                </div>
+
+                <!-- 3. Paramètres de connexion spécifiques à ce logement -->
+                <div class="p-3.5 rounded-2xl bg-night/80 border border-night-border space-y-3">
+                    <span class="text-xs font-bold text-gold block">3. Informations d'accès pour ce logement</span>
+
+                    <div id="link-conn-walking-field">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche (FR)</label>
+                        <input type="text" id="link-conn-walking-fr" placeholder="Ex: Environ 8 min à pied (3 min à vélo)" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div id="link-conn-transit-field" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps en transports TCL (FR)</label>
+                        <input type="text" id="link-conn-transit-fr" placeholder="Ex: 15 min en Métro A" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div id="link-conn-reach-field" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire retour vers le logement (FR)</label>
+                        <textarea id="link-conn-reach-fr" rows="2" placeholder="Ex: Prendre le Métro A jusqu'à la station..." class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Note ou consigne d'accès spécifique à ce logement (FR)</label>
+                        <input type="text" id="link-conn-notes-fr" placeholder="Ex: Sortie conseillée par le côté Nord" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre d'affichage</label>
+                            <input type="number" id="link-conn-order" min="1" value="1" class="w-20 p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div class="flex items-center space-x-2 pt-5">
+                            <input type="checkbox" id="link-conn-active" class="w-4 h-4 rounded bg-night border-night-border text-gold focus:ring-gold accent-[#ba9641]" checked>
+                            <label for="link-conn-active" class="text-xs font-semibold text-gray-300 cursor-pointer">Actif</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-night-border flex items-center justify-between">
+                    <button type="button" onclick="AdminApp.closeLinkExistingModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
+                    <button type="submit" id="btn-submit-link-existing" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
+                        <span>🔗</span>
+                        <span>Associer ce parking</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4c. MODALE MODIFICATION ACCÈS PARKING-LOGEMENT -->
+    <div id="modal-edit-connection" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto space-y-5">
+            <div class="flex items-center justify-between border-b border-night-border pb-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>⚙️</span>
+                        <span>Modifier l'accès au parking</span>
+                    </h3>
+                    <p id="edit-conn-subtitle" class="text-[11px] text-gray-400 mt-0.5"></p>
+                </div>
+                <button type="button" onclick="AdminApp.closeEditConnectionModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+
+            <form id="edit-connection-form" onsubmit="AdminApp.saveConnectionEdit(event)" class="space-y-4">
+                <input type="hidden" id="edit-conn-id" value="0">
+                <input type="hidden" id="edit-conn-category" value="">
+
+                <div class="space-y-3">
+                    <div id="edit-conn-walking-group">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de marche (FR)</label>
+                        <input type="text" id="edit-conn-walking-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div id="edit-conn-transit-group">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Temps de transport TCL (FR)</label>
+                        <input type="text" id="edit-conn-transit-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <div id="edit-conn-reach-group">
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Itinéraire retour vers le logement (FR)</label>
+                        <textarea id="edit-conn-reach-fr" rows="2" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Remarques / consignes d'accès spécifiques au logement (FR)</label>
+                        <input type="text" id="edit-conn-notes-fr" class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+
+                    <!-- Champs anglais cachés -->
+                    <div class="hidden" aria-hidden="true">
+                        <input type="hidden" id="edit-conn-walking-en">
+                        <input type="hidden" id="edit-conn-transit-en">
+                        <textarea id="edit-conn-reach-en"></textarea>
+                        <input type="hidden" id="edit-conn-notes-en">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre d'affichage</label>
+                            <input type="number" id="edit-conn-order" min="1" value="1" class="w-20 p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                        </div>
+                        <div class="flex items-center space-x-2 pt-5">
+                            <input type="checkbox" id="edit-conn-active" class="w-4 h-4 rounded bg-night border-night-border text-gold focus:ring-gold accent-[#ba9641]" checked>
+                            <label for="edit-conn-active" class="text-xs font-semibold text-gray-300 cursor-pointer">Actif pour ce logement</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-night-border flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onclick="AdminApp.openDirectReviewModal('parking_connection')" 
+                            class="text-xs text-gray-400 hover:text-gold flex items-center space-x-1.5 transition py-1"
+                            title="Consulter et ajuster la version anglaise des consignes d'accès">
+                        <span>✏️</span>
+                        <span>Version anglaise</span>
+                    </button>
+                    <div class="flex items-center space-x-2 ml-auto">
+                        <button type="button" onclick="AdminApp.closeEditConnectionModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
+                            <span>💾</span>
+                            <span>Enregistrer</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4d. MODALE ASSOCIATION INVERSÉE (PARKING -> PLUSIEURS LOGEMENTS) -->
+    <div id="modal-manage-parking-links" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
+        <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto space-y-5">
+            <div class="flex items-center justify-between border-b border-night-border pb-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>🔗</span>
+                        <span>Associer ce parking aux logements</span>
+                    </h3>
+                    <p id="manage-links-title" class="text-xs text-gold font-semibold mt-0.5"></p>
+                </div>
+                <button type="button" onclick="AdminApp.closeManageParkingLinksModal()" class="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+
+            <form id="manage-parking-links-form" onsubmit="AdminApp.saveParkingLinks(event)" class="space-y-4">
+                <input type="hidden" id="manage-links-category" value="">
+                <input type="hidden" id="manage-links-item-id" value="0">
+
+                <p class="text-xs text-gray-300">
+                    Cochez les logements pour lesquels ce parking doit être proposé. Vous pouvez renseigner un temps de marche ou de trajet personnalisé par logement.
+                </p>
+
+                <!-- Liste des logements avec cases à cocher et champs repliables -->
+                <div id="manage-links-properties-list" class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                    <!-- Généré dynamiquement -->
+                </div>
+
+                <div class="pt-3 border-t border-night-border flex items-center justify-between">
+                    <button type="button" onclick="AdminApp.closeManageParkingLinksModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5">
+                        <span>💾</span>
+                        <span>Enregistrer les associations</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <div id="modal-user-form" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 admin-modal-backdrop hidden overflow-y-auto">
         <div class="bg-night-card border border-night-border rounded-2xl sm:rounded-3xl w-full max-w-md max-h-[92vh] overflow-y-auto p-4 sm:p-6 sm:p-7 shadow-2xl relative my-auto">
             <div class="flex items-center justify-between border-b border-night-border pb-4 mb-5">
@@ -1705,6 +1956,6 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full"></div>
 
     <!-- Script principal de l'application -->
-    <script src="assets/js/admin.js?v=3.2"></script>
+    <script src="assets/js/admin.js?v=4.0"></script>
 </body>
 </html>

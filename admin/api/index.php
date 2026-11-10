@@ -618,6 +618,108 @@ try {
             exit;
 
         // ----------------------------------------------------------------------
+        // CATALOGUE CENTRALISÉ & ASSOCIATIONS N-N
+        // ----------------------------------------------------------------------
+        case 'parking_catalog':
+            $category = $_GET['category'] ?? null;
+            $items = $repo->getAllCatalogParkingItems($category);
+            echo json_encode([
+                'ok'    => true,
+                'items' => $items
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'parking_catalog_save':
+            $data = $body['catalog_item'] ?? ($body['item'] ?? $_POST);
+            $savedId = $repo->saveParkingCatalogItem($data);
+            if ($savedId > 0) {
+                echo json_encode(['ok' => true, 'id' => $savedId, 'message' => 'Parking du catalogue enregistré.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'error' => 'Erreur lors de l\'enregistrement dans le catalogue.']);
+            }
+            exit;
+
+        case 'parking_catalog_delete':
+            if ($currentUser['role'] === 'editor') {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'Suppression non autorisée pour le rôle éditeur.']);
+                exit;
+            }
+            $category = $body['category'] ?? ($_POST['category'] ?? '');
+            $itemId = (int)($body['item_id'] ?? ($body['id'] ?? ($_POST['id'] ?? 0)));
+            if (empty($category) || $itemId <= 0) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Catégorie et identifiant d\'élément requis.']);
+                exit;
+            }
+            $ok = $repo->deleteParkingCatalogItem($category, $itemId);
+            echo json_encode(['ok' => $ok, 'message' => 'Parking supprimé du catalogue.']);
+            exit;
+
+        case 'parking_association_link':
+            $propertyId = (int)($body['property_id'] ?? ($_POST['property_id'] ?? 0));
+            $category = $body['category'] ?? ($_POST['category'] ?? '');
+            $parkingItemId = (int)($body['parking_item_id'] ?? ($body['item_id'] ?? ($_POST['parking_item_id'] ?? 0)));
+            $connectionData = $body['connection'] ?? ($body['connection_data'] ?? $_POST);
+
+            if ($propertyId <= 0 || empty($category) || $parkingItemId <= 0) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Le logement, la catégorie et le parking ciblé sont obligatoires.']);
+                exit;
+            }
+
+            $assocId = $repo->linkParkingToProperty($propertyId, $category, $parkingItemId, $connectionData);
+            if ($assocId > 0) {
+                echo json_encode(['ok' => true, 'association_id' => $assocId, 'message' => 'Parking associé au logement avec succès.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'error' => 'Erreur lors de l\'association du parking au logement.']);
+            }
+            exit;
+
+        case 'parking_association_unlink':
+            if ($currentUser['role'] === 'editor') {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'Action non autorisée pour le rôle éditeur.']);
+                exit;
+            }
+            $assocId = (int)($body['association_id'] ?? ($body['id'] ?? ($_POST['id'] ?? 0)));
+            if ($assocId <= 0) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Identifiant d\'association manquant.']);
+                exit;
+            }
+            $ok = $repo->unlinkParkingFromProperty($assocId);
+            echo json_encode(['ok' => $ok, 'message' => 'Emplacement retiré de ce logement.']);
+            exit;
+
+        case 'parking_association_update':
+            $assocId = (int)($body['association_id'] ?? ($body['id'] ?? ($_POST['id'] ?? 0)));
+            $connectionData = $body['connection'] ?? ($body['connection_data'] ?? $_POST);
+            if ($assocId <= 0) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Identifiant d\'association manquant.']);
+                exit;
+            }
+            $ok = $repo->updateParkingAssociation($assocId, $connectionData);
+            echo json_encode(['ok' => $ok, 'message' => 'Informations d\'accès mises à jour avec succès.']);
+            exit;
+
+        case 'parking_catalog_set_properties':
+            $category = $body['category'] ?? ($_POST['category'] ?? '');
+            $parkingItemId = (int)($body['parking_item_id'] ?? ($body['item_id'] ?? ($_POST['parking_item_id'] ?? 0)));
+            $links = $body['links'] ?? [];
+            if (empty($category) || $parkingItemId <= 0 || !is_array($links)) {
+                http_response_code(400);
+                echo json_encode(['ok' => false, 'error' => 'Paramètres invalides pour l\'association des logements.']);
+                exit;
+            }
+            $ok = $repo->saveParkingItemPropertiesLinks($category, $parkingItemId, $links);
+            echo json_encode(['ok' => $ok, 'message' => 'Associations de logements mises à jour.']);
+            exit;
+
+        // ----------------------------------------------------------------------
         // UTILISATEURS ADMINISTRATEURS
         // ----------------------------------------------------------------------
         case 'users':
@@ -764,7 +866,7 @@ try {
 
             if ($type === 'parking_general') {
                 $result = \Cdh\Portal\Admin\AiTranslator::translateParkingGeneral($db, $inputData, true, true);
-            } elseif ($type === 'parking_location' || $type === 'parking_item') {
+            } elseif ($type === 'parking_location' || $type === 'parking_item' || $type === 'parking_catalog' || $type === 'parking_connection') {
                 $result = \Cdh\Portal\Admin\AiTranslator::translateParkingLocation($db, $inputData, true, true);
             } else {
                 http_response_code(400);

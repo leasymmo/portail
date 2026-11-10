@@ -85,30 +85,88 @@ class PropertyRepository
         try {
             $pdo = Database::getConnection();
 
-            // Tables spécialisées V2
+            // Architecture V3 : Many-to-Many via property_parking_associations
             $stmtFree = $pdo->prepare("
-                SELECT *, CASE WHEN spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category 
-                FROM parking_free_spots 
-                WHERE property_id = :pid AND active = 1 
-                ORDER BY display_order ASC, id ASC
+                SELECT 
+                    c.id,
+                    a.id AS association_id,
+                    a.property_id,
+                    c.spot_type,
+                    c.name_fr,
+                    c.name_en,
+                    c.address,
+                    a.walking_time_fr,
+                    a.walking_time_en,
+                    COALESCE(a.notes_fr, c.notes_fr) AS notes_fr,
+                    COALESCE(a.notes_en, c.notes_en) AS notes_en,
+                    a.display_order,
+                    a.active,
+                    CASE WHEN c.spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category
+                FROM property_parking_associations a
+                JOIN parking_free_spots c ON c.id = a.parking_item_id
+                WHERE a.property_id = :pid AND a.active = 1 AND a.category IN ('free_street', 'free_spot')
+                ORDER BY a.display_order ASC, a.id ASC
             ");
             $stmtFree->execute([':pid' => $propertyId]);
             $free = $stmtFree->fetchAll();
 
             $stmtPriv = $pdo->prepare("
-                SELECT *, 'private_parking' AS category 
-                FROM parking_private_lots 
-                WHERE property_id = :pid AND active = 1 
-                ORDER BY display_order ASC, id ASC
+                SELECT 
+                    c.id,
+                    a.id AS association_id,
+                    a.property_id,
+                    c.name_fr,
+                    c.name_en,
+                    c.operator,
+                    c.address,
+                    a.walking_time_fr,
+                    a.walking_time_en,
+                    c.max_height,
+                    c.opening_hours_fr,
+                    c.opening_hours_en,
+                    c.rates_fr,
+                    c.rates_en,
+                    c.suitable_vehicles_fr,
+                    c.suitable_vehicles_en,
+                    c.booking_url,
+                    COALESCE(a.notes_fr, c.notes_fr) AS notes_fr,
+                    COALESCE(a.notes_en, c.notes_en) AS notes_en,
+                    a.display_order,
+                    a.active,
+                    'private_parking' AS category
+                FROM property_parking_associations a
+                JOIN parking_private_lots c ON c.id = a.parking_item_id
+                WHERE a.property_id = :pid AND a.active = 1 AND a.category = 'private_parking'
+                ORDER BY a.display_order ASC, a.id ASC
             ");
             $stmtPriv->execute([':pid' => $propertyId]);
             $priv = $stmtPriv->fetchAll();
 
             $stmtTcl = $pdo->prepare("
-                SELECT *, 'tcl_pr' AS category 
-                FROM parking_tcl_prs 
-                WHERE property_id = :pid AND active = 1 
-                ORDER BY display_order ASC, id ASC
+                SELECT 
+                    c.id,
+                    a.id AS association_id,
+                    a.property_id,
+                    c.name_fr,
+                    c.name_en,
+                    c.capacity,
+                    c.address,
+                    a.transit_time_fr,
+                    a.transit_time_en,
+                    c.opening_hours_fr,
+                    c.opening_hours_en,
+                    a.how_to_reach_fr,
+                    a.how_to_reach_en,
+                    c.booking_url,
+                    COALESCE(a.notes_fr, c.notes_fr) AS notes_fr,
+                    COALESCE(a.notes_en, c.notes_en) AS notes_en,
+                    a.display_order,
+                    a.active,
+                    'tcl_pr' AS category
+                FROM property_parking_associations a
+                JOIN parking_tcl_prs c ON c.id = a.parking_item_id
+                WHERE a.property_id = :pid AND a.active = 1 AND a.category = 'tcl_pr'
+                ORDER BY a.display_order ASC, a.id ASC
             ");
             $stmtTcl->execute([':pid' => $propertyId]);
             $tcl = $stmtTcl->fetchAll();

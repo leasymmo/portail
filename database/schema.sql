@@ -74,39 +74,30 @@ CREATE TABLE IF NOT EXISTS `property_parkings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------------------
--- Table : parking_free_spots (Rues et dépose-minute gratuits)
+-- Table : parking_free_spots (Catalogue Rues et dépose-minute gratuits)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `parking_free_spots` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
     `spot_type` ENUM('street', 'spot') NOT NULL DEFAULT 'street' COMMENT 'street = rue gratuite, spot = arrêt minute / court',
     `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du lieu / rue (FR)',
     `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du lieu / rue (EN)',
     `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse précise ou repère GPS',
-    `walking_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (FR)',
-    `walking_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (EN)',
-    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (FR)',
-    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (EN)',
-    `display_order` INT NOT NULL DEFAULT 0 COMMENT 'Ordre d''affichage',
-    `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif, 0 = masqué',
+    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques générales (FR)',
+    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques générales (EN)',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_pfs_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
-    INDEX `idx_pfs_property_order` (`property_id`, `display_order`, `active`)
+    INDEX `idx_pfs_type_name` (`spot_type`, `name_fr`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------------------
--- Table : parking_private_lots (Parkings privés et couverts)
+-- Table : parking_private_lots (Catalogue Parkings privés et couverts)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `parking_private_lots` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
     `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du parking (FR)',
     `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du parking (EN)',
     `operator` VARCHAR(100) DEFAULT NULL COMMENT 'Opérateur (Zenpark, LPA&CO, Q-Park, Indigo...)',
     `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse précise du parking',
-    `walking_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (FR)',
-    `walking_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied (EN)',
     `max_height` VARCHAR(50) DEFAULT NULL COMMENT 'Hauteur max / gabarit (ex: 1.90 m)',
     `opening_hours_fr` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (FR)',
     `opening_hours_en` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (EN)',
@@ -115,41 +106,57 @@ CREATE TABLE IF NOT EXISTS `parking_private_lots` (
     `suitable_vehicles_fr` VARCHAR(255) DEFAULT NULL COMMENT 'Véhicules adaptés (FR)',
     `suitable_vehicles_en` VARCHAR(255) DEFAULT NULL COMMENT 'Véhicules adaptés (EN)',
     `booking_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien de réservation directe',
-    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (FR)',
-    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (EN)',
-    `display_order` INT NOT NULL DEFAULT 0 COMMENT 'Ordre d''affichage',
-    `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif, 0 = masqué',
+    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques générales (FR)',
+    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques générales (EN)',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_ppl_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
-    INDEX `idx_ppl_property_order` (`property_id`, `display_order`, `active`)
+    INDEX `idx_ppl_operator` (`operator`),
+    INDEX `idx_ppl_name` (`name_fr`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------------------
--- Table : parking_tcl_prs (Parcs Relais TCL - P+R)
+-- Table : parking_tcl_prs (Catalogue Parcs Relais TCL - P+R)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `parking_tcl_prs` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
     `name_fr` VARCHAR(255) NOT NULL COMMENT 'Nom du P+R (FR)',
     `name_en` VARCHAR(255) NOT NULL COMMENT 'Nom du P+R (EN)',
     `address` VARCHAR(255) DEFAULT NULL COMMENT 'Adresse précise du P+R',
-    `transit_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports (FR)',
-    `transit_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports (EN)',
     `capacity` VARCHAR(100) DEFAULT NULL COMMENT 'Capacité totale (ex: 416 places)',
     `opening_hours_fr` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (FR)',
     `opening_hours_en` VARCHAR(255) DEFAULT NULL COMMENT 'Horaires d''accès (EN)',
-    `how_to_reach_fr` TEXT DEFAULT NULL COMMENT 'Itinéraire retour vers le logement (FR)',
-    `how_to_reach_en` TEXT DEFAULT NULL COMMENT 'Itinéraire retour vers le logement (EN)',
     `booking_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien officiel TCL',
-    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (FR)',
-    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques (EN)',
-    `display_order` INT NOT NULL DEFAULT 0 COMMENT 'Ordre d''affichage',
-    `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif, 0 = masqué',
+    `notes_fr` TEXT DEFAULT NULL COMMENT 'Remarques pratiques générales (FR)',
+    `notes_en` TEXT DEFAULT NULL COMMENT 'Remarques pratiques générales (EN)',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_ptp_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
-    INDEX `idx_ptp_property_order` (`property_id`, `display_order`, `active`)
+    INDEX `idx_ptp_name` (`name_fr`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------------------------
+-- Table : property_parking_associations (Relations N-N Logements <-> Parkings)
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `property_parking_associations` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `property_id` INT UNSIGNED NOT NULL COMMENT 'Référence vers properties',
+    `category` ENUM('free_street', 'free_spot', 'private_parking', 'tcl_pr') NOT NULL COMMENT 'Type de parking ciblé',
+    `parking_item_id` INT UNSIGNED NOT NULL COMMENT 'ID dans parking_free_spots, parking_private_lots ou parking_tcl_prs',
+    `walking_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied spécifique au logement (FR)',
+    `walking_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès à pied spécifique au logement (EN)',
+    `transit_time_fr` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports spécifique au logement (FR)',
+    `transit_time_en` VARCHAR(100) DEFAULT NULL COMMENT 'Temps d''accès en transports spécifique au logement (EN)',
+    `how_to_reach_fr` TEXT DEFAULT NULL COMMENT 'Itinéraire retour spécifique au logement (FR)',
+    `how_to_reach_en` TEXT DEFAULT NULL COMMENT 'Itinéraire retour spécifique au logement (EN)',
+    `notes_fr` TEXT DEFAULT NULL COMMENT 'Note d''accès spécifique à l''association logement-parking (FR)',
+    `notes_en` TEXT DEFAULT NULL COMMENT 'Note d''accès spécifique à l''association logement-parking (EN)',
+    `display_order` INT NOT NULL DEFAULT 0 COMMENT 'Ordre d''affichage au sein de la catégorie pour ce logement',
+    `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = actif pour ce logement, 0 = masqué',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_ppa_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `uk_prop_cat_item` (`property_id`, `category`, `parking_item_id`),
+    INDEX `idx_ppa_lookup` (`property_id`, `category`, `display_order`, `active`),
+    INDEX `idx_ppa_reverse` (`category`, `parking_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------------------

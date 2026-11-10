@@ -55,7 +55,7 @@ return [
             'name'         => $envVars['DB_NAME'] ?? '',
             'user'         => $envVars['DB_USER'] ?? '',
             'pass'         => $envVars['DB_PASS'] ?? '',
-            'write_tables' => ['properties', 'videos', 'property_parkings', 'parking_free_spots', 'parking_private_lots', 'parking_tcl_prs', 'admin_users', 'admin_sessions', 'admin_activity_logs', 'admin_settings'],
+            'write_tables' => ['properties', 'videos', 'property_parkings', 'parking_free_spots', 'parking_private_lots', 'parking_tcl_prs', 'property_parking_associations', 'admin_users', 'admin_sessions', 'admin_activity_logs', 'admin_settings'],
         ],
     ],
 ];
