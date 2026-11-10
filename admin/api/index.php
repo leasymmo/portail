@@ -526,6 +526,7 @@ try {
                 echo json_encode(['ok' => false, 'error' => 'Action réservée aux administrateurs.']);
                 exit;
             }
+            require_once dirname(__DIR__, 2) . '/src/Admin/ParkingMigration.php';
             $result = $repo->runParkingV2Migration();
             if (!$result['ok']) {
                 http_response_code(500);

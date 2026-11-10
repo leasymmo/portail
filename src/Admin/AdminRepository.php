@@ -9,6 +9,7 @@ use Cdh\Portal\Database;
 
 require_once __DIR__ . '/AiTranslator.php';
 require_once __DIR__ . '/ActivityLogger.php';
+require_once __DIR__ . '/ParkingMigration.php';
 
 /**
  * ==============================================================================
