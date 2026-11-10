@@ -358,6 +358,17 @@ class AiTranslator
             $context = 'Rue ou arrêt gratuit de stationnement (nom de la voie ou du lieu, conseils pratiques)';
         }
 
+        // Champs optionnels d'accès / liaison lors d'une création à la volée pour un hébergement
+        if (!empty($data['walking_time_fr'])) {
+            $fieldsToTranslate['walking_time'] = $data['walking_time_fr'];
+        }
+        if (!empty($data['transit_time_fr'])) {
+            $fieldsToTranslate['transit_time'] = $data['transit_time_fr'];
+        }
+        if (!empty($data['how_to_reach_fr'])) {
+            $fieldsToTranslate['how_to_reach'] = $data['how_to_reach_fr'];
+        }
+
         $dict = [];
         foreach ($fieldsToTranslate as $key => $val) {
             $enKey = $key . '_en';

@@ -1310,6 +1310,13 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         </div>
                     </div>
 
+                    <!-- Champs anglais cachés pour la liaison à la volée -->
+                    <div class="hidden" aria-hidden="true">
+                        <input type="hidden" id="location-onthefly-walking-en">
+                        <input type="hidden" id="location-onthefly-transit-en">
+                        <textarea id="location-onthefly-reach-en"></textarea>
+                    </div>
+
                     <div class="flex items-center justify-between pt-1">
                         <div>
                             <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre dans sa section</label>
@@ -1410,6 +1417,14 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <input type="text" id="link-conn-notes-fr" placeholder="Ex: Sortie conseillée par le côté Nord" class="w-full p-2 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
                     </div>
 
+                    <!-- Champs anglais cachés pour l'accès spécifique à ce logement -->
+                    <div class="hidden" aria-hidden="true">
+                        <input type="hidden" id="link-conn-walking-en">
+                        <input type="hidden" id="link-conn-transit-en">
+                        <textarea id="link-conn-reach-en"></textarea>
+                        <input type="hidden" id="link-conn-notes-en">
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3 pt-1">
                         <div>
                             <label class="block text-xs font-semibold text-gray-300 mb-1">Ordre d'affichage</label>
@@ -1422,12 +1437,20 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
                 </div>
 
-                <div class="pt-3 border-t border-night-border flex items-center justify-between">
-                    <button type="button" onclick="AdminApp.closeLinkExistingModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition">Annuler</button>
-                    <button type="submit" id="btn-submit-link-existing" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5 cursor-pointer">
-                        <span id="btn-submit-link-icon">🔗</span>
-                        <span id="btn-submit-link-text">Associer ce parking</span>
+                <div class="pt-3 border-t border-night-border flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" onclick="AdminApp.openDirectReviewModal('parking_link_existing')" 
+                            class="text-xs text-gray-400 hover:text-gold flex items-center space-x-1.5 transition py-1 cursor-pointer"
+                            title="Consulter et ajuster la version anglaise des informations d'accès">
+                        <span>✏️</span>
+                        <span>Version anglaise</span>
                     </button>
+                    <div class="flex items-center space-x-2 ml-auto">
+                        <button type="button" onclick="AdminApp.closeLinkExistingModal()" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-gray-300 transition cursor-pointer">Annuler</button>
+                        <button type="submit" id="btn-submit-link-existing" class="px-5 py-2.5 rounded-xl bg-gold hover:bg-gold-light text-white font-bold text-xs shadow-lg shadow-gold/20 transition flex items-center space-x-1.5 cursor-pointer">
+                            <span id="btn-submit-link-icon">🔗</span>
+                            <span id="btn-submit-link-text">Associer ce parking</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

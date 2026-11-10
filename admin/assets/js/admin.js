@@ -1964,9 +1964,10 @@ const AdminApp = {
             ];
         } else if (type === 'parking_location' || type === 'parking_item' || type === 'parking_catalog') {
             const cat = (document.getElementById('location-category') ? document.getElementById('location-category').value : 'free_street');
+            let defs = [];
             
             if (cat === 'private_parking') {
-                return [
+                defs = [
                     { key: 'name', label: 'Nom du parking privé', frId: 'location-name-fr-priv', enId: 'location-name-en', isTextarea: false },
                     { key: 'opening_hours', label: 'Horaires d\'accès', frId: 'location-hours-fr-priv', enId: 'location-hours-en', isTextarea: false },
                     { key: 'rates', label: 'Grille tarifaire', frId: 'location-rates-fr-priv', enId: 'location-rates-en', isTextarea: true, rows: 2 },
@@ -1974,25 +1975,62 @@ const AdminApp = {
                     { key: 'notes', label: 'Remarques pratiques', frId: 'location-notes-fr-priv', enId: 'location-notes-en', isTextarea: false }
                 ];
             } else if (cat === 'tcl_pr') {
-                return [
+                defs = [
                     { key: 'name', label: 'Nom du Parc Relais TCL', frId: 'location-name-fr-tcl', enId: 'location-name-en', isTextarea: false },
                     { key: 'opening_hours', label: 'Horaires d\'accès', frId: 'location-hours-fr-tcl', enId: 'location-hours-en', isTextarea: false },
                     { key: 'notes', label: 'Notes complémentaires', frId: 'location-notes-fr-tcl', enId: 'location-notes-en', isTextarea: false }
                 ];
             } else {
                 // Rues gratuites & Dépose minute
-                return [
+                defs = [
                     { key: 'name', label: 'Nom du lieu ou de la rue', frId: 'location-name-fr-free', enId: 'location-name-en', isTextarea: false },
                     { key: 'notes', label: 'Remarques & conseils', frId: 'location-notes-fr-free', enId: 'location-notes-en', isTextarea: false }
                 ];
             }
+
+            // Si création conjointe à la volée avec un hébergement, intégrer les informations d'accès
+            const onTheFlyEl = document.getElementById('location-on-the-fly-connection');
+            if (onTheFlyEl && !onTheFlyEl.classList.contains('hidden')) {
+                if (cat === 'tcl_pr') {
+                    defs.push(
+                        { key: 'transit_time', label: 'Temps TCL (Liaison logement)', frId: 'location-onthefly-walking-fr', enId: 'location-onthefly-transit-en', isTextarea: false },
+                        { key: 'how_to_reach', label: 'Itinéraire retour vers le logement', frId: 'location-onthefly-reach-fr', enId: 'location-onthefly-reach-en', isTextarea: false }
+                    );
+                } else {
+                    defs.push(
+                        { key: 'walking_time', label: 'Temps de marche (Liaison logement)', frId: 'location-onthefly-walking-fr', enId: 'location-onthefly-walking-en', isTextarea: false }
+                    );
+                }
+            }
+            return defs;
         } else if (type === 'parking_connection') {
-            return [
-                { key: 'walking_time', label: 'Temps de marche', frId: 'edit-conn-walking-fr', enId: 'edit-conn-walking-en', isTextarea: false },
-                { key: 'transit_time', label: 'Temps en transports TCL', frId: 'edit-conn-transit-fr', enId: 'edit-conn-transit-en', isTextarea: false },
-                { key: 'how_to_reach', label: 'Itinéraire retour vers le logement', frId: 'edit-conn-reach-fr', enId: 'edit-conn-reach-en', isTextarea: true, rows: 2 },
-                { key: 'notes', label: 'Remarques d\'accès spécifiques au logement', frId: 'edit-conn-notes-fr', enId: 'edit-conn-notes-en', isTextarea: false }
-            ];
+            const cat = document.getElementById('edit-conn-category')?.value || '';
+            if (cat === 'tcl_pr') {
+                return [
+                    { key: 'transit_time', label: 'Temps en transports TCL', frId: 'edit-conn-transit-fr', enId: 'edit-conn-transit-en', isTextarea: false },
+                    { key: 'how_to_reach', label: 'Itinéraire retour vers le logement', frId: 'edit-conn-reach-fr', enId: 'edit-conn-reach-en', isTextarea: true, rows: 2 },
+                    { key: 'notes', label: 'Remarques d\'accès spécifiques au logement', frId: 'edit-conn-notes-fr', enId: 'edit-conn-notes-en', isTextarea: false }
+                ];
+            } else {
+                return [
+                    { key: 'walking_time', label: 'Temps de marche', frId: 'edit-conn-walking-fr', enId: 'edit-conn-walking-en', isTextarea: false },
+                    { key: 'notes', label: 'Remarques d\'accès spécifiques au logement', frId: 'edit-conn-notes-fr', enId: 'edit-conn-notes-en', isTextarea: false }
+                ];
+            }
+        } else if (type === 'parking_link_existing') {
+            const cat = document.getElementById('link-existing-category')?.value || 'free_street';
+            if (cat === 'tcl_pr') {
+                return [
+                    { key: 'transit_time', label: 'Temps en transports TCL', frId: 'link-conn-transit-fr', enId: 'link-conn-transit-en', isTextarea: false },
+                    { key: 'how_to_reach', label: 'Itinéraire retour vers le logement', frId: 'link-conn-reach-fr', enId: 'link-conn-reach-en', isTextarea: true, rows: 2 },
+                    { key: 'notes', label: 'Remarques d\'accès spécifiques au logement', frId: 'link-conn-notes-fr', enId: 'link-conn-notes-en', isTextarea: false }
+                ];
+            } else {
+                return [
+                    { key: 'walking_time', label: 'Temps de marche', frId: 'link-conn-walking-fr', enId: 'link-conn-walking-en', isTextarea: false },
+                    { key: 'notes', label: 'Remarques d\'accès spécifiques au logement', frId: 'link-conn-notes-fr', enId: 'link-conn-notes-en', isTextarea: false }
+                ];
+            }
         }
         return [];
     },
@@ -2049,6 +2087,8 @@ const AdminApp = {
                     this.saveLocation(null, true);
                 } else if (type === 'parking_connection') {
                     this.saveConnectionEdit(null, true);
+                } else if (type === 'parking_link_existing') {
+                    this.submitLinkExisting(null, true);
                 }
                 return;
             } else {
@@ -2157,6 +2197,8 @@ const AdminApp = {
                 await this.saveLocation(null, true);
             } else if (reviewState.type === 'parking_connection') {
                 await this.saveConnectionEdit(null, true);
+            } else if (reviewState.type === 'parking_link_existing') {
+                await this.submitLinkExisting(null, true);
             }
 
             this.closeTranslationReviewModal();
@@ -2646,7 +2688,10 @@ const AdminApp = {
         document.getElementById('location-property-id').value = isCatalog ? 0 : this.state.currentPropertyId;
 
         // Réinitialiser les champs anglais masqués
-        ['location-name-en', 'location-hours-en', 'location-rates-en', 'location-vehicles-en', 'location-notes-en'].forEach(fid => {
+        [
+            'location-name-en', 'location-hours-en', 'location-rates-en', 'location-vehicles-en', 'location-notes-en',
+            'location-onthefly-walking-en', 'location-onthefly-transit-en', 'location-onthefly-reach-en'
+        ].forEach(fid => {
             const el = document.getElementById(fid);
             if (el) el.value = '';
         });
@@ -2752,6 +2797,10 @@ const AdminApp = {
 
     async previewTranslateLocation() {
         const cat = document.getElementById('location-category').value;
+        const id = parseInt(document.getElementById('location-id')?.value || '0', 10);
+        const isCatalogMode = parseInt(document.getElementById('location-is-catalog-mode')?.value || '0', 10) === 1;
+        const isOnthefly = (id === 0 && !isCatalogMode);
+
         let nameFr = '';
         let data = { category: cat };
 
@@ -2774,6 +2823,17 @@ const AdminApp = {
             data.name_fr = nameFr;
             data.address = (document.getElementById('location-address-free')?.value || '').trim();
             data.notes_fr = (document.getElementById('location-notes-fr-free')?.value || '').trim();
+        }
+
+        if (isOnthefly) {
+            const onTheFlyWalking = (document.getElementById('location-onthefly-walking-fr')?.value || '').trim();
+            const onTheFlyReach = (document.getElementById('location-onthefly-reach-fr')?.value || '').trim();
+            if (cat === 'tcl_pr') {
+                data.transit_time_fr = onTheFlyWalking;
+                data.how_to_reach_fr = onTheFlyReach;
+            } else {
+                data.walking_time_fr = onTheFlyWalking;
+            }
         }
 
         if (!nameFr) {
@@ -2812,6 +2872,15 @@ const AdminApp = {
                 }
                 if (res.data.notes_en !== undefined && document.getElementById('location-notes-en')) {
                     document.getElementById('location-notes-en').value = res.data.notes_en;
+                }
+                if (res.data.walking_time_en !== undefined && document.getElementById('location-onthefly-walking-en')) {
+                    document.getElementById('location-onthefly-walking-en').value = res.data.walking_time_en;
+                }
+                if (res.data.transit_time_en !== undefined && document.getElementById('location-onthefly-transit-en')) {
+                    document.getElementById('location-onthefly-transit-en').value = res.data.transit_time_en;
+                }
+                if (res.data.how_to_reach_en !== undefined && document.getElementById('location-onthefly-reach-en')) {
+                    document.getElementById('location-onthefly-reach-en').value = res.data.how_to_reach_en;
                 }
             }
 
@@ -2943,6 +3012,15 @@ const AdminApp = {
                     if (res.data.notes_en !== undefined && document.getElementById('location-notes-en')) {
                         document.getElementById('location-notes-en').value = res.data.notes_en;
                     }
+                    if (res.data.walking_time_en !== undefined && document.getElementById('location-onthefly-walking-en')) {
+                        document.getElementById('location-onthefly-walking-en').value = res.data.walking_time_en;
+                    }
+                    if (res.data.transit_time_en !== undefined && document.getElementById('location-onthefly-transit-en')) {
+                        document.getElementById('location-onthefly-transit-en').value = res.data.transit_time_en;
+                    }
+                    if (res.data.how_to_reach_en !== undefined && document.getElementById('location-onthefly-reach-en')) {
+                        document.getElementById('location-onthefly-reach-en').value = res.data.how_to_reach_en;
+                    }
                 }
 
                 // Ouvre la vérification flash
@@ -2981,11 +3059,11 @@ const AdminApp = {
             notes_en: (document.getElementById('location-notes-en')?.value || '').trim(),
             // Paramètres de liaison à la volée (uniquement si création immédiate pour un hébergement)
             walking_time_fr: (isOnthefly && cat !== 'tcl_pr') ? onTheFlyWalking : '',
-            walking_time_en: (isOnthefly && cat !== 'tcl_pr' && this.state._ontheflyTranslation?.walking_time_en) ? this.state._ontheflyTranslation.walking_time_en : '',
+            walking_time_en: (isOnthefly && cat !== 'tcl_pr') ? ((document.getElementById('location-onthefly-walking-en')?.value || '').trim() || (this.state._ontheflyTranslation?.walking_time_en || '')) : '',
             transit_time_fr: (isOnthefly && cat === 'tcl_pr') ? onTheFlyWalking : '',
-            transit_time_en: (isOnthefly && cat === 'tcl_pr' && this.state._ontheflyTranslation?.transit_time_en) ? this.state._ontheflyTranslation.transit_time_en : '',
+            transit_time_en: (isOnthefly && cat === 'tcl_pr') ? ((document.getElementById('location-onthefly-transit-en')?.value || '').trim() || (this.state._ontheflyTranslation?.transit_time_en || '')) : '',
             how_to_reach_fr: (isOnthefly && cat === 'tcl_pr') ? onTheFlyReach : '',
-            how_to_reach_en: (isOnthefly && cat === 'tcl_pr' && this.state._ontheflyTranslation?.how_to_reach_en) ? this.state._ontheflyTranslation.how_to_reach_en : '',
+            how_to_reach_en: (isOnthefly && cat === 'tcl_pr') ? ((document.getElementById('location-onthefly-reach-en')?.value || '').trim() || (this.state._ontheflyTranslation?.how_to_reach_en || '')) : '',
             display_order: isOnthefly ? onTheFlyOrder : 1,
             active: isOnthefly ? onTheFlyActive : 1
         };
@@ -3148,6 +3226,12 @@ const AdminApp = {
         }
         document.getElementById('link-existing-property-id').value = this.state.currentPropertyId;
 
+        // Réinitialiser les champs anglais masqués de liaison
+        ['link-conn-walking-en', 'link-conn-transit-en', 'link-conn-reach-en', 'link-conn-notes-en'].forEach(fid => {
+            const el = document.getElementById(fid);
+            if (el) el.value = '';
+        });
+
         if (!this.state.parkingCatalogItems || this.state.parkingCatalogItems.length === 0) {
             await this.loadCatalogView();
         }
@@ -3223,7 +3307,7 @@ const AdminApp = {
         }
     },
 
-    async submitLinkExisting(e) {
+    async submitLinkExisting(e, skipAiCheck = false) {
         if (e && typeof e.preventDefault === 'function') e.preventDefault();
         const propertyId = parseInt(document.getElementById('link-existing-property-id').value, 10);
         const category = document.getElementById('link-existing-category').value;
@@ -3234,21 +3318,88 @@ const AdminApp = {
             return;
         }
 
-        const connectionData = {
-            walking_time_fr: (document.getElementById('link-conn-walking-fr')?.value || '').trim(),
-            transit_time_fr: (document.getElementById('link-conn-transit-fr')?.value || '').trim(),
-            how_to_reach_fr: (document.getElementById('link-conn-reach-fr')?.value || '').trim(),
-            notes_fr: (document.getElementById('link-conn-notes-fr')?.value || '').trim(),
-            display_order: parseInt(document.getElementById('link-conn-order')?.value, 10) || 0,
-            active: document.getElementById('link-conn-active')?.checked ? 1 : 0
-        };
+        const walkingFr = (document.getElementById('link-conn-walking-fr')?.value || '').trim();
+        const walkingEn = (document.getElementById('link-conn-walking-en')?.value || '').trim();
+        const transitFr = (document.getElementById('link-conn-transit-fr')?.value || '').trim();
+        const transitEn = (document.getElementById('link-conn-transit-en')?.value || '').trim();
+        const reachFr = (document.getElementById('link-conn-reach-fr')?.value || '').trim();
+        const reachEn = (document.getElementById('link-conn-reach-en')?.value || '').trim();
+        const notesFr = (document.getElementById('link-conn-notes-fr')?.value || '').trim();
+        const notesEn = (document.getElementById('link-conn-notes-en')?.value || '').trim();
+        const displayOrder = parseInt(document.getElementById('link-conn-order')?.value, 10) || 0;
+        const active = document.getElementById('link-conn-active')?.checked ? 1 : 0;
 
         const btn = document.getElementById('btn-submit-link-existing');
-        const origText = btn ? btn.innerHTML : '';
+        const iconEl = document.getElementById('btn-submit-link-icon');
+        const textEl = document.getElementById('btn-submit-link-text');
+        const origIcon = iconEl ? iconEl.innerHTML : '🔗';
+        const origText = textEl ? textEl.textContent : 'Associer ce parking';
+
+        // Étape 1 : Si traduction automatique activée et champs anglais non renseignés, prévisualisation IA Flash Check
+        const hasFr = (walkingFr || transitFr || reachFr || notesFr);
+        const hasMissingEn = (walkingFr && !walkingEn) || (transitFr && !transitEn) || (reachFr && !reachEn) || (notesFr && !notesEn);
+
+        if (!skipAiCheck && this.state.aiAutoTranslateEnabled && hasFr && hasMissingEn) {
+            try {
+                if (btn) btn.disabled = true;
+                if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+                if (textEl) textEl.textContent = 'Traduction IA...';
+
+                const res = await this.apiRequest('api/index.php?action=translate_preview', 'POST', {
+                    type: 'parking_connection',
+                    data: {
+                        walking_time_fr: walkingFr,
+                        transit_time_fr: transitFr,
+                        how_to_reach_fr: reachFr,
+                        notes_fr: notesFr
+                    }
+                });
+
+                if (res.data) {
+                    if (res.data.walking_time_en !== undefined && document.getElementById('link-conn-walking-en')) {
+                        document.getElementById('link-conn-walking-en').value = res.data.walking_time_en;
+                    }
+                    if (res.data.transit_time_en !== undefined && document.getElementById('link-conn-transit-en')) {
+                        document.getElementById('link-conn-transit-en').value = res.data.transit_time_en;
+                    }
+                    if (res.data.how_to_reach_en !== undefined && document.getElementById('link-conn-reach-en')) {
+                        document.getElementById('link-conn-reach-en').value = res.data.how_to_reach_en;
+                    }
+                    if (res.data.notes_en !== undefined && document.getElementById('link-conn-notes-en')) {
+                        document.getElementById('link-conn-notes-en').value = res.data.notes_en;
+                    }
+                }
+
+                this.openTranslationReviewModal('parking_link_existing', res.data);
+                return;
+            } catch (err) {
+                console.warn('[AI] Échec de la traduction préalable liaison :', err);
+            } finally {
+                if (btn) btn.disabled = false;
+                if (iconEl) iconEl.innerHTML = origIcon;
+                if (textEl) textEl.textContent = origText;
+            }
+        }
+
+        // Étape 2 : Sauvegarde de la liaison
+        const connectionData = {
+            walking_time_fr: walkingFr,
+            walking_time_en: (document.getElementById('link-conn-walking-en')?.value || '').trim(),
+            transit_time_fr: transitFr,
+            transit_time_en: (document.getElementById('link-conn-transit-en')?.value || '').trim(),
+            how_to_reach_fr: reachFr,
+            how_to_reach_en: (document.getElementById('link-conn-reach-en')?.value || '').trim(),
+            notes_fr: notesFr,
+            notes_en: (document.getElementById('link-conn-notes-en')?.value || '').trim(),
+            display_order: displayOrder,
+            active: active
+        };
+
         try {
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<span class="animate-spin inline-block mr-1">⏳</span> Enregistrement...';
+                if (iconEl) iconEl.innerHTML = '<span class="inline-block animate-spin">⏳</span>';
+                if (textEl) textEl.textContent = 'Enregistrement...';
             }
             const res = await this.apiRequest('api/index.php?action=parking_association_link', 'POST', {
                 property_id: propertyId,
@@ -3266,7 +3417,8 @@ const AdminApp = {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = origText;
+                if (iconEl) iconEl.innerHTML = origIcon;
+                if (textEl) textEl.textContent = origText;
             }
         }
     },

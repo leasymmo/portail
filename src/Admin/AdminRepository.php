@@ -866,6 +866,16 @@ class AdminRepository
      */
     public function linkParkingToProperty(int $propertyId, string $category, int $parkingItemId, array $connectionData = []): int
     {
+        // Traduction automatique IA de sécurité si champs anglais non renseignés
+        if (!empty($connectionData)) {
+            try {
+                require_once __DIR__ . '/AiTranslator.php';
+                $connectionData = AiTranslator::translateParkingConnection($this->db, $connectionData);
+            } catch (\Throwable $e) {
+                error_log("[AdminRepository::linkParkingToProperty] Traduction IA : " . $e->getMessage());
+            }
+        }
+
         $order = isset($connectionData['display_order']) ? (int)$connectionData['display_order'] : 0;
         if ($order <= 0) {
             $stmtOrder = $this->db->prepare("
@@ -953,6 +963,16 @@ class AdminRepository
     public function updateParkingAssociation(int $associationId, array $data): bool
     {
         try {
+            // Traduction automatique IA de sécurité si champs anglais non renseignés
+            if (!empty($data)) {
+                try {
+                    require_once __DIR__ . '/AiTranslator.php';
+                    $data = AiTranslator::translateParkingConnection($this->db, $data);
+                } catch (\Throwable $e) {
+                    error_log("[AdminRepository::updateParkingAssociation] Traduction IA : " . $e->getMessage());
+                }
+            }
+
             $stmt = $this->db->prepare("
                 UPDATE property_parking_associations SET
                     walking_time_fr = :walking_fr,
