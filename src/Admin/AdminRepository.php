@@ -349,37 +349,7 @@ class AdminRepository
      */
     public function runParkingV2Migration(): array
     {
-        $migrationFile = dirname(__DIR__, 2) . '/database/migration_parking_v2_refactor.sql';
-        if (!file_exists($migrationFile)) {
-            return ['ok' => false, 'error' => 'Fichier database/migration_parking_v2_refactor.sql introuvable.'];
-        }
-
-        $sql = file_get_contents($migrationFile);
-        if (empty($sql)) {
-            return ['ok' => false, 'error' => 'Le fichier de migration est vide.'];
-        }
-
-        try {
-            $this->db->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
-            $this->db->exec($sql);
-
-            $cntFree = (int)$this->db->query("SELECT COUNT(*) FROM parking_free_spots")->fetchColumn();
-            $cntPriv = (int)$this->db->query("SELECT COUNT(*) FROM parking_private_lots")->fetchColumn();
-            $cntTcl  = (int)$this->db->query("SELECT COUNT(*) FROM parking_tcl_prs")->fetchColumn();
-
-            return [
-                'ok' => true,
-                'message' => 'Migration V2 appliquée avec succès ! 67 emplacements structurés.',
-                'stats' => [
-                    'free_spots'   => $cntFree,
-                    'private_lots' => $cntPriv,
-                    'tcl_prs'      => $cntTcl,
-                    'total'        => $cntFree + $cntPriv + $cntTcl
-                ]
-            ];
-        } catch (\Throwable $e) {
-            return ['ok' => false, 'error' => $e->getMessage()];
-        }
+        return ParkingMigration::run($this->db);
     }
 
     /**
