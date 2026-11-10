@@ -553,13 +553,14 @@ class AdminRepository
                 a.active
             FROM property_parking_associations a
             JOIN properties p ON p.id = a.property_id
-            WHERE a.category = :cat AND a.parking_item_id = :item_id
+            WHERE (a.category = :cat OR (a.category IN ('free_street', 'free_spot') AND :cat2 IN ('free_street', 'free_spot')))
+              AND a.parking_item_id = :item_id
             ORDER BY a.display_order ASC, p.name ASC
         ");
 
         foreach ($items as &$item) {
             $cat = $item['category'];
-            $stmtLinks->execute(['cat' => $cat, 'item_id' => $item['id']]);
+            $stmtLinks->execute(['cat' => $cat, 'cat2' => $cat, 'item_id' => $item['id']]);
             $item['linked_properties'] = $stmtLinks->fetchAll();
             $item['links_count'] = count($item['linked_properties']);
         }
@@ -998,16 +999,20 @@ class AdminRepository
             }
 
             // Supprimer les liaisons qui ont été décochées
+            $catFilter = ($category === 'free_street' || $category === 'free_spot') 
+                ? "category IN ('free_street', 'free_spot')" 
+                : "category = " . $this->db->quote($category);
+
             if (empty($keptPropertyIds)) {
-                $stmtDel = $this->db->prepare("DELETE FROM property_parking_associations WHERE category = :cat AND parking_item_id = :item_id");
-                $stmtDel->execute(['cat' => $category, 'item_id' => $parkingItemId]);
+                $stmtDel = $this->db->prepare("DELETE FROM property_parking_associations WHERE {$catFilter} AND parking_item_id = :item_id");
+                $stmtDel->execute(['item_id' => $parkingItemId]);
             } else {
                 $inClause = implode(',', array_map('intval', $keptPropertyIds));
                 $stmtDel = $this->db->prepare("
                     DELETE FROM property_parking_associations 
-                    WHERE category = :cat AND parking_item_id = :item_id AND property_id NOT IN ({$inClause})
+                    WHERE {$catFilter} AND parking_item_id = :item_id AND property_id NOT IN ({$inClause})
                 ");
-                $stmtDel->execute(['cat' => $category, 'item_id' => $parkingItemId]);
+                $stmtDel->execute(['item_id' => $parkingItemId]);
             }
 
             $this->db->commit();
@@ -1115,9 +1120,14 @@ class AdminRepository
 
         $this->db->beginTransaction();
         try {
-            // 1. Supprime les liaisons
-            $stmtAssoc = $this->db->prepare("DELETE FROM property_parking_associations WHERE category = :cat AND parking_item_id = :item_id");
-            $stmtAssoc->execute(['cat' => $category, 'item_id' => $parkingItemId]);
+            // 1. Supprime les liaisons (supporte la polymorphie free_street / free_spot)
+            if ($table === 'parking_free_spots') {
+                $stmtAssoc = $this->db->prepare("DELETE FROM property_parking_associations WHERE category IN ('free_street', 'free_spot') AND parking_item_id = :item_id");
+                $stmtAssoc->execute(['item_id' => $parkingItemId]);
+            } else {
+                $stmtAssoc = $this->db->prepare("DELETE FROM property_parking_associations WHERE category = :cat AND parking_item_id = :item_id");
+                $stmtAssoc->execute(['cat' => $category, 'item_id' => $parkingItemId]);
+            }
 
             // 2. Supprime l'entrée du catalogue
             $stmtCat = $this->db->prepare("DELETE FROM `{$table}` WHERE id = :id");

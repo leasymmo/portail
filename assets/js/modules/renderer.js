@@ -20,7 +20,8 @@ export const PropertyRenderer = {
         AppState.currentProperty = prop;
         AppState.currentVideos = videos || [];
 
-        document.title = `${prop.name} - Portail Voyageurs | Carré d'Hôtes`;
+        const portalLabel = I18n.currentLang === 'en' ? 'Guest Portal' : 'Portail Voyageurs';
+        document.title = `${prop.name} - ${portalLabel} | Carré d'Hôtes`;
 
         // Mise à jour dynamique du manifeste PWA & des métadonnées pour ce logement spécifique
         const manifestLink = document.getElementById('app-manifest-link');
@@ -459,11 +460,21 @@ export const PropertyRenderer = {
                 const name = isEn ? (spot.name_en || spot.name_fr) : spot.name_fr;
                 const walk = isEn ? (spot.walking_time_en || spot.walking_time_fr) : spot.walking_time_fr;
                 const notes = isEn ? (spot.notes_en || spot.notes_fr) : spot.notes_fr;
+                const spotQueryAddress = (spot.address || spot.name_fr || '');
+                const hasCityOrZip = /\b(Lyon|Villeurbanne|Bron|Caluire|Vénissieux|Oullins|69\d{3})\b/i.test(spotQueryAddress);
+                const mapsQuery = encodeURIComponent(spotQueryAddress + (hasCityOrZip ? '' : ' Lyon'));
                 freeCards += `
                     <div class="p-3 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 space-y-1.5">
                         <div class="flex items-center justify-between gap-2">
                             <span class="font-bold text-xs sm:text-sm text-emerald-800 dark:text-emerald-300">${Utils.escapeHtml(name)}</span>
-                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white flex-shrink-0">${I18n.t('parking_free_tag')}</span>
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-600 text-white">${I18n.t('parking_free_tag')}</span>
+                                <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer"
+                                   class="w-6 h-6 rounded-md bg-emerald-600/20 hover:bg-emerald-600 hover:text-white text-emerald-700 dark:text-emerald-300 flex items-center justify-center transition text-xs"
+                                   title="${I18n.t('parking_maps_btn')}">
+                                    📍
+                                </a>
+                            </div>
                         </div>
                         <p class="text-[11px] text-ink-soft dark:text-gray-300">📍 ${Utils.escapeHtml(spot.address || '')}</p>
                         ${walk ? `<p class="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">🚶 ${Utils.escapeHtml(walk)}</p>` : ''}
@@ -487,7 +498,7 @@ export const PropertyRenderer = {
                             <div class="min-w-0 pr-1">
                                 <h5 class="text-xs font-bold text-ink dark:text-white truncate">${Utils.escapeHtml(name)}</h5>
                                 ${walk ? `<p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate mt-0.5">🚶 ${Utils.escapeHtml(walk)}</p>` : ''}
-                                ${notes ? `<p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">${Utils.escapeHtml(notes)}</p>` : ''}
+                                ${notes ? `<p class="text-[10px] text-ink-faint dark:text-gray-400 leading-tight mt-0.5">${Utils.escapeHtml(notes)}</p>` : ''}
                             </div>
                             <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank" rel="noopener noreferrer"
                                class="w-7 h-7 rounded-lg bg-gold/10 hover:bg-gold hover:text-white text-gold flex items-center justify-center flex-shrink-0 transition text-xs"
@@ -534,8 +545,9 @@ export const PropertyRenderer = {
         const streetSched = isEn ? (gen.street_parking_schedule_en || gen.street_parking_schedule_fr) : (gen.street_parking_schedule_fr || gen.street_parking_schedule_en);
         const streetRates = isEn ? (gen.street_parking_rates_en || gen.street_parking_rates_fr) : (gen.street_parking_rates_fr || gen.street_parking_rates_en);
         const streetInfo = isEn ? (gen.street_parking_info_en || gen.street_parking_info_fr) : (gen.street_parking_info_fr || gen.street_parking_info_en);
+        const streetApp = gen.street_parking_app || 'EasyPark';
 
-        if (streetSched || streetRates) {
+        if (streetSched || streetRates || streetInfo) {
             html += `
                 <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
                     <button type="button" id="parking-acc-trigger-street" onclick="toggleParkingSection('street')" aria-expanded="false"
@@ -547,7 +559,7 @@ export const PropertyRenderer = {
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <h4 class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">${I18n.t('parking_sec_street_title')}</h4>
-                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex-shrink-0">EasyPark</span>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex-shrink-0">${Utils.escapeHtml(streetApp)}</span>
                                 </div>
                                 <p class="text-[11px] text-ink-soft dark:text-gray-400 truncate mt-0.5">${I18n.t('parking_sec_street_desc')}</p>
                             </div>
@@ -573,7 +585,7 @@ export const PropertyRenderer = {
 
                         <a href="https://www.easypark.com" target="_blank" rel="noopener noreferrer"
                            class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold transition shadow-xs">
-                            <span>🅿️</span> ${I18n.t('parking_easypark_btn')} ↗
+                            <span>🅿️</span> ${I18n.t('parking_easypark_btn')} (${Utils.escapeHtml(streetApp)}) ↗
                         </a>
                     </div>
                 </div>
@@ -724,7 +736,7 @@ export const PropertyRenderer = {
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <h4 class="text-xs sm:text-sm font-bold text-ink dark:text-white group-hover:text-gold transition truncate">${I18n.t('parking_sec_tcl_title')}</h4>
-                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">TCL P+R</span>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 flex-shrink-0">${tclPrs.length} ${isEn ? 'P+R' : 'parcs'}</span>
                                 </div>
                                 <p class="text-[11px] text-ink-soft dark:text-gray-400 truncate mt-0.5">${I18n.t('parking_sec_tcl_desc')}</p>
                             </div>
@@ -734,6 +746,16 @@ export const PropertyRenderer = {
                     <div id="parking-acc-content-tcl" class="p-3.5 space-y-2.5 border-t border-[#e2e4e6] dark:border-[#38455d] hidden">
                         ${tclCards}
                     </div>
+                </div>
+            `;
+        }
+
+        if (!html.trim()) {
+            html = `
+                <div class="p-8 text-center rounded-2xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] space-y-2">
+                    <span class="text-3xl block">🅿️</span>
+                    <h5 class="text-xs sm:text-sm font-bold text-ink dark:text-white">${isEn ? 'No parking information' : 'Aucune information de stationnement'}</h5>
+                    <p class="text-[11px] text-ink-faint dark:text-gray-400 max-w-xs mx-auto">${isEn ? 'No specific parking options are registered for this property yet.' : 'Aucun emplacement de stationnement n\'est configuré pour cet hébergement.'}</p>
                 </div>
             `;
         }
@@ -750,7 +772,9 @@ export const PropertyRenderer = {
             const card = document.createElement('div');
             card.className = 'video-card card-interactive cascade-item cursor-pointer flex items-center p-3.5 rounded-2xl shadow-xs group';
             card.style.animationDelay = `${Math.min(index * 40, 400)}ms`;
-            card.setAttribute('data-title', (video.title_fr + ' ' + (video.title_en || '')).toLowerCase());
+            const cleanTitle = (video.title_fr + ' ' + (video.title_en || ''))
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            card.setAttribute('data-title', cleanTitle);
             card.onclick = () => ModalManager.openVideo(video);
 
             const bgClass = Utils.sanitizeClassName(video.icon_bg_color, 'bg-blue-50');
@@ -775,6 +799,11 @@ export const PropertyRenderer = {
             `;
             container.appendChild(card);
         });
+
+        const searchInput = document.getElementById('video-search');
+        if (searchInput && searchInput.value.trim().length > 0) {
+            VideoSearch.filter();
+        }
     },
 
     _tabAnimTimeout: null,
@@ -951,10 +980,11 @@ export const ListRenderer = {
         }
 
         if (!props || props.length === 0) {
+            const isEn = I18n.currentLang === 'en';
             container.innerHTML = `
                 <div class="col-span-full text-center py-8 text-xs text-ink-soft dark:text-gray-300 bg-[#faf9f6] dark:bg-[#243047] rounded-2xl border border-line p-6">
-                    <p class="font-semibold text-ink dark:text-white mb-1">Aucun hébergement trouvé dans la base.</p>
-                    <p>Importez le fichier <code>database/install.sql</code> pour charger vos logements.</p>
+                    <p class="font-semibold text-ink dark:text-white mb-1">${isEn ? 'No accommodations found in the database.' : 'Aucun hébergement trouvé dans la base.'}</p>
+                    <p>${isEn ? 'Import the <code>database/install.sql</code> file to initialize your properties.' : 'Importez le fichier <code>database/install.sql</code> pour charger vos logements.'}</p>
                 </div>
             `;
         } else {
@@ -1004,7 +1034,9 @@ export const VideoSearch = {
     _debounceTimer: null,
 
     filter() {
-        const query = document.getElementById('video-search').value.toLowerCase().trim();
+        const inputEl = document.getElementById('video-search');
+        const raw = inputEl ? inputEl.value : '';
+        const query = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
         const cards = document.querySelectorAll('.video-card');
         let visibleCount = 0;
 

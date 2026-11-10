@@ -1751,7 +1751,7 @@ const AdminApp = {
                                 <span>✏️</span>
                                 <span>Modifier la fiche</span>
                             </button>
-                            <button type="button" onclick="AdminApp.confirmDeleteCatalogItem(${it.id}, '${it.category}', '${this.escape(it.name_fr)}', ${linkedCount})" 
+                            <button type="button" onclick="AdminApp.confirmDeleteCatalogItem(${it.id}, '${it.category}')" 
                                     class="py-1.5 px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm"
                                     title="Supprimer définitivement ce parking du catalogue">
                                 <span>🗑️</span>
@@ -2411,7 +2411,7 @@ const AdminApp = {
                             </button>
 
                             <!-- Délier de ce logement -->
-                            <button type="button" onclick="AdminApp.confirmUnlinkParking(${assocId}, '${this.escape(loc.name_fr)}')" 
+                            <button type="button" onclick="AdminApp.confirmUnlinkParking(${assocId})" 
                                     class="py-1.5 px-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" 
                                     title="Retirer ce parking de cet hébergement (sans supprimer le parking du catalogue)">
                                 <span>🗑️</span>
@@ -2948,9 +2948,14 @@ const AdminApp = {
         }
     },
 
-    confirmUnlinkParking(assocId, name) {
+    confirmUnlinkParking(assocId, name = null) {
+        let displayName = name;
+        if (!displayName) {
+            const loc = (this.state.currentParkingLocations || []).find(l => (l.association_id == assocId || l.id == assocId));
+            displayName = loc ? (loc.name_fr || loc.name || 'cet emplacement') : 'cet emplacement';
+        }
         this.confirmAction(
-            `Délier « ${name} » de ce logement ?`,
+            `Délier « ${displayName} » de ce logement ?`,
             `L'emplacement sera retiré de cet hébergement mais restera conservé dans le catalogue général pour les autres logements.`,
             async () => {
                 try {
@@ -2958,7 +2963,7 @@ const AdminApp = {
                         id: assocId,
                         association_id: assocId
                     });
-                    this.showToast(`Emplacement « ${name} » délié de cet hébergement.`);
+                    this.showToast(`Emplacement « ${displayName} » délié de cet hébergement.`);
                     await this.fetchAndRenderParking(this.state.currentPropertyId);
                     await this.loadCatalogView(true);
                 } catch (err) {
@@ -2968,13 +2973,26 @@ const AdminApp = {
         );
     },
 
-    confirmDeleteCatalogItem(id, category, name, linkedCount = 0) {
-        const warning = linkedCount > 0 
-            ? `Attention : ce parking est actuellement associé à ${linkedCount} logement(s). Le supprimer du catalogue le retirera automatiquement de tous ces hébergements.`
+    confirmDeleteCatalogItem(id, category, name = null, linkedCount = null) {
+        let displayName = name;
+        let count = linkedCount;
+        if (!displayName || count === null) {
+            const it = (this.state.parkingCatalogItems || []).find(i => i.id == id && (!category || i.category === category));
+            if (it) {
+                if (!displayName) displayName = it.name_fr || it.name || 'ce parking';
+                if (count === null) count = it.linked_properties_count || 0;
+            } else {
+                if (!displayName) displayName = 'ce parking';
+                if (count === null) count = 0;
+            }
+        }
+
+        const warning = count > 0 
+            ? `Attention : ce parking est actuellement associé à ${count} logement(s). Le supprimer du catalogue le retirera automatiquement de tous ces hébergements.`
             : `Le parking sera définitivement supprimé du catalogue.`;
 
         this.confirmAction(
-            `Supprimer « ${name} » du catalogue ?`,
+            `Supprimer « ${displayName} » du catalogue ?`,
             warning,
             async () => {
                 try {
@@ -2983,7 +3001,7 @@ const AdminApp = {
                         item_id: id,
                         category: category
                     });
-                    this.showToast(`Parking « ${name} » supprimé du catalogue.`);
+                    this.showToast(`Parking « ${displayName} » supprimé du catalogue.`);
                     await this.loadCatalogView(true);
                     if (this.state.currentPropertyId) {
                         await this.fetchAndRenderParking(this.state.currentPropertyId);

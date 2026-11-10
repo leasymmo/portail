@@ -46,7 +46,9 @@ try {
         // Flux direct PDF (Passerelle même origine pour affichage vectoriel PDF.js sans blocage CORS)
         if (isset($_GET['pdf']) && $_GET['pdf'] === '1') {
             $lang = ($_GET['lang'] ?? 'fr') === 'en' ? 'en' : 'fr';
-            $targetPdfUrl = ($lang === 'en') ? ($property['guide_en_url'] ?? '') : ($property['guide_fr_url'] ?? '');
+            $guideFr = $property['guide_fr_url'] ?? '';
+            $guideEn = $property['guide_en_url'] ?? '';
+            $targetPdfUrl = ($lang === 'en') ? ($guideEn ?: $guideFr) : ($guideFr ?: $guideEn);
             
             $scheme = strtolower((string)parse_url($targetPdfUrl, PHP_URL_SCHEME));
             $host = strtolower((string)parse_url($targetPdfUrl, PHP_URL_HOST));

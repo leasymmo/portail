@@ -23,7 +23,7 @@ export const Utils = {
      * Échappe les caractères HTML dangereux pour éviter toute injection XSS
      */
     escapeHtml(str) {
-        if (!str) return '';
+        if (str === null || str === undefined) return '';
         return String(str)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -38,7 +38,8 @@ export const Utils = {
     safeUrl(url) {
         if (!url || typeof url !== 'string') return '#';
         const trimmed = url.trim();
-        if (/^(https?:\/\/|\/|tel:|mailto:)/i.test(trimmed)) {
+        // Autorise https://, http://, liens relatifs / (sauf // protocol-relative), tel: et mailto:
+        if (/^(https?:\/\/|\/(?!\/)|tel:|mailto:)/i.test(trimmed)) {
             return trimmed;
         }
         return '#';

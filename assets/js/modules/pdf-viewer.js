@@ -680,6 +680,9 @@ export const PdfViewer = {
         this._preloadSeq = (this._preloadSeq || 0) + 1;
         this._targetPreloadSlug = null;
         this._targetPreloadLang = null;
+        if (this.pdfDoc && typeof this.pdfDoc.destroy === 'function') {
+            try { this.pdfDoc.destroy(); } catch (e) {}
+        }
         this.pdfDoc = null;
         this.loadedSlug = null;
         this.loadedLang = null;

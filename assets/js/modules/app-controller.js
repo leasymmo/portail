@@ -86,7 +86,10 @@ export const AppController = {
     renderNotFound(slug) {
         const msgEl = document.getElementById('not-found-msg');
         if (msgEl) {
-            msgEl.innerHTML = `Aucun logement ne correspond à l'identifiant <strong>"${Utils.escapeHtml(slug)}"</strong>.`;
+            const isEn = I18n.currentLang === 'en';
+            msgEl.innerHTML = isEn
+                ? `No accommodation matches the identifier <strong>"${Utils.escapeHtml(slug)}"</strong>.`
+                : `Aucun logement ne correspond à l'identifiant <strong>"${Utils.escapeHtml(slug)}"</strong>.`;
         }
         const notFoundView = document.getElementById('view-not-found');
         if (notFoundView) notFoundView.classList.remove('hidden');

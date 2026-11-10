@@ -224,7 +224,7 @@
         <!-- =============================================================== -->
         <div id="view-loading" class="flex-1 min-h-[50vh] flex flex-col items-center justify-center p-8 text-center">
             <img id="loading-logo" src="assets/images/picto-light.png" alt="Logo Carré d'Hôtes - Chargement de votre portail" class="h-16 w-16 object-contain brand-pulse mb-4">
-            <p class="text-xs font-semibold text-gold uppercase tracking-widest">Chargement de votre portail...</p>
+            <p data-i18n="app_loading" class="text-xs font-semibold text-gold uppercase tracking-widest">Chargement de votre portail...</p>
         </div>
 
         <!-- =============================================================== -->
@@ -579,8 +579,8 @@
             <div class="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 flex items-center justify-center text-3xl mb-4 border border-amber-200 dark:border-amber-800" aria-hidden="true">
                 ⚙️
             </div>
-            <h2 class="text-lg font-bold text-ink dark:text-white mb-2">Configuration requise</h2>
-            <p id="error-details" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
+            <h2 data-i18n="error_title" class="text-lg font-bold text-ink dark:text-white mb-2">Configuration requise</h2>
+            <p id="error-details" data-i18n="error_desc" class="text-xs text-ink-soft dark:text-gray-300 mb-6 max-w-xs">
                 Impossible de se connecter à la base MySQL. Veuillez vérifier le fichier <code>.env</code>.
             </p>
             <button onclick="window.location.reload()" class="px-5 py-2.5 bg-ink dark:bg-gold text-white dark:text-ink rounded-xl text-xs font-medium hover:opacity-90 transition shadow-sm cursor-pointer" data-i18n="error_retry">

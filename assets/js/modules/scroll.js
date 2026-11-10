@@ -89,7 +89,8 @@ export const ScrollManager = {
 
     unlock() {
         if (!AppState.isPdfModalOpen && !AppState.isVideoModalOpen && !AppState.isBookingModalOpen && 
-            !AppState.isWifiModalOpen && !AppState.isReviewModalOpen && !AppState.isContactModalOpen) {
+            !AppState.isWifiModalOpen && !AppState.isReviewModalOpen && !AppState.isContactModalOpen &&
+            !AppState.isParkingModalOpen) {
             document.body.classList.remove('modal-open');
             this.updatePageScrollState();
         }

@@ -16,10 +16,11 @@ export const ModalManager = {
     // --- MODALE PDF ---
     openPdf(lang = null, updateUrl = true) {
         if (!AppState.currentProperty) return;
-        const activeLang = lang || I18n.currentLang;
+        let activeLang = lang || I18n.currentLang;
         let pdfUrl = activeLang === 'en' ? AppState.currentProperty.guide_en_url : AppState.currentProperty.guide_fr_url;
         if (!pdfUrl) {
-            pdfUrl = activeLang === 'en' ? AppState.currentProperty.guide_fr_url : AppState.currentProperty.guide_en_url;
+            activeLang = activeLang === 'en' ? 'fr' : 'en';
+            pdfUrl = activeLang === 'en' ? AppState.currentProperty.guide_en_url : AppState.currentProperty.guide_fr_url;
         }
         if (!pdfUrl) return;
 
@@ -514,6 +515,10 @@ export const ModalManager = {
         const triageVideos = document.getElementById('contact-triage-videos');
         if (triageVideos) {
             triageVideos.classList.toggle('hidden', !(AppState.currentVideos && AppState.currentVideos.length > 0));
+        }
+        const triageGuide = document.getElementById('contact-triage-guide');
+        if (triageGuide) {
+            triageGuide.classList.toggle('hidden', !(prop && (prop.guide_fr_url || prop.guide_en_url)));
         }
 
         // Pré-configuration native du lien direct WhatsApp vers Anthony
