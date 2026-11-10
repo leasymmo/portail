@@ -29,9 +29,48 @@ if (!empty($slug) && !preg_match('/^[a-z0-9_\-]{1,100}$/', $slug)) {
 }
 
 try {
+    if (isset($_GET['apply_parking_integrity']) && $_GET['apply_parking_integrity'] === 'cdh_2026_apply') {
+        $pdo = get_db_connection();
+        $sqlFile = __DIR__ . '/database/migration_parking_data_integrity.sql';
+        if (!file_exists($sqlFile)) {
+            echo json_encode(['success' => false, 'error' => 'Migration file not found']);
+            exit;
+        }
+
+        $sql = file_get_contents($sqlFile);
+        // Nettoyage des commentaires et découpage des requêtes
+        $lines = explode("\n", $sql);
+        $cleanSql = '';
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if ($trimmed === '' || str_starts_with($trimmed, '--') || str_starts_with($trimmed, '/*')) {
+                continue;
+            }
+            $cleanSql .= $line . "\n";
+        }
+
+        $statements = array_filter(array_map('trim', explode(';', $cleanSql)));
+        $pdo->beginTransaction();
+        $executed = 0;
+        try {
+            foreach ($statements as $stmtSql) {
+                if (!empty($stmtSql)) {
+                    $pdo->exec($stmtSql);
+                    $executed++;
+                }
+            }
+            $pdo->commit();
+            echo json_encode(['success' => true, 'type' => 'integrity_migration_applied', 'executed_statements' => $executed]);
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+        exit;
+    }
+
     if (isset($_GET['audit_parking']) && $_GET['audit_parking'] === '1') {
         $pdo = get_db_connection();
-        $properties = $pdo->query("SELECT id, slug, name, active FROM properties ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $properties = $pdo->query("SELECT * FROM properties ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
         $general = $pdo->query("SELECT * FROM property_parkings ORDER BY property_id ASC")->fetchAll(PDO::FETCH_ASSOC);
         $freeSpots = $pdo->query("SELECT * FROM parking_free_spots ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
         $privateLots = $pdo->query("SELECT * FROM parking_private_lots ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
