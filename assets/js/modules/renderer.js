@@ -398,6 +398,7 @@ export const PropertyRenderer = {
         if (!content || !trigger) return;
         const isHidden = content.classList.contains('hidden');
         content.classList.toggle('hidden', !isHidden);
+        trigger.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
         const chevron = trigger.querySelector('.acc-chevron');
         if (chevron) {
             chevron.classList.toggle('rotate-180', isHidden);
@@ -478,7 +479,9 @@ export const PropertyRenderer = {
                     const name = isEn ? (street.name_en || street.name_fr) : street.name_fr;
                     const walk = isEn ? (street.walking_time_en || street.walking_time_fr) : street.walking_time_fr;
                     const notes = isEn ? (street.notes_en || street.notes_fr) : street.notes_fr;
-                    const mapsQuery = encodeURIComponent((street.address || street.name_fr) + ' Lyon');
+                    const queryAddress = (street.address || street.name_fr || '');
+                    const hasCityOrZip = /\b(Lyon|Villeurbanne|Bron|Caluire|Vénissieux|Oullins|69\d{3})\b/i.test(queryAddress);
+                    const mapsQuery = encodeURIComponent(queryAddress + (hasCityOrZip ? '' : ' Lyon'));
                     freeCards += `
                         <div class="p-2.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between gap-2">
                             <div class="min-w-0 pr-1">
@@ -504,7 +507,7 @@ export const PropertyRenderer = {
 
             html += `
                 <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
-                    <button type="button" id="parking-acc-trigger-free" onclick="toggleParkingSection('free')"
+                    <button type="button" id="parking-acc-trigger-free" onclick="toggleParkingSection('free')" aria-expanded="true"
                             class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 text-sm">
@@ -535,7 +538,7 @@ export const PropertyRenderer = {
         if (streetSched || streetRates) {
             html += `
                 <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
-                    <button type="button" id="parking-acc-trigger-street" onclick="toggleParkingSection('street')"
+                    <button type="button" id="parking-acc-trigger-street" onclick="toggleParkingSection('street')" aria-expanded="false"
                             class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 text-sm">
@@ -615,7 +618,7 @@ export const PropertyRenderer = {
                                 📍 ${I18n.t('parking_maps_btn')}
                             </a>
                             ${p.booking_url ? `
-                                <a href="${p.booking_url}" target="_blank" rel="noopener noreferrer"
+                                <a href="${Utils.escapeHtml(Utils.safeUrl(p.booking_url))}" target="_blank" rel="noopener noreferrer"
                                    class="flex-1 py-1.5 px-3 rounded-lg bg-gold hover:bg-[#a38234] text-white text-xs font-bold text-center transition shadow-xs">
                                     🎫 ${I18n.t('parking_book_btn')} ↗
                                 </a>
@@ -627,7 +630,7 @@ export const PropertyRenderer = {
 
             html += `
                 <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
-                    <button type="button" id="parking-acc-trigger-private" onclick="toggleParkingSection('private')"
+                    <button type="button" id="parking-acc-trigger-private" onclick="toggleParkingSection('private')" aria-expanded="false"
                             class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0 text-sm">
@@ -701,7 +704,7 @@ export const PropertyRenderer = {
                                class="flex-1 py-1.5 px-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gold hover:text-white text-ink dark:text-white text-xs font-semibold text-center transition">
                                 📍 ${I18n.t('parking_maps_btn')}
                             </a>
-                            <a href="${pr.booking_url || 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures'}" target="_blank" rel="noopener noreferrer"
+                            <a href="${Utils.escapeHtml(Utils.safeUrl(pr.booking_url || 'https://www.tcl.fr/se-deplacer/voitures-et-reseau-tcl/parcs-relais-pr-voitures'))}" target="_blank" rel="noopener noreferrer"
                                class="flex-1 py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold text-center transition shadow-xs">
                                 🚇 ${I18n.t('parking_tcl_btn')} ↗
                             </a>
@@ -712,7 +715,7 @@ export const PropertyRenderer = {
 
             html += `
                 <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
-                    <button type="button" id="parking-acc-trigger-tcl" onclick="toggleParkingSection('tcl')"
+                    <button type="button" id="parking-acc-trigger-tcl" onclick="toggleParkingSection('tcl')" aria-expanded="false"
                             class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center flex-shrink-0 text-sm">

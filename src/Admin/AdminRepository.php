@@ -542,6 +542,41 @@ class AdminRepository
         $category = $data['category'] ?? 'free_street';
         $propertyId = (int)($data['property_id'] ?? 0);
 
+        // Détection et gestion propre du changement de catégorie (migration entre tables dédiées)
+        $originalCategory = !empty($data['original_category']) ? $data['original_category'] : null;
+        if ($id > 0) {
+            $isOldFree = in_array($originalCategory, ['free_street', 'free_spot'], true);
+            $isNewFree = in_array($category, ['free_street', 'free_spot'], true);
+
+            $targetTableChanged = false;
+            if ($originalCategory) {
+                if ($isOldFree !== $isNewFree || (!$isOldFree && !$isNewFree && $originalCategory !== $category)) {
+                    $targetTableChanged = true;
+                }
+            } else {
+                $destTable = $isNewFree ? 'parking_free_spots' : ($category === 'private_parking' ? 'parking_private_lots' : 'parking_tcl_prs');
+                $stmtCheck = $this->db->prepare("SELECT COUNT(*) FROM `{$destTable}` WHERE id = :id");
+                $stmtCheck->execute(['id' => $id]);
+                if ((int)$stmtCheck->fetchColumn() === 0) {
+                    $targetTableChanged = true;
+                }
+            }
+
+            if ($targetTableChanged) {
+                if ($originalCategory) {
+                    $this->deleteParkingLocation($id, $originalCategory);
+                } else {
+                    foreach (['parking_free_spots', 'parking_private_lots', 'parking_tcl_prs'] as $t) {
+                        $destTbl = $isNewFree ? 'parking_free_spots' : ($category === 'private_parking' ? 'parking_private_lots' : 'parking_tcl_prs');
+                        if ($t !== $destTbl) {
+                            $this->db->prepare("DELETE FROM `{$t}` WHERE id = :id")->execute(['id' => $id]);
+                        }
+                    }
+                }
+                $id = 0;
+            }
+        }
+
         // Traduction automatique intelligente ciblée par type
         $data = AiTranslator::translateParkingLocation($this->db, $data);
 

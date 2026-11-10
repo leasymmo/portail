@@ -2067,16 +2067,21 @@ const AdminApp = {
             if (catFree) catFree.classList.remove('hidden');
             if (catPriv) catPriv.classList.add('hidden');
             if (catTcl) catTcl.classList.add('hidden');
+            const targetSubtype = (cat === 'free_spot' ? 'free_spot' : 'free_street');
             const subtypeEl = document.getElementById('location-free-subtype');
-            if (subtypeEl) {
-                subtypeEl.value = (cat === 'free_spot' ? 'free_spot' : 'free_street');
-            }
+            if (subtypeEl) subtypeEl.value = targetSubtype;
+            const rStreet = document.getElementById('location-free-subtype-street');
+            const rSpot = document.getElementById('location-free-subtype-spot');
+            if (rStreet) rStreet.checked = (targetSubtype === 'free_street');
+            if (rSpot) rSpot.checked = (targetSubtype === 'free_spot');
         }
     },
 
     onFreeSubtypeChange(subtype) {
         const catInput = document.getElementById('location-category');
         if (catInput) catInput.value = subtype;
+        const subtypeEl = document.getElementById('location-free-subtype');
+        if (subtypeEl) subtypeEl.value = subtype;
     },
 
     renderParkingLocationsList() {
@@ -2104,8 +2109,8 @@ const AdminApp = {
                         <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
                             <!-- Poignée d'ordre ▲ / ▼ -->
                             <div class="flex flex-col space-y-1 text-gray-500 flex-shrink-0 pt-0.5">
-                                <button type="button" onclick="AdminApp.moveLocation(${loc.id}, -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
-                                <button type="button" onclick="AdminApp.moveLocation(${loc.id}, 1)" ${idx === listForCat.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
+                                <button type="button" onclick="AdminApp.moveLocation(${loc.id}, '${loc.category}', -1)" ${idx === 0 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Monter">▲</button>
+                                <button type="button" onclick="AdminApp.moveLocation(${loc.id}, '${loc.category}', 1)" ${idx === listForCat.length - 1 ? 'disabled class="opacity-20 cursor-not-allowed"' : 'class="p-1 rounded hover:bg-white/5 hover:text-gold transition"'} title="Descendre">▼</button>
                             </div>
 
                             <div class="min-w-0 flex-1">
@@ -2139,7 +2144,7 @@ const AdminApp = {
 
                         <!-- Statut Actif / Masqué -->
                         <div class="flex-shrink-0">
-                            <button type="button" onclick="AdminApp.toggleLocationStatus(${loc.id})" title="Cliquer pour basculer la visibilité"
+                            <button type="button" onclick="AdminApp.toggleLocationStatus(${loc.id}, '${loc.category}')" title="Cliquer pour basculer la visibilité"
                                     class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${loc.active == 1 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border border-gray-500/30 hover:bg-gray-500/20'}">
                                 ${loc.active == 1 ? '● Actif' : '○ Masqué'}
                             </button>
@@ -2161,7 +2166,7 @@ const AdminApp = {
                         `}
 
                         ${loc.booking_url ? `
-                            <a href="${loc.booking_url}" target="_blank" rel="noopener noreferrer"
+                            <a href="${this.escape(this.safeUrl(loc.booking_url))}" target="_blank" rel="noopener noreferrer"
                                class="col-span-3 py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm"
                                title="Lien réservation ou fiche officielle">
                                 <span>🔗</span>
@@ -2169,12 +2174,12 @@ const AdminApp = {
                             </a>
                         ` : ''}
 
-                        <button type="button" onclick="AdminApp.openLocationModal(${loc.id})" 
+                        <button type="button" onclick="AdminApp.openLocationModal(${loc.id}, '${loc.category}')" 
                                 class="${loc.booking_url ? 'col-span-4' : 'col-span-4'} py-2 px-2 rounded-xl bg-night border border-night-border hover:border-gold hover:text-gold text-xs font-semibold text-gray-300 transition flex items-center justify-center space-x-1 shadow-sm" title="Modifier l'emplacement">
                             <span>✏️</span>
                             <span>Modifier</span>
                         </button>
-                        <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id})" 
+                        <button type="button" onclick="AdminApp.confirmDeleteLocation(${loc.id}, '${loc.category}')" 
                                 class="col-span-2 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 hover:text-white border border-red-500/20 text-xs font-semibold text-red-400 transition flex items-center justify-center shadow-sm" title="Supprimer cet emplacement">
                             <span>🗑️</span>
                         </button>
@@ -2297,10 +2302,13 @@ const AdminApp = {
         });
 
         if (id > 0) {
-            const loc = (this.state.currentParkingLocations || []).find(l => l.id == id);
+            const loc = (this.state.currentParkingLocations || []).find(l => l.id == id && (!defaultCategory || l.category === defaultCategory));
             if (!loc) return;
             const cat = loc.category || 'free_street';
             titleEl.textContent = `Modifier : ${loc.name_fr}`;
+            if (document.getElementById('location-original-category')) {
+                document.getElementById('location-original-category').value = cat;
+            }
             this.onLocationCategoryChange(cat);
 
             if (cat === 'private_parking') {
@@ -2345,6 +2353,9 @@ const AdminApp = {
             document.getElementById('location-active').checked = (loc.active == 1);
         } else {
             titleEl.textContent = 'Ajouter un emplacement';
+            if (document.getElementById('location-original-category')) {
+                document.getElementById('location-original-category').value = '';
+            }
             this.onLocationCategoryChange(defaultCategory);
             const countForCat = (this.state.currentParkingLocations || []).filter(l => {
                 if (defaultCategory === 'private_parking') return l.category === 'private_parking';
@@ -2580,6 +2591,7 @@ const AdminApp = {
             id,
             property_id: parseInt(document.getElementById('location-property-id').value, 10),
             category: cat,
+            original_category: (document.getElementById('location-original-category')?.value || '').trim(),
             name_fr: nameFr,
             name_en: (document.getElementById('location-name-en')?.value || '').trim(),
             address: address,
@@ -2616,18 +2628,18 @@ const AdminApp = {
         }
     },
 
-    async moveLocation(id, direction) {
-        const item = (this.state.currentParkingLocations || []).find(l => l.id == id);
+    async moveLocation(id, category, direction) {
+        const item = (this.state.currentParkingLocations || []).find(l => l.id == id && (!category || l.category === category));
         if (!item) return;
 
-        const cat = item.category;
+        const cat = category || item.category;
         const isFree = (cat === 'free_street' || cat === 'free_spot');
         const list = (this.state.currentParkingLocations || []).filter(l => {
             if (isFree) return (l.category === 'free_street' || l.category === 'free_spot');
             return l.category === cat;
         });
 
-        const idx = list.findIndex(l => l.id == id);
+        const idx = list.findIndex(l => l.id == id && l.category === cat);
         if (idx < 0) return;
 
         const targetIdx = idx + direction;
@@ -2649,9 +2661,9 @@ const AdminApp = {
         }
     },
 
-    async toggleLocationStatus(id) {
-        const item = (this.state.currentParkingLocations || []).find(l => l.id == id);
-        const cat = item ? item.category : null;
+    async toggleLocationStatus(id, category) {
+        const item = (this.state.currentParkingLocations || []).find(l => l.id == id && (!category || l.category === category));
+        const cat = category || (item ? item.category : null);
         try {
             await this.apiRequest('api/index.php?action=parking_location_toggle', 'POST', { id, category: cat });
             if (item) item.active = (item.active == 1 ? 0 : 1);
@@ -2662,10 +2674,10 @@ const AdminApp = {
         }
     },
 
-    confirmDeleteLocation(id, name = null) {
-        const loc = (this.state.currentParkingLocations || []).find(l => l.id == id);
+    confirmDeleteLocation(id, category, name = null) {
+        const loc = (this.state.currentParkingLocations || []).find(l => l.id == id && (!category || l.category === category));
         const resolvedName = name || (loc ? loc.name_fr : 'cet emplacement');
-        const cat = loc ? loc.category : null;
+        const cat = category || (loc ? loc.category : null);
 
         this.confirmAction(
             `Supprimer ${resolvedName} ?`,
@@ -3057,6 +3069,15 @@ const AdminApp = {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    },
+
+    safeUrl(url) {
+        if (!url || typeof url !== 'string') return '#';
+        const trimmed = url.trim();
+        if (/^(https?:\/\/|\/|tel:|mailto:)/i.test(trimmed)) {
+            return trimmed;
+        }
+        return '#';
     },
 
     formatDate(dateStr) {

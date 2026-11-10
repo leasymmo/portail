@@ -1017,6 +1017,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <input type="hidden" id="location-id" value="0">
                 <input type="hidden" id="location-property-id" value="0">
                 <input type="hidden" id="location-category" value="free_street">
+                <input type="hidden" id="location-original-category" value="">
 
                 <!-- SÉLECTEUR DE CATÉGORIE VISUEL EN SEGMENTS -->
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-night border border-night-border space-y-2">
@@ -1050,17 +1051,18 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                 <!-- SECTION A : CHAMPS RUES ET DÉPOSE-MINUTE GRATUITS             -->
                 <!-- ============================================================== -->
                 <div id="cat-fields-free" class="space-y-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                    <input type="hidden" id="location-free-subtype" value="free_street">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                             <span>🟢</span> Détails de la rue gratuite ou dépose-minute
                         </span>
                         <div class="flex items-center gap-3 text-xs">
                             <label class="flex items-center gap-1 text-gray-300 cursor-pointer">
-                                <input type="radio" name="location-free-subtype" value="free_street" onchange="AdminApp.onFreeSubtypeChange(this.value)" checked class="accent-emerald-500">
+                                <input type="radio" id="location-free-subtype-street" name="location-free-subtype" value="free_street" onchange="AdminApp.onFreeSubtypeChange(this.value)" checked class="accent-emerald-500">
                                 <span>Rue gratuite</span>
                             </label>
                             <label class="flex items-center gap-1 text-gray-300 cursor-pointer">
-                                <input type="radio" name="location-free-subtype" value="free_spot" onchange="AdminApp.onFreeSubtypeChange(this.value)" class="accent-emerald-500">
+                                <input type="radio" id="location-free-subtype-spot" name="location-free-subtype" value="free_spot" onchange="AdminApp.onFreeSubtypeChange(this.value)" class="accent-emerald-500">
                                 <span>Arrêt minute / Super U</span>
                             </label>
                         </div>
