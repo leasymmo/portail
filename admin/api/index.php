@@ -66,6 +66,7 @@ try {
         // INITIALISATION GLOBALE DU DASHBOARD (Charge tout en 1 requête rapide)
         // ----------------------------------------------------------------------
         case 'init':
+            $repo->cleanOldParkingTables();
             $stats = $repo->getDashboardStats();
             $properties = $repo->getAllProperties();
             $recentLogs = ActivityLogger::getRecent(15);
@@ -509,6 +510,7 @@ try {
         // ----------------------------------------------------------------------
         case 'parking_get':
             $propertyId = (int)($_GET['property_id'] ?? 0);
+            $repo->cleanOldParkingTables();
             $sections = $repo->getParkingSectionsByProperty($propertyId);
             $allLocations = $repo->getParkingLocationsByProperty($propertyId);
             echo json_encode([
@@ -531,6 +533,16 @@ try {
             if (!$result['ok']) {
                 http_response_code(500);
             }
+            echo json_encode($result, JSON_UNESCAPED_UNICODE);
+            exit;
+
+        case 'parking_clean_v2':
+            if ($currentUser['role'] === 'editor') {
+                http_response_code(403);
+                echo json_encode(['ok' => false, 'error' => 'Action réservée aux administrateurs.']);
+                exit;
+            }
+            $result = $repo->cleanOldParkingTables();
             echo json_encode($result, JSON_UNESCAPED_UNICODE);
             exit;
 

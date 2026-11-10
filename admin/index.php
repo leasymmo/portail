@@ -386,7 +386,7 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                             <div>
                                 <h4 class="text-sm font-bold text-amber-300">Nouvelle architecture Stationnement V2 prête à être activée</h4>
                                 <p class="text-xs text-amber-200/80 mt-0.5 leading-relaxed">
-                                    Vos 3 tables spécialisées (rues, garages privés, P+R TCL) et la vue unifiée vont être créées. Vos emplacements actuels seront automatiquement migrés sans coupure.
+                                    Vos 3 tables spécialisées (rues, garages privés, P+R TCL) vont être créées. Vos emplacements actuels seront automatiquement migrés sans coupure.
                                 </p>
                             </div>
                         </div>

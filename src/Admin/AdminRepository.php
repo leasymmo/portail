@@ -38,8 +38,16 @@ class AdminRepository
             'total_videos'      => (int)$this->db->query('SELECT COUNT(*) FROM videos')->fetchColumn(),
             'active_videos'     => (int)$this->db->query('SELECT COUNT(*) FROM videos WHERE active = 1')->fetchColumn(),
             'total_parkings'    => (int)$this->db->query('SELECT COUNT(*) FROM property_parkings')->fetchColumn(),
-            'total_locations'   => (int)$this->db->query('SELECT COUNT(*) FROM parking_locations')->fetchColumn(),
-            'active_locations'  => (int)$this->db->query('SELECT COUNT(*) FROM parking_locations WHERE active = 1')->fetchColumn(),
+            'total_locations'   => (int)$this->db->query('
+                SELECT (SELECT COUNT(*) FROM parking_free_spots) + 
+                       (SELECT COUNT(*) FROM parking_private_lots) + 
+                       (SELECT COUNT(*) FROM parking_tcl_prs)
+            ')->fetchColumn(),
+            'active_locations'  => (int)$this->db->query('
+                SELECT (SELECT COUNT(*) FROM parking_free_spots WHERE active = 1) + 
+                       (SELECT COUNT(*) FROM parking_private_lots WHERE active = 1) + 
+                       (SELECT COUNT(*) FROM parking_tcl_prs WHERE active = 1)
+            ')->fetchColumn(),
             'total_admins'      => (int)$this->db->query('SELECT COUNT(*) FROM admin_users WHERE active = 1')->fetchColumn(),
         ];
         return $stats;
@@ -54,7 +62,11 @@ class AdminRepository
         $stmt = $this->db->query('
             SELECT p.*,
                    (SELECT COUNT(*) FROM videos v WHERE v.property_id = p.id) as videos_count,
-                   (SELECT COUNT(*) FROM parking_locations pl WHERE pl.property_id = p.id) as parking_locations_count,
+                   (
+                       (SELECT COUNT(*) FROM parking_free_spots pfs WHERE pfs.property_id = p.id) +
+                       (SELECT COUNT(*) FROM parking_private_lots ppl WHERE ppl.property_id = p.id) +
+                       (SELECT COUNT(*) FROM parking_tcl_prs ptp WHERE ptp.property_id = p.id)
+                   ) as parking_locations_count,
                    (SELECT id FROM property_parkings pp WHERE pp.property_id = p.id LIMIT 1) as parking_id
             FROM properties p
             ORDER BY p.name ASC
@@ -354,6 +366,14 @@ class AdminRepository
     }
 
     /**
+     * Nettoie définitivement les anciennes tables et vues obsolètes
+     */
+    public function cleanOldParkingTables(): array
+    {
+        return ParkingMigration::dropOldTables($this->db);
+    }
+
+    /**
      * Récupère les emplacements sous forme structurée en 3 sections distinctes
      */
     public function getParkingSectionsByProperty(int $propertyId): array
@@ -392,22 +412,10 @@ class AdminRepository
                 'tcl_prs'      => $tcl,
             ];
         } catch (Throwable $e) {
-            // Repli sur l'ancienne table ou la vue unifiée parking_locations
-            try {
-                $stmt = $this->db->prepare('
-                    SELECT * FROM parking_locations
-                    WHERE property_id = :pid
-                    ORDER BY display_order ASC, id ASC
-                ');
-                $stmt->execute(['pid' => $propertyId]);
-                $all = $stmt->fetchAll();
-            } catch (Throwable $e2) {
-                $all = [];
-            }
             return [
-                'free_spots'   => array_values(array_filter($all, fn($l) => in_array($l['category'] ?? '', ['free_street', 'free_spot']))),
-                'private_lots' => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'private_parking')),
-                'tcl_prs'      => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'tcl_pr')),
+                'free_spots'   => [],
+                'private_lots' => [],
+                'tcl_prs'      => [],
             ];
         }
     }
@@ -417,18 +425,8 @@ class AdminRepository
      */
     public function getParkingLocationsByProperty(int $propertyId): array
     {
-        try {
-            $sections = $this->getParkingSectionsByProperty($propertyId);
-            return array_merge($sections['free_spots'] ?? [], $sections['private_lots'] ?? [], $sections['tcl_prs'] ?? []);
-        } catch (Throwable $e) {
-            $stmt = $this->db->prepare('
-                SELECT * FROM parking_locations
-                WHERE property_id = :pid
-                ORDER BY display_order ASC, id ASC
-            ');
-            $stmt->execute(['pid' => $propertyId]);
-            return $stmt->fetchAll();
-        }
+        $sections = $this->getParkingSectionsByProperty($propertyId);
+        return array_merge($sections['free_spots'] ?? [], $sections['private_lots'] ?? [], $sections['tcl_prs'] ?? []);
     }
 
     public function saveParkingGeneral(int $propertyId, array $data): bool
@@ -527,14 +525,7 @@ class AdminRepository
             if ($row) return $row;
         } catch (Throwable $e) {}
 
-        // Repli sur l'ancienne table/vue
-        try {
-            $stmt = $this->db->prepare('SELECT * FROM parking_locations WHERE id = :id LIMIT 1');
-            $stmt->execute(['id' => $id]);
-            return $stmt->fetch() ?: null;
-        } catch (Throwable $e) {
-            return null;
-        }
+        return null;
     }
 
     public function findParkingLocationById(int $id): ?array

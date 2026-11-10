@@ -22,7 +22,6 @@ class ParkingMigration
             // 3. Migrer les données si la table de base existe
             if ($status['is_base_table']) {
                 self::migrateFromTable($db, 'parking_locations');
-                self::archiveBaseTable($db);
             } elseif ($status['has_archive']) {
                 // Si la table est déjà archivée mais les nouvelles tables sont vides, re-migrer depuis l'archive
                 $totalNew = (int)$db->query("SELECT (SELECT COUNT(*) FROM parking_free_spots) + (SELECT COUNT(*) FROM parking_private_lots) + (SELECT COUNT(*) FROM parking_tcl_prs)")->fetchColumn();
@@ -31,20 +30,18 @@ class ParkingMigration
                 }
             }
 
-            // 4. Créer ou remplacer la vue rétrocompatible
-            self::createView($db);
+            // 4. Nettoyer les anciennes tables et colonnes obsolètes
+            $cleaned = self::dropOldTables($db);
 
-            // 5. Nettoyer les colonnes obsolètes de property_parkings
-            self::cleanDeadColumns($db);
-
-            // 6. Récupérer les métriques
+            // 5. Récupérer les métriques
             $cntFree = (int)$db->query("SELECT COUNT(*) FROM parking_free_spots")->fetchColumn();
             $cntPriv = (int)$db->query("SELECT COUNT(*) FROM parking_private_lots")->fetchColumn();
             $cntTcl  = (int)$db->query("SELECT COUNT(*) FROM parking_tcl_prs")->fetchColumn();
 
             return [
                 'ok'      => true,
-                'message' => 'Migration V2 appliquée avec succès ! Les 3 tables et la vue sont opérationnelles.',
+                'message' => 'Migration V2 et nettoyage appliqués avec succès ! Architecture 100% normalisée.',
+                'cleaned' => $cleaned,
                 'stats'   => [
                     'free_spots'   => $cntFree,
                     'private_lots' => $cntPriv,
@@ -225,73 +222,6 @@ class ParkingMigration
     }
 
     /**
-     * Archive la table de base d'origine
-     */
-    public static function archiveBaseTable(PDO $db): void
-    {
-        try {
-            $db->exec("DROP TABLE IF EXISTS `_archive_parking_locations`");
-            $db->exec("RENAME TABLE `parking_locations` TO `_archive_parking_locations`");
-        } catch (Throwable $e) {
-            // Ignorer si la table est déjà renommée
-        }
-    }
-
-    /**
-     * Crée ou remplace la vue SQL unifiée rétrocompatible
-     */
-    public static function createView(PDO $db): void
-    {
-        $db->exec("
-            CREATE OR REPLACE VIEW `parking_locations` AS
-            SELECT 
-                id, property_id,
-                CASE WHEN spot_type = 'spot' THEN 'free_spot' ELSE 'free_street' END AS category,
-                name_fr, name_en, address,
-                walking_time_fr, walking_time_en,
-                NULL AS walking_minutes, NULL AS transit_time_fr, NULL AS transit_time_en,
-                NULL AS max_height, NULL AS capacity,
-                NULL AS opening_hours_fr, NULL AS opening_hours_en,
-                NULL AS rates_fr, NULL AS rates_en,
-                NULL AS suitable_vehicles_fr, NULL AS suitable_vehicles_en,
-                NULL AS how_to_reach_fr, NULL AS how_to_reach_en,
-                NULL AS operator, NULL AS booking_url,
-                notes_fr, notes_en, display_order, active, created_at, updated_at
-            FROM `parking_free_spots`
-            UNION ALL
-            SELECT 
-                id, property_id,
-                'private_parking' AS category,
-                name_fr, name_en, address,
-                walking_time_fr, walking_time_en,
-                NULL AS walking_minutes, NULL AS transit_time_fr, NULL AS transit_time_en,
-                max_height, NULL AS capacity,
-                opening_hours_fr, opening_hours_en,
-                rates_fr, rates_en,
-                suitable_vehicles_fr, suitable_vehicles_en,
-                NULL AS how_to_reach_fr, NULL AS how_to_reach_en,
-                operator, booking_url,
-                notes_fr, notes_en, display_order, active, created_at, updated_at
-            FROM `parking_private_lots`
-            UNION ALL
-            SELECT 
-                id, property_id,
-                'tcl_pr' AS category,
-                name_fr, name_en, address,
-                NULL AS walking_time_fr, NULL AS walking_time_en,
-                NULL AS walking_minutes, transit_time_fr, transit_time_en,
-                NULL AS max_height, capacity,
-                opening_hours_fr, opening_hours_en,
-                NULL AS rates_fr, NULL AS rates_en,
-                NULL AS suitable_vehicles_fr, NULL AS suitable_vehicles_en,
-                how_to_reach_fr, how_to_reach_en,
-                'TCL' AS operator, booking_url,
-                notes_fr, notes_en, display_order, active, created_at, updated_at
-            FROM `parking_tcl_prs`
-        ");
-    }
-
-    /**
      * Supprime les colonnes mortes de property_parkings
      */
     public static function cleanDeadColumns(PDO $db): void
@@ -309,6 +239,57 @@ class ParkingMigration
             } catch (Throwable $e) {
                 // Ignore if already dropped
             }
+        }
+    }
+
+    /**
+     * Supprime définitivement les anciennes tables et vues obsolètes
+     */
+    public static function dropOldTables(PDO $db): array
+    {
+        $dropped = [];
+        try {
+            // 1. Suppression de la table d'archive temporaire
+            $stmtArchive = $db->query("
+                SELECT COUNT(*) FROM information_schema.tables 
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '_archive_parking_locations'
+            ");
+            if ($stmtArchive && (int)$stmtArchive->fetchColumn() > 0) {
+                $db->exec("DROP TABLE IF EXISTS `_archive_parking_locations`");
+                $dropped[] = '_archive_parking_locations';
+            }
+
+            // 2. Suppression de l'ancienne table ou vue parking_locations
+            $stmtType = $db->query("
+                SELECT TABLE_TYPE FROM information_schema.tables 
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'parking_locations'
+            ");
+            $type = $stmtType ? $stmtType->fetchColumn() : null;
+            if ($type === 'VIEW') {
+                $db->exec("DROP VIEW IF EXISTS `parking_locations`");
+                $dropped[] = 'parking_locations (vue)';
+            } elseif ($type === 'BASE TABLE') {
+                $db->exec("DROP TABLE IF EXISTS `parking_locations`");
+                $dropped[] = 'parking_locations (table)';
+            }
+
+            // 3. Suppression des colonnes mortes de property_parkings
+            self::cleanDeadColumns($db);
+
+            if (!empty($dropped) && class_exists('Cdh\Portal\Admin\ActivityLogger')) {
+                ActivityLogger::log('clean', 'database', 0, 'Suppression des anciennes tables : ' . implode(', ', $dropped));
+            }
+
+            return [
+                'ok'      => true,
+                'dropped' => $dropped,
+                'message' => empty($dropped) ? 'Aucune ancienne table résiduelle à supprimer.' : 'Anciennes tables supprimées : ' . implode(', ', $dropped)
+            ];
+        } catch (Throwable $e) {
+            return [
+                'ok'    => false,
+                'error' => 'Erreur lors de la suppression des anciennes tables : ' . $e->getMessage()
+            ];
         }
     }
 }

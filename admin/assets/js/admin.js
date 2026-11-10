@@ -1578,7 +1578,7 @@ const AdminApp = {
 
         this.confirmAction(
             "Lancer la migration Stationnement V2 ?",
-            "Les 3 nouvelles tables spécialisées et la vue unifiée vont être créées. Tous vos emplacements existants seront automatiquement migrés sans coupure ni perte.",
+            "Les 3 nouvelles tables spécialisées vont être créées. Tous vos emplacements existants seront automatiquement migrés sans coupure ni perte.",
             async () => {
                 try {
                     if (btn) {

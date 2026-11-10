@@ -313,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $pdoConn
                                 <li>🚇 <strong><?= $tclPrsCount ?></strong> Parcs Relais TCL connectés (<code>parking_tcl_prs</code>)</li>
                             </ul>
                             <p class="text-[11px] text-green-700 font-semibold mt-1.5">
-                                ✓ Tables spécialisées et vue <code>parking_locations</code> opérationnelles !
+                                ✓ Tables spécialisées (Architecture V2 Normalisée) opérationnelles !
                             </p>
                         <?php elseif ($parkingTablesExist && $parkingsCount > 0): ?>
                             <p class="text-xs text-gray-600 mt-0.5">

@@ -126,35 +126,17 @@ class PropertyRepository
                 'tcl_pr'          => $tcl,
                 'all'             => array_merge($free, $priv, $tcl)
             ];
-        } catch (\PDOException $e) {
-            // Repli sur l'ancienne table ou vue parking_locations
-            try {
-                $pdo = Database::getConnection();
-                $stmt = $pdo->prepare("
-                    SELECT * FROM parking_locations 
-                    WHERE property_id = :property_id AND active = 1 
-                    ORDER BY display_order ASC, id ASC
-                ");
-                $stmt->execute([':property_id' => $propertyId]);
-                $all = $stmt->fetchAll();
-
-                return [
-                    'free_spots'      => array_values(array_filter($all, fn($l) => in_array($l['category'] ?? '', ['free_street', 'free_spot']))),
-                    'private_lots'    => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'private_parking')),
-                    'tcl_prs'         => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'tcl_pr')),
-                    'free_street'     => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'free_street')),
-                    'free_spot'       => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'free_spot')),
-                    'private_parking' => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'private_parking')),
-                    'tcl_pr'          => array_values(array_filter($all, fn($l) => ($l['category'] ?? '') === 'tcl_pr')),
-                    'all'             => $all
-                ];
-            } catch (\PDOException $e2) {
-                return [
-                    'free_spots' => [], 'private_lots' => [], 'tcl_prs' => [],
-                    'free_street' => [], 'free_spot' => [], 'private_parking' => [], 'tcl_pr' => [],
-                    'all' => []
-                ];
-            }
+        } catch (\Throwable $e) {
+            return [
+                'free_spots'      => [],
+                'private_lots'    => [],
+                'tcl_prs'         => [],
+                'free_street'     => [],
+                'free_spot'       => [],
+                'private_parking' => [],
+                'tcl_pr'          => [],
+                'all'             => []
+            ];
         }
     }
 
