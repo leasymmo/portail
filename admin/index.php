@@ -459,16 +459,30 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                         <div id="parking-subtabs-wrapper" class="space-y-5">
                             <!-- SOUS-ONGLET A : EMPLACEMENTS DÉTAILLÉS DU LOGEMENT (PARKINGS) -->
                             <div id="parking-subtab-locations" class="space-y-5">
-                                <!-- Barre de filtre épurée (ZÉRO bouton superflu) -->
-                                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-night-card border border-night-border shadow-xs">
-                                    <div class="flex items-center space-x-2 w-full sm:w-auto">
-                                        <label class="text-xs font-semibold text-gray-400 whitespace-nowrap">Filtrer par type :</label>
-                                        <select id="parking-locations-filter-cat" onchange="AdminApp.renderParkingLocationsList()" class="py-1.5 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold w-full sm:w-auto">
-                                            <option value="all">Tous les parkings du logement</option>
-                                            <option value="free_street">🟢 Rues gratuites & Dépose-minute</option>
-                                            <option value="private_parking">🏢 Parkings privés & couverts</option>
-                                            <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
-                                        </select>
+                                <!-- Barre d'onglets de filtrage par type -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-night-card border border-night-border shadow-xs">
+                                    <input type="hidden" id="parking-locations-filter-cat" value="all">
+                                    <div class="inline-flex p-1 rounded-xl bg-night border border-night-border gap-1 overflow-x-auto max-w-full" id="parking-locations-filter-tabs">
+                                        <button type="button" data-cat="all" onclick="AdminApp.setParkingLocationFilterTab('all')"
+                                                class="parking-loc-tab px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold text-white shadow-xs cursor-pointer whitespace-nowrap">
+                                            <span>Tous</span>
+                                            <span id="badge-count-loc-all" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold">0</span>
+                                        </button>
+                                        <button type="button" data-cat="free_street" onclick="AdminApp.setParkingLocationFilterTab('free_street')"
+                                                class="parking-loc-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                            <span>🟢 Rues & Dépose</span>
+                                            <span id="badge-count-loc-free" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold">0</span>
+                                        </button>
+                                        <button type="button" data-cat="private_parking" onclick="AdminApp.setParkingLocationFilterTab('private_parking')"
+                                                class="parking-loc-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                            <span>🏢 Privés & Couverts</span>
+                                            <span id="badge-count-loc-private" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold">0</span>
+                                        </button>
+                                        <button type="button" data-cat="tcl_pr" onclick="AdminApp.setParkingLocationFilterTab('tcl_pr')"
+                                                class="parking-loc-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                            <span>🚇 Parcs Relais TCL</span>
+                                            <span id="badge-count-loc-tcl" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold">0</span>
+                                        </button>
                                     </div>
                                     <span class="text-xs text-gray-500 hidden sm:inline">Utilisez ▲ ▼ pour réordonner</span>
                                 </div>
@@ -563,21 +577,37 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     <!-- VUE 2 : CATALOGUE GÉNÉRAL MUTUALISÉ                          -->
                     <!-- ============================================================== -->
                     <div id="parking-view-catalog" class="hidden space-y-5">
-                        <!-- BARRE D'OUTILS ÉPURÉE DU CATALOGUE (EXACTEMENT UN SEUL BOUTON !) -->
-                        <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-1 min-w-0">
-                                <div class="relative flex-1 sm:max-w-xs">
+                        <!-- BARRE D'OUTILS DU CATALOGUE (RECHERCHE + ONGLETS PAR CATÉGORIE + BOUTON D'AJOUT) -->
+                        <div class="p-4 sm:p-5 rounded-2xl bg-night-card border border-night-border flex flex-col xl:flex-row xl:items-center justify-between gap-4 shadow-sm">
+                            <div class="flex flex-col lg:flex-row lg:items-center gap-3 flex-1 min-w-0">
+                                <div class="relative w-full lg:w-64 flex-shrink-0">
                                     <input type="text" id="parking-catalog-search" oninput="AdminApp.filterCatalogList()" placeholder="Rechercher par nom, adresse..."
                                            class="w-full py-2.5 pl-8 pr-3 rounded-xl bg-night border border-night-border text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gold">
                                     <span class="absolute left-2.5 top-3 text-gray-400 text-xs">🔍</span>
                                 </div>
-                                <select id="parking-catalog-filter-cat" onchange="AdminApp.renderCatalogList()"
-                                        class="py-2.5 px-3 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
-                                    <option value="all">Toutes les catégories</option>
-                                    <option value="free_street">🟢 Rues & Dépose-minute</option>
-                                    <option value="private_parking">🏢 Parkings privés & couverts</option>
-                                    <option value="tcl_pr">🚇 Parcs Relais TCL (P+R)</option>
-                                </select>
+                                <input type="hidden" id="parking-catalog-filter-cat" value="all">
+                                <div class="inline-flex p-1 rounded-xl bg-night border border-night-border gap-1 overflow-x-auto max-w-full" id="parking-catalog-filter-tabs">
+                                    <button type="button" data-cat="all" onclick="AdminApp.setParkingCatalogFilterTab('all')"
+                                            class="parking-cat-tab px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold text-white shadow-xs cursor-pointer whitespace-nowrap">
+                                        <span>Toutes</span>
+                                        <span id="badge-count-cat-all" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold">0</span>
+                                    </button>
+                                    <button type="button" data-cat="free_street" onclick="AdminApp.setParkingCatalogFilterTab('free_street')"
+                                            class="parking-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                        <span>🟢 Rues & Dépose</span>
+                                        <span id="badge-count-cat-free" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold">0</span>
+                                    </button>
+                                    <button type="button" data-cat="private_parking" onclick="AdminApp.setParkingCatalogFilterTab('private_parking')"
+                                            class="parking-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                        <span>🏢 Privés & Couverts</span>
+                                        <span id="badge-count-cat-private" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold">0</span>
+                                    </button>
+                                    <button type="button" data-cat="tcl_pr" onclick="AdminApp.setParkingCatalogFilterTab('tcl_pr')"
+                                            class="parking-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                        <span>🚇 Parcs Relais TCL</span>
+                                        <span id="badge-count-cat-tcl" class="px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold">0</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- LE SEUL ET UNIQUE BOUTON DU CATALOGUE -->

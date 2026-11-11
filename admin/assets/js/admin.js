@@ -1729,12 +1729,36 @@ const AdminApp = {
         return pills.join(' ');
     },
 
-    resetCatalogFilters() {
+    setParkingCatalogFilterTab(cat) {
         const filterCat = document.getElementById('parking-catalog-filter-cat');
-        const searchInput = document.getElementById('parking-catalog-search');
-        if (filterCat) filterCat.value = 'all';
-        if (searchInput) searchInput.value = '';
+        if (filterCat) filterCat.value = cat;
+        this.updateParkingCatalogFilterTabsUI(cat);
         this.renderCatalogList();
+    },
+
+    updateParkingCatalogFilterTabsUI(currentCat) {
+        const cat = currentCat || document.getElementById('parking-catalog-filter-cat')?.value || 'all';
+        const buttons = document.querySelectorAll('#parking-catalog-filter-tabs .parking-cat-tab');
+        const activeClass = 'parking-cat-tab px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold text-white shadow-xs cursor-pointer whitespace-nowrap';
+        const inactiveClass = 'parking-cat-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
+
+        buttons.forEach(btn => {
+            const btnCat = btn.getAttribute('data-cat');
+            const isActive = (btnCat === cat);
+            btn.className = isActive ? activeClass : inactiveClass;
+            const badge = btn.querySelector('span[id^="badge-count-cat-"]');
+            if (badge) {
+                badge.className = isActive 
+                    ? 'px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold' 
+                    : 'px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold';
+            }
+        });
+    },
+
+    resetCatalogFilters() {
+        const searchInput = document.getElementById('parking-catalog-search');
+        if (searchInput) searchInput.value = '';
+        this.setParkingCatalogFilterTab('all');
     },
 
     switchFromLinkToCreateOnTheFly() {
@@ -1756,8 +1780,25 @@ const AdminApp = {
 
         const cat = filterCat ? filterCat.value : 'all';
         const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
-        let items = this.state.parkingCatalogItems || [];
+        const allItems = this.state.parkingCatalogItems || [];
 
+        // Mise à jour dynamique des badges de compteurs dans la barre d'onglets du catalogue
+        const catFree = allItems.filter(it => it.category === 'free_street' || it.category === 'free_spot');
+        const catPriv = allItems.filter(it => it.category === 'private_parking');
+        const catTcl = allItems.filter(it => it.category === 'tcl_pr');
+
+        const bcAll = document.getElementById('badge-count-cat-all');
+        const bcFree = document.getElementById('badge-count-cat-free');
+        const bcPriv = document.getElementById('badge-count-cat-private');
+        const bcTcl = document.getElementById('badge-count-cat-tcl');
+        if (bcAll) bcAll.textContent = allItems.length;
+        if (bcFree) bcFree.textContent = catFree.length;
+        if (bcPriv) bcPriv.textContent = catPriv.length;
+        if (bcTcl) bcTcl.textContent = catTcl.length;
+
+        this.updateParkingCatalogFilterTabsUI(cat);
+
+        let items = allItems;
         if (cat !== 'all') {
             items = items.filter(it => it.category === cat || (cat === 'free_street' && it.category === 'free_spot'));
         }
@@ -2469,6 +2510,32 @@ const AdminApp = {
         if (subtypeEl) subtypeEl.value = subtype;
     },
 
+    setParkingLocationFilterTab(cat) {
+        const filterCat = document.getElementById('parking-locations-filter-cat');
+        if (filterCat) filterCat.value = cat;
+        this.updateParkingLocationFilterTabsUI(cat);
+        this.renderParkingLocationsList();
+    },
+
+    updateParkingLocationFilterTabsUI(currentCat) {
+        const cat = currentCat || document.getElementById('parking-locations-filter-cat')?.value || 'all';
+        const buttons = document.querySelectorAll('#parking-locations-filter-tabs .parking-loc-tab');
+        const activeClass = 'parking-loc-tab px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-gold text-white shadow-xs cursor-pointer whitespace-nowrap';
+        const inactiveClass = 'parking-loc-tab px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap';
+
+        buttons.forEach(btn => {
+            const btnCat = btn.getAttribute('data-cat');
+            const isActive = (btnCat === cat);
+            btn.className = isActive ? activeClass : inactiveClass;
+            const badge = btn.querySelector('span[id^="badge-count-loc-"]');
+            if (badge) {
+                badge.className = isActive 
+                    ? 'px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 text-white font-bold' 
+                    : 'px-1.5 py-0.2 rounded-full text-[10px] bg-white/10 text-gray-400 font-bold';
+            }
+        });
+    },
+
     renderParkingLocationsList() {
         const container = document.getElementById('parking-locations-list');
         const filterCat = document.getElementById('parking-locations-filter-cat');
@@ -2594,6 +2661,22 @@ const AdminApp = {
             `;
         };
 
+        const freeList = allLocs.filter(l => l.category === 'free_street' || l.category === 'free_spot');
+        const privateList = allLocs.filter(l => l.category === 'private_parking');
+        const tclList = allLocs.filter(l => l.category === 'tcl_pr');
+
+        // Mise à jour des compteurs dans les onglets de filtrage du logement
+        const blAll = document.getElementById('badge-count-loc-all');
+        const blFree = document.getElementById('badge-count-loc-free');
+        const blPriv = document.getElementById('badge-count-loc-private');
+        const blTcl = document.getElementById('badge-count-loc-tcl');
+        if (blAll) blAll.textContent = allLocs.length;
+        if (blFree) blFree.textContent = freeList.length;
+        if (blPriv) blPriv.textContent = privateList.length;
+        if (blTcl) blTcl.textContent = tclList.length;
+
+        this.updateParkingLocationFilterTabsUI(cat);
+
         if (allLocs.length === 0) {
             container.innerHTML = `
                 <div class="py-12 text-center text-gray-400 border border-dashed border-night-border rounded-2xl p-6">
@@ -2608,10 +2691,6 @@ const AdminApp = {
             `;
             return;
         }
-
-        const freeList = allLocs.filter(l => l.category === 'free_street' || l.category === 'free_spot');
-        const privateList = allLocs.filter(l => l.category === 'private_parking');
-        const tclList = allLocs.filter(l => l.category === 'tcl_pr');
 
         let html = '';
 
