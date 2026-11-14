@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.7';
-import { Utils } from './utils.js?v=11.7';
+import { AppState } from './state.js?v=11.8';
+import { Utils } from './utils.js?v=11.8';
 
 export const I18n = {
     currentLang: 'fr',
@@ -150,6 +150,10 @@ export const I18n = {
             parking_legend_free: "Gratuit",
             parking_legend_private: "Privé / Couvert",
             parking_legend_tcl: "Relais TCL",
+            map_fullscreen_expand: "Plein écran",
+            map_fullscreen_collapse: "Réduire",
+            map_fullscreen_title: "Agrandir en plein écran",
+            map_fullscreen_close_title: "Quitter le plein écran (Échap)",
             res_chip_in: "Du",
             res_chip_out: "au",
             res_modal_ref_label: "Numéro de réservation",
@@ -337,6 +341,10 @@ export const I18n = {
             parking_legend_free: "Free",
             parking_legend_private: "Private / Covered",
             parking_legend_tcl: "TCL Park & Ride",
+            map_fullscreen_expand: "Full screen",
+            map_fullscreen_collapse: "Exit full screen",
+            map_fullscreen_title: "View full screen",
+            map_fullscreen_close_title: "Exit full screen (Esc)",
             res_chip_in: "From",
             res_chip_out: "to",
             res_modal_ref_label: "Booking reference",

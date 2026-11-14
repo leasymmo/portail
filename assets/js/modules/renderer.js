@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.7';
-import { Utils } from './utils.js?v=11.7';
-import { I18n } from './i18n.js?v=11.7';
-import { ScrollManager } from './scroll.js?v=11.7';
-import { Router, BASE_PATH } from './router.js?v=11.7';
-import { ModalManager } from './modals.js?v=11.7';
-import { PdfViewer } from './pdf-viewer.js?v=11.7';
+import { AppState } from './state.js?v=11.8';
+import { Utils } from './utils.js?v=11.8';
+import { I18n } from './i18n.js?v=11.8';
+import { ScrollManager } from './scroll.js?v=11.8';
+import { Router, BASE_PATH } from './router.js?v=11.8';
+import { ModalManager } from './modals.js?v=11.8';
+import { PdfViewer } from './pdf-viewer.js?v=11.8';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -801,6 +801,177 @@ export const PropertyRenderer = {
         }
     },
 
+    _activeFullscreenMap: null,
+
+    toggleMapFullscreen(type) {
+        const isParking = type === 'parking';
+        const wrapperId = isParking ? 'parking-map-wrapper' : 'res-map-wrapper';
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+
+        if (wrapper.classList.contains('map-wrapper-fullscreen')) {
+            this.exitMapFullscreen(type);
+        } else {
+            this.enterMapFullscreen(type);
+        }
+    },
+
+    enterMapFullscreen(type) {
+        const isParking = type === 'parking';
+        const wrapperId = isParking ? 'parking-map-wrapper' : 'res-map-wrapper';
+        const btnId = isParking ? 'btn-fullscreen-parking' : 'btn-fullscreen-res';
+        const wrapper = document.getElementById(wrapperId);
+        const btn = document.getElementById(btnId);
+        const map = isParking ? this._parkingMap : this._resMap;
+
+        if (!wrapper) return;
+
+        if (this._activeFullscreenMap && this._activeFullscreenMap !== type) {
+            this.exitMapFullscreen(this._activeFullscreenMap);
+        }
+
+        // Créer un placeholder invisible pour mémoriser l'emplacement d'origine dans le DOM
+        let placeholder = document.getElementById(`${wrapperId}-placeholder`);
+        if (!placeholder) {
+            placeholder = document.createElement('div');
+            placeholder.id = `${wrapperId}-placeholder`;
+            placeholder.style.display = 'none';
+            wrapper.parentNode.insertBefore(placeholder, wrapper);
+        }
+
+        // Déplacer vers body pour échapper au transform et overflow du bottom-sheet
+        document.body.appendChild(wrapper);
+
+        wrapper.classList.add('map-wrapper-fullscreen');
+        this._activeFullscreenMap = type;
+        document.body.classList.add('map-fullscreen-active');
+
+        // Activer le zoom molette sur grand écran quand la carte est en plein écran
+        if (map && map.scrollWheelZoom) {
+            try { map.scrollWheelZoom.enable(); } catch(e) {}
+        }
+
+        if (btn) {
+            btn.classList.add('is-fullscreen');
+            btn.setAttribute('title', I18n.t('map_fullscreen_close_title'));
+            btn.setAttribute('aria-label', I18n.t('map_fullscreen_close_title'));
+            const textEl = btn.querySelector('.btn-text');
+            if (textEl) textEl.textContent = I18n.t('map_fullscreen_collapse');
+            const iconExp = btn.querySelector('.icon-expand');
+            const iconCol = btn.querySelector('.icon-collapse');
+            if (iconExp) iconExp.classList.add('hidden');
+            if (iconCol) iconCol.classList.remove('hidden');
+        }
+
+        if (map) {
+            [20, 80, 200, 400].forEach((delay) => {
+                setTimeout(() => {
+                    try {
+                        map.invalidateSize(true);
+                        if (isParking) {
+                            if (AppState.currentProperty) {
+                                const allBounds = [];
+                                const propCoords = this.getPropertyCoordinates(AppState.currentProperty);
+                                allBounds.push([propCoords.lat, propCoords.lng]);
+                                const locations = AppState.currentProperty.parking && AppState.currentProperty.parking.locations 
+                                    ? (AppState.currentProperty.parking.locations.all || []) : [];
+                                locations.forEach(loc => {
+                                    const c = this.getParkingCoordinates(loc, AppState.currentProperty);
+                                    allBounds.push([c.lat, c.lng]);
+                                });
+                                if (allBounds.length > 1) {
+                                    map.fitBounds(allBounds, { padding: [60, 60], maxZoom: 17 });
+                                } else {
+                                    map.setView([propCoords.lat, propCoords.lng], 16);
+                                }
+                            }
+                        } else {
+                            if (AppState.currentProperty) {
+                                const coords = this.getPropertyCoordinates(AppState.currentProperty);
+                                map.setView([coords.lat, coords.lng], 16);
+                            }
+                        }
+                    } catch(e) {}
+                }, delay);
+            });
+        }
+    },
+
+    exitMapFullscreen(type) {
+        const targetType = type || this._activeFullscreenMap;
+        if (!targetType) return;
+
+        const isParking = targetType === 'parking';
+        const wrapperId = isParking ? 'parking-map-wrapper' : 'res-map-wrapper';
+        const btnId = isParking ? 'btn-fullscreen-parking' : 'btn-fullscreen-res';
+        const wrapper = document.getElementById(wrapperId);
+        const btn = document.getElementById(btnId);
+        const map = isParking ? this._parkingMap : this._resMap;
+
+        if (wrapper) {
+            wrapper.classList.remove('map-wrapper-fullscreen');
+            // Replacer à l'emplacement d'origine
+            const placeholder = document.getElementById(`${wrapperId}-placeholder`);
+            if (placeholder && placeholder.parentNode) {
+                placeholder.parentNode.insertBefore(wrapper, placeholder);
+                placeholder.remove();
+            }
+        }
+
+        this._activeFullscreenMap = null;
+        document.body.classList.remove('map-fullscreen-active');
+
+        // Désactiver le zoom molette hors plein écran pour préserver le défilement de la modale
+        if (map && map.scrollWheelZoom) {
+            try { map.scrollWheelZoom.disable(); } catch(e) {}
+        }
+
+        if (btn) {
+            btn.classList.remove('is-fullscreen');
+            btn.setAttribute('title', I18n.t('map_fullscreen_title'));
+            btn.setAttribute('aria-label', I18n.t('map_fullscreen_title'));
+            const textEl = btn.querySelector('.btn-text');
+            if (textEl) textEl.textContent = I18n.t('map_fullscreen_expand');
+            const iconExp = btn.querySelector('.icon-expand');
+            const iconCol = btn.querySelector('.icon-collapse');
+            if (iconExp) iconExp.classList.remove('hidden');
+            if (iconCol) iconCol.classList.add('hidden');
+        }
+
+        if (map) {
+            [20, 80, 200].forEach((delay) => {
+                setTimeout(() => {
+                    try {
+                        map.invalidateSize(true);
+                        if (isParking) {
+                            if (AppState.currentProperty) {
+                                const allBounds = [];
+                                const propCoords = this.getPropertyCoordinates(AppState.currentProperty);
+                                allBounds.push([propCoords.lat, propCoords.lng]);
+                                const locations = AppState.currentProperty.parking && AppState.currentProperty.parking.locations 
+                                    ? (AppState.currentProperty.parking.locations.all || []) : [];
+                                locations.forEach(loc => {
+                                    const c = this.getParkingCoordinates(loc, AppState.currentProperty);
+                                    allBounds.push([c.lat, c.lng]);
+                                });
+                                if (allBounds.length > 1) {
+                                    map.fitBounds(allBounds, { padding: [30, 30], maxZoom: 16 });
+                                } else {
+                                    map.setView([propCoords.lat, propCoords.lng], 15);
+                                }
+                            }
+                        } else {
+                            if (AppState.currentProperty) {
+                                const coords = this.getPropertyCoordinates(AppState.currentProperty);
+                                map.setView([coords.lat, coords.lng], 16);
+                            }
+                        }
+                    } catch(e) {}
+                }, delay);
+            });
+        }
+    },
+
     updateLanguageContent() {
         if (!AppState.currentProperty) return;
         const prop = AppState.currentProperty;
@@ -891,6 +1062,24 @@ export const PropertyRenderer = {
 
         // Actualise la langue de l'iframe de réservation directe Superhote (?lang=en)
         ModalManager.updateBookingLanguage();
+
+        // Actualise les libellés et infobulles des boutons plein écran des cartes 2D
+        const parkingFsBtn = document.getElementById('btn-fullscreen-parking');
+        if (parkingFsBtn) {
+            const isFs = parkingFsBtn.classList.contains('is-fullscreen');
+            const txt = parkingFsBtn.querySelector('.btn-text');
+            if (txt) txt.textContent = isFs ? I18n.t('map_fullscreen_collapse') : I18n.t('map_fullscreen_expand');
+            parkingFsBtn.setAttribute('title', isFs ? I18n.t('map_fullscreen_close_title') : I18n.t('map_fullscreen_title'));
+            parkingFsBtn.setAttribute('aria-label', isFs ? I18n.t('map_fullscreen_close_title') : I18n.t('map_fullscreen_title'));
+        }
+        const resFsBtn = document.getElementById('btn-fullscreen-res');
+        if (resFsBtn) {
+            const isFs = resFsBtn.classList.contains('is-fullscreen');
+            const txt = resFsBtn.querySelector('.btn-text');
+            if (txt) txt.textContent = isFs ? I18n.t('map_fullscreen_collapse') : I18n.t('map_fullscreen_expand');
+            resFsBtn.setAttribute('title', isFs ? I18n.t('map_fullscreen_close_title') : I18n.t('map_fullscreen_title'));
+            resFsBtn.setAttribute('aria-label', isFs ? I18n.t('map_fullscreen_close_title') : I18n.t('map_fullscreen_title'));
+        }
 
         // 4. Préchargement réactif du livret de bienvenue dans la nouvelle langue pour affichage 0ms
         let targetLang = isEn ? 'en' : 'fr';

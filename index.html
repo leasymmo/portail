@@ -78,7 +78,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=11.7">
+    <link rel="stylesheet" href="assets/css/custom.css?v=11.8">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -979,9 +979,32 @@
                         <span class="text-[10px] text-ink-faint dark:text-gray-400 truncate" data-i18n="parking_map_subtitle">Logement & solutions à proximité</span>
                     </div>
 
-                    <!-- Conteneur Carte Leaflet 2D OpenStreetMap -->
-                    <div class="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner">
+                    <!-- Conteneur Carte Leaflet 2D OpenStreetMap avec bouton Plein Écran -->
+                    <div id="parking-map-wrapper" class="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner">
                         <div id="parking-modal-map" class="w-full h-full z-0" style="min-height: 192px;"></div>
+                        <!-- Bouton Agrandir / Plein Écran -->
+                        <button id="btn-fullscreen-parking"
+                                type="button"
+                                onclick="toggleMapFullscreen('parking')"
+                                class="btn-map-fullscreen"
+                                title="Agrandir en plein écran"
+                                aria-label="Agrandir la carte en plein écran"
+                                data-i18n-title="map_fullscreen_title">
+                            <svg class="w-3.5 h-3.5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                            </svg>
+                            <svg class="w-3.5 h-3.5 icon-collapse hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M10 4v6m0 0H4m6 0L3 3m10 7h6m-6 0V4m0 6l7-7"/>
+                            </svg>
+                            <span class="btn-text" data-i18n="map_fullscreen_expand">Plein écran</span>
+                        </button>
+                        <!-- Légende flottante exclusive au mode Plein Écran -->
+                        <div class="map-fullscreen-legend" aria-hidden="true">
+                            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold shadow-2xs"></span> <span data-i18n="parking_legend_property">Logement</span></span>
+                            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-2xs"></span> <span data-i18n="parking_legend_free">Gratuit</span></span>
+                            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-2xs"></span> <span data-i18n="parking_legend_private">Privé / Couvert</span></span>
+                            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-2xs"></span> <span data-i18n="parking_legend_tcl">Relais TCL</span></span>
+                        </div>
                     </div>
 
                     <!-- Légende visuelle épurée -->
@@ -1304,9 +1327,25 @@
                         </a>
                     </div>
 
-                    <!-- Aperçu Carte 2D (Leaflet Open-Source & OpenStreetMap) -->
-                    <div class="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner">
+                    <!-- Aperçu Carte 2D (Leaflet Open-Source & OpenStreetMap) avec bouton Plein Écran -->
+                    <div id="res-map-wrapper" class="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner">
                         <div id="res-modal-map" class="w-full h-full z-0" style="min-height: 176px;"></div>
+                        <!-- Bouton Agrandir / Plein Écran -->
+                        <button id="btn-fullscreen-res"
+                                type="button"
+                                onclick="toggleMapFullscreen('reservation')"
+                                class="btn-map-fullscreen"
+                                title="Agrandir en plein écran"
+                                aria-label="Agrandir la carte en plein écran"
+                                data-i18n-title="map_fullscreen_title">
+                            <svg class="w-3.5 h-3.5 icon-expand" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                            </svg>
+                            <svg class="w-3.5 h-3.5 icon-collapse hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M10 4v6m0 0H4m6 0L3 3m10 7h6m-6 0V4m0 6l7-7"/>
+                            </svg>
+                            <span class="btn-text" data-i18n="map_fullscreen_expand">Plein écran</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1409,6 +1448,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=11.7"></script>
+    <script type="module" src="assets/js/app.js?v=11.8"></script>
 </body>
 </html>

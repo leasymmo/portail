@@ -1349,6 +1349,145 @@ body.modal-open .pwa-install-prompt {
 }
 
 /* ==============================================================================
+   CARTE 2D INTERACTIVE : BOUTON ET MODE PLEIN ÉCRAN FLUIDE
+   ============================================================================== */
+.btn-map-fullscreen {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1005;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e2e4e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dark .btn-map-fullscreen {
+    color: #f8fafc;
+    background: rgba(30, 39, 57, 0.95);
+    border-color: #38455d;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.btn-map-fullscreen:hover {
+    color: #b8995a;
+    border-color: #b8995a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(184, 153, 90, 0.28);
+}
+
+.btn-map-fullscreen:active {
+    transform: scale(0.96);
+}
+
+/* Bouton lorsque la carte est affichée en Plein Écran */
+.btn-map-fullscreen.is-fullscreen {
+    background: #b8995a !important;
+    color: #ffffff !important;
+    border-color: #b8995a !important;
+    box-shadow: 0 6px 20px rgba(184, 153, 90, 0.45) !important;
+    top: 14px;
+    right: 14px;
+    padding: 8px 14px;
+    font-size: 12px;
+}
+
+.btn-map-fullscreen.is-fullscreen:hover {
+    background: #a38241 !important;
+    border-color: #a38241 !important;
+}
+
+/* Mode Plein Écran du conteneur de carte */
+.map-wrapper-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    z-index: 99999 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    animation: mapWrapperFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes mapWrapperFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.map-wrapper-fullscreen > div[id$="-map"] {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100dvh !important;
+    border-radius: 0 !important;
+}
+
+/* Légende flottante exclusive au mode Plein Écran */
+.map-fullscreen-legend {
+    display: none;
+}
+
+.map-wrapper-fullscreen .map-fullscreen-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1005;
+    padding: 9px 18px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #e2e4e6;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 11px;
+    font-weight: 600;
+    color: #334155;
+    pointer-events: auto;
+    white-space: nowrap;
+    max-width: 92vw;
+    overflow-x: auto;
+}
+
+.dark .map-wrapper-fullscreen .map-fullscreen-legend {
+    background: rgba(30, 39, 57, 0.96);
+    border-color: #38455d;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    color: #e2e8f0;
+}
+
+body.map-fullscreen-active {
+    overflow: hidden !important;
+}
+
+/* ==============================================================================
    ACCESSIBILITÉ : MODE MOUVEMENT RÉDUIT (PREFERS-REDUCED-MOTION)
    ============================================================================== */
 @media (prefers-reduced-motion: reduce) {
