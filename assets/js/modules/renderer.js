@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.0';
-import { Utils } from './utils.js?v=11.0';
-import { I18n } from './i18n.js?v=11.0';
-import { ScrollManager } from './scroll.js?v=11.0';
-import { Router, BASE_PATH } from './router.js?v=11.0';
-import { ModalManager } from './modals.js?v=11.0';
-import { PdfViewer } from './pdf-viewer.js?v=11.0';
+import { AppState } from './state.js?v=11.1';
+import { Utils } from './utils.js?v=11.1';
+import { I18n } from './i18n.js?v=11.1';
+import { ScrollManager } from './scroll.js?v=11.1';
+import { Router, BASE_PATH } from './router.js?v=11.1';
+import { ModalManager } from './modals.js?v=11.1';
+import { PdfViewer } from './pdf-viewer.js?v=11.1';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -173,6 +173,20 @@ export const PropertyRenderer = {
         }
     },
 
+    formatShortReservationDate(isoDate, lang = 'fr') {
+        if (!isoDate) return '—';
+        try {
+            const parts = isoDate.split('-');
+            if (parts.length === 3) {
+                const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                const locale = lang === 'en' ? 'en-US' : 'fr-FR';
+                const options = { day: 'numeric', month: 'short' };
+                return date.toLocaleDateString(locale, options);
+            }
+        } catch(e) {}
+        return isoDate;
+    },
+
     formatReservationDate(isoDate, lang = 'fr') {
         if (!isoDate) return '—';
         try {
@@ -267,14 +281,9 @@ export const PropertyRenderer = {
         card.style.animationDelay = '0.02s';
 
         const isEn = I18n.currentLang === 'en';
+        const prop = AppState.currentProperty;
 
-        // Nom voyageur
-        const guestEl = document.getElementById('res-card-guest');
-        if (guestEl) {
-            const guestName = [res.guest_first_name, res.guest_last_name].filter(Boolean).join(' ');
-            guestEl.textContent = guestName ? `${isEn ? 'Guest' : 'Voyageur'} : ${guestName}` : '';
-        }
-
+        // --- 1. CARTE COMPACTE (GRILLE PRINCIPALE) ---
         // Plateforme
         const platformEl = document.getElementById('res-card-platform');
         if (platformEl) {
@@ -292,34 +301,75 @@ export const PropertyRenderer = {
             statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span><span>${I18n.t('reservation_card_badge_confirmed')}</span>`;
         }
 
-        // Dates d'arrivée & départ
-        const checkinDateEl = document.getElementById('res-card-checkin-date');
-        const checkinTimeEl = document.getElementById('res-card-checkin-time');
-        const checkoutDateEl = document.getElementById('res-card-checkout-date');
-        const checkoutTimeEl = document.getElementById('res-card-checkout-time');
+        // Dates courtes pour les puces compactes
+        const chipCheckinEl = document.getElementById('res-chip-checkin');
+        const chipCheckoutEl = document.getElementById('res-chip-checkout');
+        if (chipCheckinEl) chipCheckinEl.textContent = this.formatShortReservationDate(res.checkin, I18n.currentLang);
+        if (chipCheckoutEl) chipCheckoutEl.textContent = this.formatShortReservationDate(res.checkout, I18n.currentLang);
 
-        if (checkinDateEl) checkinDateEl.textContent = this.formatReservationDate(res.checkin, I18n.currentLang);
-        if (checkinTimeEl) checkinTimeEl.textContent = `${I18n.t('reservation_card_checkin_time_prefix')} ${res.checkin_time || '15:00'}`;
-
-        if (checkoutDateEl) checkoutDateEl.textContent = this.formatReservationDate(res.checkout, I18n.currentLang);
-        if (checkoutTimeEl) checkoutTimeEl.textContent = `${I18n.t('reservation_card_checkout_time_prefix')} ${res.checkout_time || '10:00'}`;
-
-        // Durée & Référence
-        const nightsEl = document.getElementById('res-card-nights');
-        const refEl = document.getElementById('res-card-ref');
+        // Nuits & Voyageurs pour la carte compacte
         const nightsCount = parseInt(res.nights, 10) || 1;
         const nightLabel = nightsCount > 1 ? I18n.t('reservation_card_nights_plural') : I18n.t('reservation_card_nights_single');
-        if (nightsEl) nightsEl.textContent = `${nightsCount} ${nightLabel}`;
-        if (refEl) refEl.textContent = `${I18n.t('reservation_card_ref')}${res.id || '—'}`;
+        const chipNightsEl = document.getElementById('res-chip-nights');
+        if (chipNightsEl) chipNightsEl.textContent = `${nightsCount} ${nightLabel}`;
 
-        // Voyageurs
-        const guestsCountEl = document.getElementById('res-card-guests-count');
-        const guestsDetailEl = document.getElementById('res-card-guests-detail');
         const guestsTotal = parseInt(res.guests_count, 10) || (parseInt(res.adults_count, 10) + parseInt(res.children_count, 10)) || 1;
         const guestLabel = guestsTotal > 1 ? I18n.t('reservation_card_guests_plural') : I18n.t('reservation_card_guests_single');
-        if (guestsCountEl) guestsCountEl.textContent = `${guestsTotal} ${guestLabel}`;
+        const chipGuestsEl = document.getElementById('res-chip-guests');
+        if (chipGuestsEl) chipGuestsEl.textContent = `${guestsTotal} ${guestLabel}`;
 
-        if (guestsDetailEl) {
+        // --- 2. MODALE DÉTAILLÉE DE RÉSERVATION ---
+        const modalGuestName = document.getElementById('res-modal-guest-name');
+        if (modalGuestName) {
+            const guestName = [res.guest_first_name, res.guest_last_name].filter(Boolean).join(' ');
+            modalGuestName.textContent = guestName ? `${isEn ? 'Welcome' : 'Bienvenue'} ${guestName}` : (isEn ? 'Welcome' : 'Bienvenue');
+        }
+
+        const modalPropName = document.getElementById('res-modal-prop-name');
+        if (modalPropName && prop) {
+            modalPropName.textContent = prop.name || '';
+        }
+
+        const modalRefId = document.getElementById('res-modal-ref-id');
+        if (modalRefId) {
+            modalRefId.textContent = `#${res.id || '—'}`;
+        }
+
+        const modalPlatformBadge = document.getElementById('res-modal-platform-badge');
+        if (modalPlatformBadge) {
+            if (res.platform_name) {
+                modalPlatformBadge.textContent = res.platform_name;
+                modalPlatformBadge.classList.remove('hidden');
+            } else {
+                modalPlatformBadge.classList.add('hidden');
+            }
+        }
+
+        const modalStatusBadge = document.getElementById('res-modal-status-badge');
+        if (modalStatusBadge) {
+            modalStatusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span><span>${I18n.t('reservation_card_badge_confirmed')}</span>`;
+        }
+
+        // Dates et heures complètes dans la modale
+        const modalCheckinDate = document.getElementById('res-modal-checkin-date');
+        const modalCheckinTime = document.getElementById('res-modal-checkin-time');
+        const modalCheckoutDate = document.getElementById('res-modal-checkout-date');
+        const modalCheckoutTime = document.getElementById('res-modal-checkout-time');
+
+        if (modalCheckinDate) modalCheckinDate.textContent = this.formatReservationDate(res.checkin, I18n.currentLang);
+        if (modalCheckinTime) modalCheckinTime.textContent = `${I18n.t('reservation_card_checkin_time_prefix')} ${res.checkin_time || '15:00'}`;
+
+        if (modalCheckoutDate) modalCheckoutDate.textContent = this.formatReservationDate(res.checkout, I18n.currentLang);
+        if (modalCheckoutTime) modalCheckoutTime.textContent = `${I18n.t('reservation_card_checkout_time_prefix')} ${res.checkout_time || '10:00'}`;
+
+        const modalNights = document.getElementById('res-modal-nights');
+        if (modalNights) modalNights.textContent = `${nightsCount} ${nightLabel}`;
+
+        const modalGuestsCount = document.getElementById('res-modal-guests-count');
+        const modalGuestsDetail = document.getElementById('res-modal-guests-detail');
+        if (modalGuestsCount) modalGuestsCount.textContent = `${guestsTotal} ${guestLabel}`;
+
+        if (modalGuestsDetail) {
             const adults = parseInt(res.adults_count, 10) || 0;
             const children = parseInt(res.children_count, 10) || 0;
             if (adults > 0) {
@@ -327,11 +377,28 @@ export const PropertyRenderer = {
                 if (children > 0) {
                     detail += `, ${children} ${I18n.t('reservation_card_children')}`;
                 }
-                guestsDetailEl.textContent = detail;
-                guestsDetailEl.classList.remove('hidden');
+                modalGuestsDetail.textContent = detail;
+                modalGuestsDetail.classList.remove('hidden');
             } else {
-                guestsDetailEl.classList.add('hidden');
+                modalGuestsDetail.classList.add('hidden');
             }
+        }
+
+        // Adresse du logement & Bouton itinéraire Maps
+        const modalAddressBlock = document.getElementById('res-modal-address-block');
+        const modalAddressText = document.getElementById('res-modal-address-text');
+        const modalMapsBtn = document.getElementById('res-modal-maps-btn');
+
+        if (prop && (prop.address || prop.name)) {
+            const addrString = prop.address || prop.name;
+            if (modalAddressText) modalAddressText.textContent = addrString;
+            if (modalMapsBtn) {
+                const mapsQuery = encodeURIComponent(prop.address ? `${prop.address}, Lyon` : `${prop.name}, Lyon`);
+                modalMapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+            }
+            if (modalAddressBlock) modalAddressBlock.classList.remove('hidden');
+        } else if (modalAddressBlock) {
+            modalAddressBlock.classList.add('hidden');
         }
     },
 

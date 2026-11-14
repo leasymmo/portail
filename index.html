@@ -74,7 +74,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=11.0">
+    <link rel="stylesheet" href="assets/css/custom.css?v=11.1">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -326,79 +326,73 @@
                     </div>
 
                     <div id="info-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto">
-                        <!-- Carte 0 : Informations de Réservation Personnalisée (VIP) -->
-                        <div id="card-reservation-active" class="hidden card-interactive card-reservation-luxury p-4 sm:p-5 rounded-2xl group sm:col-span-2">
-                            <!-- En-tête de la carte -->
-                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-gold/20 dark:border-gold/20">
-                                <div class="flex items-center space-x-2.5 min-w-0 pr-2">
-                                    <span class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gold/20 text-gold flex items-center justify-center flex-shrink-0 font-bold shadow-xs">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                        </svg>
-                                    </span>
-                                    <div class="min-w-0">
-                                        <h3 id="res-card-title" data-i18n="reservation_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white font-serif-brand">Détails de votre séjour</h3>
-                                        <p id="res-card-guest" class="text-[11px] text-ink-soft dark:text-gray-300 truncate font-medium"></p>
+                        <!-- Carte 0 : Informations de Réservation Personnalisée (VIP Compacte) -->
+                        <div id="card-reservation-active" onclick="openReservationModal()" role="button" tabindex="0"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openReservationModal();}"
+                             aria-label="Consulter les détails de votre réservation"
+                             class="hidden card-interactive card-reservation-luxury cursor-pointer flex items-center justify-between p-3.5 sm:p-4 rounded-2xl group sm:col-span-2">
+                            <div class="flex items-center min-w-0 pr-2">
+                                <span class="w-8 h-8 sm:w-9 sm:h-9 mr-3 sm:mr-3.5 drop-shadow-xs flex-shrink-0 flex items-center justify-center text-gold bg-gold/10 rounded-xl" aria-hidden="true">
+                                    <svg aria-hidden="true" class="w-5 h-5 sm:w-5.5 sm:h-5.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect width="18" height="18" x="3" y="4" rx="3" ry="3"/>
+                                        <line x1="16" y1="2" x2="16" y2="6"/>
+                                        <line x1="8" y1="2" x2="8" y2="6"/>
+                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                        <path d="m9 16 2 2 4-4"/>
+                                    </svg>
+                                </span>
+                                <div class="min-w-0">
+                                    <!-- Ligne 1 : Titre + Badges -->
+                                    <div class="flex items-center gap-1.5 flex-nowrap min-w-0">
+                                        <span id="res-card-title" data-i18n="reservation_card_title" class="text-sm sm:text-base font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Détails de votre séjour</span>
+                                        <span id="res-card-platform" class="hidden text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/80 dark:bg-[#161f30] text-ink-soft dark:text-gray-300 border border-[#e2e4e6] dark:border-[#38455d] flex-shrink-0 whitespace-nowrap"></span>
+                                        <span id="res-card-status" class="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex-shrink-0 whitespace-nowrap">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
+                                            <span data-i18n="reservation_card_badge_confirmed">Confirmée</span>
+                                        </span>
                                     </div>
-                                </div>
-                                <div class="flex items-center gap-2 flex-shrink-0">
-                                    <span id="res-card-platform" class="hidden text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/80 dark:bg-[#161f30] text-ink-soft dark:text-gray-300 border border-[#e2e4e6] dark:border-[#38455d]"></span>
-                                    <span id="res-card-status" data-i18n="reservation_card_badge_confirmed" class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
-                                        <span>Confirmée</span>
-                                    </span>
+                                    <!-- Ligne 2 : Micro-chips avec icônes (Arrivée, Départ, Nuits, Voyageurs) -->
+                                    <div class="flex items-center flex-wrap gap-x-2.5 gap-y-1 text-xs text-ink-soft dark:text-gray-300 mt-1">
+                                        <!-- Date d'arrivée -->
+                                        <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs">
+                                            <svg class="w-3.5 h-3.5 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            <span class="text-ink-faint dark:text-gray-400 text-[10px] sm:text-[11px] hidden xs:inline" data-i18n="res_chip_in">Du</span>
+                                            <strong id="res-chip-checkin" class="font-semibold text-ink dark:text-white">—</strong>
+                                        </div>
+                                        <span class="text-ink-faint/40 dark:text-gray-600 text-[10px] hidden xs:inline">•</span>
+                                        <!-- Date de départ -->
+                                        <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs">
+                                            <svg class="w-3.5 h-3.5 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                            </svg>
+                                            <span class="text-ink-faint dark:text-gray-400 text-[10px] sm:text-[11px] hidden xs:inline" data-i18n="res_chip_out">au</span>
+                                            <strong id="res-chip-checkout" class="font-semibold text-ink dark:text-white">—</strong>
+                                        </div>
+                                        <span class="text-ink-faint/40 dark:text-gray-600 text-[10px]">•</span>
+                                        <!-- Nombre de nuits -->
+                                        <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs">
+                                            <svg class="w-3.5 h-3.5 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                                            </svg>
+                                            <strong id="res-chip-nights" class="font-semibold text-ink dark:text-white">—</strong>
+                                        </div>
+                                        <span class="text-ink-faint/40 dark:text-gray-600 text-[10px]">•</span>
+                                        <!-- Nombre de personnes -->
+                                        <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs">
+                                            <svg class="w-3.5 h-3.5 text-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                            </svg>
+                                            <strong id="res-chip-guests" class="font-semibold text-ink dark:text-white">—</strong>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <!-- Grille des 4 indicateurs clés (Arrivée, Départ, Durée, Voyageurs) -->
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
-                                <!-- Arrivée -->
-                                <div class="p-2.5 sm:p-3 rounded-xl bg-white/80 dark:bg-[#243047]/80 border border-[#e2e4e6]/80 dark:border-[#38455d]/80">
-                                    <div class="flex items-center gap-1.5 text-[11px] text-ink-faint dark:text-gray-400 mb-1">
-                                        <span>🗓️</span>
-                                        <span data-i18n="reservation_card_checkin" class="font-semibold uppercase tracking-wider text-[10px]">Arrivée</span>
-                                    </div>
-                                    <p id="res-card-checkin-date" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
-                                    <p id="res-card-checkin-time" class="text-[11px] text-gold font-medium mt-0.5">—</p>
-                                </div>
-
-                                <!-- Départ -->
-                                <div class="p-2.5 sm:p-3 rounded-xl bg-white/80 dark:bg-[#243047]/80 border border-[#e2e4e6]/80 dark:border-[#38455d]/80">
-                                    <div class="flex items-center gap-1.5 text-[11px] text-ink-faint dark:text-gray-400 mb-1">
-                                        <span>🚪</span>
-                                        <span data-i18n="reservation_card_checkout" class="font-semibold uppercase tracking-wider text-[10px]">Départ</span>
-                                    </div>
-                                    <p id="res-card-checkout-date" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
-                                    <p id="res-card-checkout-time" class="text-[11px] text-gold font-medium mt-0.5">—</p>
-                                </div>
-
-                                <!-- Durée -->
-                                <div class="p-2.5 sm:p-3 rounded-xl bg-white/80 dark:bg-[#243047]/80 border border-[#e2e4e6]/80 dark:border-[#38455d]/80">
-                                    <div class="flex items-center gap-1.5 text-[11px] text-ink-faint dark:text-gray-400 mb-1">
-                                        <span>🌙</span>
-                                        <span data-i18n="reservation_card_duration" class="font-semibold uppercase tracking-wider text-[10px]">Durée</span>
-                                    </div>
-                                    <p id="res-card-nights" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
-                                    <p id="res-card-ref" class="text-[10px] text-ink-faint dark:text-gray-400 font-mono mt-0.5 truncate">—</p>
-                                </div>
-
-                                <!-- Voyageurs -->
-                                <div class="p-2.5 sm:p-3 rounded-xl bg-white/80 dark:bg-[#243047]/80 border border-[#e2e4e6]/80 dark:border-[#38455d]/80">
-                                    <div class="flex items-center gap-1.5 text-[11px] text-ink-faint dark:text-gray-400 mb-1">
-                                        <span>👥</span>
-                                        <span data-i18n="reservation_card_guests" class="font-semibold uppercase tracking-wider text-[10px]">Voyageurs</span>
-                                    </div>
-                                    <p id="res-card-guests-count" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
-                                    <p id="res-card-guests-detail" class="text-[10px] text-ink-soft dark:text-gray-400 mt-0.5 truncate">—</p>
-                                </div>
-                            </div>
-
-                            <!-- Liseré de bas de carte -->
-                            <div class="mt-3 pt-2.5 border-t border-gold/15 flex items-center justify-between text-[11px] text-ink-soft dark:text-gray-300">
-                                <div class="flex items-center gap-1.5 truncate">
-                                    <span class="text-gold flex-shrink-0">✨</span>
-                                    <span data-i18n="reservation_card_reassurance" class="truncate">Logement vérifié et préparé avec soin par l'équipe Carré d'Hôtes.</span>
-                                </div>
+                            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f3f3ec] dark:bg-[#1e2739] flex items-center justify-center text-ink-faint dark:text-gray-300 group-hover:bg-gold group-hover:text-white transition flex-shrink-0 shadow-2xs ml-2 sm:ml-3" aria-hidden="true">
+                                <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                </svg>
                             </div>
                         </div>
 
@@ -1176,6 +1170,164 @@
         </div>
     </div>
 
+    <!-- =================================================================== -->
+    <!-- MODALE BOTTOM-SHEET 7 : DÉTAILS DE LA RÉSERVATION VOYAGEUR         -->
+    <!-- =================================================================== -->
+    <div id="modal-reservation" class="modal-overlay" onclick="onModalBackdropClick(event, 'reservation')" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
+        <div class="modal-sheet-compact flex flex-col" onclick="event.stopPropagation()">
+            <div class="sheet-drag-handle flex-shrink-0" aria-hidden="true"></div>
+
+            <!-- Barre supérieure de la modale Réservation -->
+            <div class="modal-header-fixed px-5 py-3.5 border-b border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center space-x-2.5 truncate pr-2">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-gold/15 text-gold" aria-hidden="true">
+                        <svg aria-hidden="true" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="18" height="18" x="3" y="4" rx="3" ry="3"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                            <path d="m9 16 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <div class="truncate">
+                        <h3 id="reservation-modal-title" data-i18n="reservation_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Détails de votre réservation</h3>
+                        <p id="reservation-modal-subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate font-mono">Carré d'Hôtes &middot; Séjour Privilège</p>
+                    </div>
+                </div>
+                <button onclick="closeReservationModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Contenu défilant : Détails complets de la réservation -->
+            <div id="reservation-modal-body" class="p-4 sm:p-6 space-y-4 overflow-y-auto max-h-[75vh]">
+                <!-- En-tête VIP voyageur -->
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-gold/15 via-[#faf9f6] to-[#f3f3ec] dark:from-gold/20 dark:via-[#1e2739] dark:to-[#171f2e] border border-gold/30">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-gold">
+                                <span>✦</span> <span data-i18n="hero_badge_vip">Séjour Privilège</span>
+                            </span>
+                            <h4 id="res-modal-guest-name" class="text-base sm:text-lg font-bold text-ink dark:text-white font-serif-brand mt-0.5 truncate">Bienvenue</h4>
+                            <p id="res-modal-prop-name" class="text-xs text-ink-soft dark:text-gray-300 font-medium truncate"></p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span id="res-modal-status-badge" class="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span>
+                                <span data-i18n="reservation_card_badge_confirmed">Confirmée</span>
+                            </span>
+                            <span id="res-modal-platform-badge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 dark:bg-[#161f30] text-ink-soft dark:text-gray-300 border border-[#e2e4e6] dark:border-[#38455d]"></span>
+                        </div>
+                    </div>
+                    <div class="mt-2.5 pt-2.5 border-t border-gold/20 flex items-center justify-between text-[11px] text-ink-faint dark:text-gray-400 font-mono">
+                        <span data-i18n="res_modal_ref_label">Numéro de réservation</span>
+                        <strong id="res-modal-ref-id" class="text-gold">#—</strong>
+                    </div>
+                </div>
+
+                <!-- Grille des 4 indicateurs majeurs -->
+                <div class="grid grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+                    <!-- Arrivée -->
+                    <div class="p-3 sm:p-3.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                        <div class="flex items-center gap-1.5 text-gold mb-1">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span data-i18n="reservation_card_checkin" class="font-bold uppercase tracking-wider text-[10px]">Arrivée</span>
+                        </div>
+                        <p id="res-modal-checkin-date" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
+                        <p id="res-modal-checkin-time" class="text-[11px] text-gold font-medium mt-1">—</p>
+                    </div>
+
+                    <!-- Départ -->
+                    <div class="p-3 sm:p-3.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                        <div class="flex items-center gap-1.5 text-gold mb-1">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            <span data-i18n="reservation_card_checkout" class="font-bold uppercase tracking-wider text-[10px]">Départ</span>
+                        </div>
+                        <p id="res-modal-checkout-date" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
+                        <p id="res-modal-checkout-time" class="text-[11px] text-gold font-medium mt-1">—</p>
+                    </div>
+
+                    <!-- Durée -->
+                    <div class="p-3 sm:p-3.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                        <div class="flex items-center gap-1.5 text-gold mb-1">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                            </svg>
+                            <span data-i18n="reservation_card_duration" class="font-bold uppercase tracking-wider text-[10px]">Durée</span>
+                        </div>
+                        <p id="res-modal-nights" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
+                        <p class="text-[10px] text-ink-faint dark:text-gray-400 mt-1" data-i18n="res_modal_stay_label">Séjour complet</p>
+                    </div>
+
+                    <!-- Voyageurs -->
+                    <div class="p-3 sm:p-3.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                        <div class="flex items-center gap-1.5 text-gold mb-1">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            <span data-i18n="reservation_card_guests" class="font-bold uppercase tracking-wider text-[10px]">Voyageurs</span>
+                        </div>
+                        <p id="res-modal-guests-count" class="font-bold text-ink dark:text-white text-xs sm:text-sm leading-tight">—</p>
+                        <p id="res-modal-guests-detail" class="text-[10px] text-ink-soft dark:text-gray-400 mt-1 truncate">—</p>
+                    </div>
+                </div>
+
+                <!-- Bloc Adresse & Itinéraire GPS -->
+                <div id="res-modal-address-block" class="p-3.5 sm:p-4 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5 text-[10px] font-semibold text-gold uppercase tracking-wider mb-1">
+                                <span>📍</span>
+                                <span data-i18n="res_modal_address_label">Adresse de votre hébergement</span>
+                            </div>
+                            <p id="res-modal-address-text" class="text-xs sm:text-sm font-semibold text-ink dark:text-white leading-snug">—</p>
+                        </div>
+                        <a id="res-modal-maps-btn" href="#" target="_blank" rel="noopener noreferrer"
+                           class="px-3 py-1.5 rounded-lg bg-gold/15 text-gold-text dark:text-gold border border-gold/30 hover:bg-gold hover:text-white transition text-xs font-semibold flex items-center gap-1 flex-shrink-0">
+                            <span>🗺️</span>
+                            <span data-i18n="parking_maps_btn">Itinéraire</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Raccourcis immédiats utiles -->
+                <div class="space-y-2 pt-1">
+                    <p data-i18n="res_modal_quick_access" class="text-[11px] font-semibold text-gold uppercase tracking-wider">
+                        Accès rapide pour votre séjour
+                    </p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="closeReservationModal(); openCurrentGuide();" class="p-2.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold transition text-left flex items-center space-x-2 cursor-pointer group">
+                            <span class="w-7 h-7 rounded-lg bg-gold/10 text-gold flex items-center justify-center text-sm flex-shrink-0">📖</span>
+                            <div class="min-w-0">
+                                <p data-i18n="res_modal_btn_guide" class="text-xs font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Guide d'accueil</p>
+                                <p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Consulter le livret</p>
+                            </div>
+                        </button>
+                        <button type="button" onclick="closeReservationModal(); openWifiModal();" class="p-2.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold transition text-left flex items-center space-x-2 cursor-pointer group">
+                            <span class="w-7 h-7 rounded-lg bg-gold/10 text-gold flex items-center justify-center text-sm flex-shrink-0">📶</span>
+                            <div class="min-w-0">
+                                <p data-i18n="res_modal_btn_wifi" class="text-xs font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Codes Wi-Fi</p>
+                                <p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Accès Internet</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer réassurance -->
+                <div class="pt-2 border-t border-[#e2e4e6] dark:border-[#38455d] flex items-center justify-between text-[11px] text-ink-faint dark:text-gray-400">
+                    <span class="flex items-center gap-1 truncate">
+                        <span class="text-gold">✨</span>
+                        <span data-i18n="reservation_card_reassurance" class="truncate">Logement vérifié et préparé avec soin par l'équipe Carré d'Hôtes.</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification flottante de copie -->
     <div id="copy-toast" class="bg-ink text-white px-4 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
         <span>✓</span>
@@ -1264,6 +1416,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=11.0"></script>
+    <script type="module" src="assets/js/app.js?v=11.1"></script>
 </body>
 </html>
