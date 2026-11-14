@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.1';
-import { Utils } from './utils.js?v=11.1';
-import { I18n } from './i18n.js?v=11.1';
-import { ScrollManager } from './scroll.js?v=11.1';
-import { Router, BASE_PATH } from './router.js?v=11.1';
-import { ModalManager } from './modals.js?v=11.1';
-import { PdfViewer } from './pdf-viewer.js?v=11.1';
+import { AppState } from './state.js?v=11.2';
+import { Utils } from './utils.js?v=11.2';
+import { I18n } from './i18n.js?v=11.2';
+import { ScrollManager } from './scroll.js?v=11.2';
+import { Router, BASE_PATH } from './router.js?v=11.2';
+import { ModalManager } from './modals.js?v=11.2';
+import { PdfViewer } from './pdf-viewer.js?v=11.2';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -290,8 +290,10 @@ export const PropertyRenderer = {
             if (res.platform_name) {
                 platformEl.textContent = res.platform_name;
                 platformEl.classList.remove('hidden');
+                platformEl.classList.add('hidden', 'sm:inline-flex');
             } else {
                 platformEl.classList.add('hidden');
+                platformEl.classList.remove('sm:inline-flex');
             }
         }
 
