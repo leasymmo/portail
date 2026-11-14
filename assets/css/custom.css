@@ -1236,6 +1236,64 @@ body.modal-open .pwa-install-prompt {
 }
 
 /* ==============================================================================
+   CARTE 2D LEAFLET (APERÇU DU LOGEMENT DANS LA MODALE RÉSERVATION)
+   ============================================================================== */
+.leaflet-container {
+    font-family: inherit !important;
+    background-color: #f1f0ea !important;
+    z-index: 1 !important;
+}
+
+.dark .leaflet-container {
+    background-color: #111827 !important;
+}
+
+/* Rendu sombre élégant des tuiles en mode Dark */
+.dark #res-modal-map .leaflet-tile {
+    filter: brightness(0.72) invert(1) contrast(1.15) hue-rotate(200deg) saturate(0.65) !important;
+}
+
+/* Boutons de zoom arrondis et assortis au design */
+.leaflet-bar {
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+.leaflet-bar a {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    font-size: 14px !important;
+    transition: background-color 0.2s, color 0.2s !important;
+}
+
+.leaflet-bar a:hover {
+    background-color: #b8995a !important;
+    color: #ffffff !important;
+}
+
+.dark .leaflet-bar a {
+    background-color: rgba(30, 39, 57, 0.95) !important;
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #38455d !important;
+}
+
+.dark .leaflet-bar a:hover {
+    background-color: #b8995a !important;
+    color: #ffffff !important;
+}
+
+.cdh-leaflet-marker {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* ==============================================================================
    ACCESSIBILITÉ : MODE MOUVEMENT RÉDUIT (PREFERS-REDUCED-MOTION)
    ============================================================================== */
 @media (prefers-reduced-motion: reduce) {

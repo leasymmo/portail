@@ -5,17 +5,17 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.3';
-import { Utils } from './utils.js?v=11.3';
-import { I18n } from './i18n.js?v=11.3';
-import { Router } from './router.js?v=11.3';
-import { ApiService } from './api.js?v=11.3';
-import { PropertyRenderer, ListRenderer } from './renderer.js?v=11.3';
-import { ModalManager } from './modals.js?v=11.3';
-import { ScrollManager } from './scroll.js?v=11.3';
-import { PdfViewer } from './pdf-viewer.js?v=11.3';
-import { SheetGestureController, TabGestureController } from './gestures.js?v=11.3';
-import { PwaManager } from './pwa.js?v=11.3';
+import { AppState } from './state.js?v=11.4';
+import { Utils } from './utils.js?v=11.4';
+import { I18n } from './i18n.js?v=11.4';
+import { Router } from './router.js?v=11.4';
+import { ApiService } from './api.js?v=11.4';
+import { PropertyRenderer, ListRenderer } from './renderer.js?v=11.4';
+import { ModalManager } from './modals.js?v=11.4';
+import { ScrollManager } from './scroll.js?v=11.4';
+import { PdfViewer } from './pdf-viewer.js?v=11.4';
+import { SheetGestureController, TabGestureController } from './gestures.js?v=11.4';
+import { PwaManager } from './pwa.js?v=11.4';
 
 export const AppController = {
     async load() {

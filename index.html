@@ -42,6 +42,10 @@
     <!-- Moteur de rendu PDF vectoriel universel (Mozilla PDF.js - Standard du Web) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
 
+    <!-- Librairie cartographique vectorielle Leaflet 2D (Open-source, sécurisée & ultra-légère) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="" defer></script>
+
     <!-- Tailwind CSS (CDN avec mode sombre configuré sur la classe dark) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -74,7 +78,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=11.3">
+    <link rel="stylesheet" href="assets/css/custom.css?v=11.4">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -1276,44 +1280,30 @@
                     </div>
                 </div>
 
-                <!-- Bloc Adresse & Itinéraire GPS -->
-                <div id="res-modal-address-block" class="p-3.5 sm:p-4 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d]">
+                <!-- Bloc Adresse de votre hébergement avec Aperçu Carte 2D Interactive -->
+                <div id="res-modal-address-block" class="p-3.5 sm:p-4 rounded-2xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] space-y-3">
                     <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-1.5 text-[10px] font-semibold text-gold uppercase tracking-wider mb-1">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 text-[10px] font-bold text-gold uppercase tracking-wider mb-1">
                                 <span>📍</span>
                                 <span data-i18n="res_modal_address_label">Adresse de votre hébergement</span>
                             </div>
                             <p id="res-modal-address-text" class="text-xs sm:text-sm font-semibold text-ink dark:text-white leading-snug">—</p>
                         </div>
                         <a id="res-modal-maps-btn" href="#" target="_blank" rel="noopener noreferrer"
-                           class="px-3 py-1.5 rounded-lg bg-gold/15 text-gold-text dark:text-gold border border-gold/30 hover:bg-gold hover:text-white transition text-xs font-semibold flex items-center gap-1 flex-shrink-0">
+                           class="px-3 py-1.5 rounded-lg bg-gold/15 text-gold-text dark:text-gold border border-gold/30 hover:bg-gold hover:text-white transition text-xs font-semibold flex items-center gap-1 flex-shrink-0 cursor-pointer shadow-sm">
                             <span>🗺️</span>
                             <span data-i18n="parking_maps_btn">Itinéraire</span>
                         </a>
                     </div>
-                </div>
 
-                <!-- Raccourcis immédiats utiles -->
-                <div class="space-y-2 pt-1">
-                    <p data-i18n="res_modal_quick_access" class="text-[11px] font-semibold text-gold uppercase tracking-wider">
-                        Accès rapide pour votre séjour
-                    </p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="closeReservationModal(); openCurrentGuide();" class="p-2.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold transition text-left flex items-center space-x-2 cursor-pointer group">
-                            <span class="w-7 h-7 rounded-lg bg-gold/10 text-gold flex items-center justify-center text-sm flex-shrink-0">📖</span>
-                            <div class="min-w-0">
-                                <p data-i18n="res_modal_btn_guide" class="text-xs font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Guide d'accueil</p>
-                                <p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Consulter le livret</p>
-                            </div>
-                        </button>
-                        <button type="button" onclick="closeReservationModal(); openWifiModal();" class="p-2.5 rounded-xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold transition text-left flex items-center space-x-2 cursor-pointer group">
-                            <span class="w-7 h-7 rounded-lg bg-gold/10 text-gold flex items-center justify-center text-sm flex-shrink-0">📶</span>
-                            <div class="min-w-0">
-                                <p data-i18n="res_modal_btn_wifi" class="text-xs font-bold text-ink dark:text-white group-hover:text-gold transition truncate">Codes Wi-Fi</p>
-                                <p class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Accès Internet</p>
-                            </div>
-                        </button>
+                    <!-- Aperçu Carte 2D (Leaflet Open-Source & CartoDB Voyager) -->
+                    <div class="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner group">
+                        <div id="res-modal-map" class="w-full h-full z-0"></div>
+                        <a id="res-modal-map-open-link" href="#" target="_blank" rel="noopener noreferrer"
+                           class="absolute bottom-2.5 right-2.5 z-[400] px-2.5 py-1 rounded-md bg-white/95 dark:bg-[#1e2739]/95 text-ink dark:text-white text-[11px] font-semibold shadow-md border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold flex items-center gap-1 backdrop-blur-sm transition cursor-pointer">
+                            <span>Google Maps ↗</span>
+                        </a>
                     </div>
                 </div>
 
@@ -1416,6 +1406,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=11.3"></script>
+    <script type="module" src="assets/js/app.js?v=11.4"></script>
 </body>
 </html>
