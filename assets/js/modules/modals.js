@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.0';
-import { Utils } from './utils.js?v=11.0';
-import { I18n } from './i18n.js?v=11.0';
-import { ScrollManager } from './scroll.js?v=11.0';
-import { Router } from './router.js?v=11.0';
-import { PdfViewer } from './pdf-viewer.js?v=11.0';
+import { AppState } from './state.js?v=11.1';
+import { Utils } from './utils.js?v=11.1';
+import { I18n } from './i18n.js?v=11.1';
+import { ScrollManager } from './scroll.js?v=11.1';
+import { Router } from './router.js?v=11.1';
+import { PdfViewer } from './pdf-viewer.js?v=11.1';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -675,6 +675,7 @@ export const ModalManager = {
             if (type === 'review') this.closeReview();
             if (type === 'contact') this.closeContact();
             if (type === 'parking') this.closeParking();
+            if (type === 'reservation') this.closeReservation();
         }
     },
 
@@ -750,6 +751,76 @@ export const ModalManager = {
             }
             Router.setUrl(AppState.currentSlug, AppState.currentActiveTab || 'guides');
         }, 360);
+    },
+
+    // --- MODALE RÉSERVATION COMPACTE / DÉTAILLÉE ---
+    openReservation() {
+        if (!AppState.currentReservation) return;
+        const modal = document.getElementById('modal-reservation');
+        if (!modal) return;
+
+        // Réinitialise tout style restant d'un glissement gestuel
+        modal.classList.remove('is-closing');
+        const sheet = modal.querySelector('.modal-sheet, .modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = '';
+            sheet.style.transition = '';
+        }
+        modal.style.opacity = '';
+        modal.style.backgroundColor = '';
+
+        // Étape 1 : active la modale dans le DOM (display: flex) à sa position fermée translateY(100%)
+        modal.classList.add('is-active');
+        void modal.offsetHeight;
+
+        // Étape 2 : déclenche l'animation d'ouverture fluide (montée depuis le bas)
+        requestAnimationFrame(() => {
+            modal.classList.add('open');
+            modal.classList.remove('is-active');
+            modal.setAttribute('aria-hidden', 'false');
+        });
+
+        AppState.isReservationModalOpen = true;
+        ScrollManager.lock();
+
+        const bodyEl = document.getElementById('reservation-modal-body');
+        if (bodyEl) bodyEl.scrollTop = 0;
+    },
+
+    closeReservation(immediate = false) {
+        const modal = document.getElementById('modal-reservation');
+        if (!modal) return;
+
+        AppState.isReservationModalOpen = false;
+        ScrollManager.unlock();
+
+        if (immediate || !modal.classList.contains('open')) {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            const sheet = modal.querySelector('.modal-sheet, .modal-sheet-compact');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            return;
+        }
+
+        modal.classList.add('is-closing');
+        const sheet = modal.querySelector('.modal-sheet, .modal-sheet-compact');
+        if (sheet) {
+            sheet.style.transform = 'translateY(100%)';
+        }
+        modal.style.opacity = '0';
+
+        setTimeout(() => {
+            modal.classList.remove('open', 'is-active', 'is-closing');
+            modal.setAttribute('aria-hidden', 'true');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
+        }, 340);
     }
 };
 

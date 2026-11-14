@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.0';
-import { Utils } from './utils.js?v=11.0';
+import { AppState } from './state.js?v=11.1';
+import { Utils } from './utils.js?v=11.1';
 
 export const I18n = {
     currentLang: 'fr',
@@ -142,6 +142,16 @@ export const I18n = {
             vip_welcome_at: "au",
             vip_welcome_subtitle: "Nous vous souhaitons un séjour d'exception à Lyon.",
             reservation_card_title: "Détails de votre séjour",
+            reservation_modal_title: "Détails de votre réservation",
+            res_chip_in: "Du",
+            res_chip_out: "au",
+            res_modal_ref_label: "Numéro de réservation",
+            res_modal_stay_label: "Séjour complet",
+            res_modal_address_label: "Adresse de votre hébergement",
+            res_modal_quick_access: "Accès rapide pour votre séjour",
+            res_modal_btn_guide: "Guide d'accueil",
+            res_modal_btn_wifi: "Codes Wi-Fi",
+            res_modal_btn_contact: "Contacter Anthony",
             reservation_card_badge_confirmed: "Confirmée",
             reservation_card_badge_unconfirmed: "En attente",
             reservation_card_checkin: "Arrivée",
@@ -312,6 +322,16 @@ export const I18n = {
             vip_welcome_at: "at",
             vip_welcome_subtitle: "We wish you an exceptional stay in Lyon.",
             reservation_card_title: "Your Stay Details",
+            reservation_modal_title: "Your Booking Details",
+            res_chip_in: "From",
+            res_chip_out: "to",
+            res_modal_ref_label: "Booking reference",
+            res_modal_stay_label: "Full stay",
+            res_modal_address_label: "Accommodation address",
+            res_modal_quick_access: "Quick shortcuts for your stay",
+            res_modal_btn_guide: "Welcome Guide",
+            res_modal_btn_wifi: "Wi-Fi Codes",
+            res_modal_btn_contact: "Contact Anthony",
             reservation_card_badge_confirmed: "Confirmed",
             reservation_card_badge_unconfirmed: "Pending",
             reservation_card_checkin: "Check-in",
