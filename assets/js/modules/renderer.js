@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.3';
-import { Utils } from './utils.js?v=11.3';
-import { I18n } from './i18n.js?v=11.3';
-import { ScrollManager } from './scroll.js?v=11.3';
-import { Router, BASE_PATH } from './router.js?v=11.3';
-import { ModalManager } from './modals.js?v=11.3';
-import { PdfViewer } from './pdf-viewer.js?v=11.3';
+import { AppState } from './state.js?v=11.4';
+import { Utils } from './utils.js?v=11.4';
+import { I18n } from './i18n.js?v=11.4';
+import { ScrollManager } from './scroll.js?v=11.4';
+import { Router, BASE_PATH } from './router.js?v=11.4';
+import { ModalManager } from './modals.js?v=11.4';
+import { PdfViewer } from './pdf-viewer.js?v=11.4';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -391,7 +391,7 @@ export const PropertyRenderer = {
             }
         }
 
-        // Adresse du logement & Bouton itinéraire Maps
+        // Adresse du logement & Bouton itinéraire Maps & Aperçu Carte 2D
         const modalAddressBlock = document.getElementById('res-modal-address-block');
         const modalAddressText = document.getElementById('res-modal-address-text');
         const modalMapsBtn = document.getElementById('res-modal-maps-btn');
@@ -404,8 +404,138 @@ export const PropertyRenderer = {
                 modalMapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
             }
             if (modalAddressBlock) modalAddressBlock.classList.remove('hidden');
+            this.renderReservationMap(prop);
         } else if (modalAddressBlock) {
             modalAddressBlock.classList.add('hidden');
+        }
+    },
+
+    _resMap: null,
+    _resMarker: null,
+    _currentMapSlug: null,
+
+    PROPERTY_COORDINATES: {
+        'marietton-cosy': { lat: 45.77526, lng: 4.80609 },
+        'chez-denise-studio-cosy': { lat: 45.75971, lng: 4.87250 },
+        'cosy-et-design': { lat: 45.77388, lng: 4.86113 },
+        'studio-cosy-de-mel': { lat: 45.76683, lng: 4.89461 },
+        'studio-cosy-de-paul': { lat: 45.76683, lng: 4.89461 },
+        'latelier-cosy-felix': { lat: 45.75472, lng: 4.86886 },
+        'atelier-cosy-felix': { lat: 45.75472, lng: 4.86886 },
+        'berthelot-design': { lat: 45.73788, lng: 4.86507 },
+        'bataille': { lat: 45.73743, lng: 4.87495 },
+        'maisonnette-en-jouhet': { lat: 45.73300, lng: 4.85907 },
+        'loft-cosy-annonay': { lat: 45.24150, lng: 4.67100 },
+        'villa-soleil-printemps': { lat: 45.75000, lng: 4.85000 }
+    },
+
+    getPropertyCoordinates(prop) {
+        if (!prop) return { lat: 45.7640, lng: 4.8357 };
+        const slug = (prop.slug || '').toLowerCase().trim();
+        if (this.PROPERTY_COORDINATES[slug]) {
+            return this.PROPERTY_COORDINATES[slug];
+        }
+        for (const [key, coords] of Object.entries(this.PROPERTY_COORDINATES)) {
+            if (slug.includes(key) || key.includes(slug)) {
+                return coords;
+            }
+        }
+        return { lat: 45.7640, lng: 4.8357 };
+    },
+
+    renderReservationMap(prop) {
+        const mapContainer = document.getElementById('res-modal-map');
+        if (!mapContainer) return;
+
+        if (typeof window.L === 'undefined') {
+            const checkTimer = setInterval(() => {
+                if (typeof window.L !== 'undefined') {
+                    clearInterval(checkTimer);
+                    this.renderReservationMap(prop);
+                }
+            }, 60);
+            setTimeout(() => clearInterval(checkTimer), 4000);
+            return;
+        }
+
+        const coords = this.getPropertyCoordinates(prop);
+
+        // Lien direct Google Maps pour itinéraire
+        const openLink = document.getElementById('res-modal-map-open-link');
+        if (openLink) {
+            const query = encodeURIComponent(prop && prop.address ? prop.address : `${coords.lat},${coords.lng}`);
+            openLink.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+        }
+
+        const propSlug = prop ? prop.slug : '';
+
+        // Si la carte Leaflet existe déjà
+        if (this._resMap) {
+            if (this._currentMapSlug !== propSlug) {
+                this._currentMapSlug = propSlug;
+                this._resMap.setView([coords.lat, coords.lng], 16);
+                if (this._resMarker) {
+                    this._resMarker.setLatLng([coords.lat, coords.lng]);
+                }
+            }
+            this.invalidateReservationMap();
+            return;
+        }
+
+        try {
+            this._currentMapSlug = propSlug;
+
+            const map = L.map('res-modal-map', {
+                center: [coords.lat, coords.lng],
+                zoom: 16,
+                minZoom: 11,
+                maxZoom: 19,
+                zoomControl: true,
+                attributionControl: false,
+                scrollWheelZoom: false,
+                touchZoom: true
+            });
+
+            // Fond de carte élégant et moderne CartoDB Voyager
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Marqueur doré Carré d'Hôtes avec douce onde de pulsation
+            const customIcon = L.divIcon({
+                className: 'cdh-leaflet-marker',
+                html: `
+                    <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <span style="position: absolute; width: 34px; height: 34px; border-radius: 9999px; background: rgba(184, 153, 90, 0.4); animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
+                        <div style="position: relative; width: 32px; height: 32px; border-radius: 9999px; background: linear-gradient(135deg, #c5a869 0%, #b8995a 100%); border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white;">
+                            <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                        </div>
+                    </div>
+                `,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+
+            this._resMarker = L.marker([coords.lat, coords.lng], { icon: customIcon }).addTo(map);
+            this._resMap = map;
+
+            this.invalidateReservationMap();
+        } catch(err) {
+            console.warn('[PropertyRenderer] Erreur carte Leaflet :', err);
+        }
+    },
+
+    invalidateReservationMap() {
+        if (this._resMap) {
+            setTimeout(() => {
+                try {
+                    this._resMap.invalidateSize();
+                } catch(e) {}
+            }, 260);
         }
     },
 

@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.3';
-import { Utils } from './utils.js?v=11.3';
-import { I18n } from './i18n.js?v=11.3';
-import { ScrollManager } from './scroll.js?v=11.3';
-import { Router } from './router.js?v=11.3';
-import { PdfViewer } from './pdf-viewer.js?v=11.3';
+import { AppState } from './state.js?v=11.4';
+import { Utils } from './utils.js?v=11.4';
+import { I18n } from './i18n.js?v=11.4';
+import { ScrollManager } from './scroll.js?v=11.4';
+import { Router } from './router.js?v=11.4';
+import { PdfViewer } from './pdf-viewer.js?v=11.4';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -792,6 +792,12 @@ export const ModalManager = {
 
         const bodyEl = document.getElementById('reservation-modal-body');
         if (bodyEl) bodyEl.scrollTop = 0;
+
+        setTimeout(() => {
+            if (window.PropertyRenderer && window.PropertyRenderer.invalidateReservationMap) {
+                window.PropertyRenderer.invalidateReservationMap();
+            }
+        }, 300);
     },
 
     closeReservation(immediate = false) {
