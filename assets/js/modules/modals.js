@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.8';
-import { Utils } from './utils.js?v=11.8';
-import { I18n } from './i18n.js?v=11.8';
-import { ScrollManager } from './scroll.js?v=11.8';
-import { Router } from './router.js?v=11.8';
-import { PdfViewer } from './pdf-viewer.js?v=11.8';
+import { AppState } from './state.js?v=11.9';
+import { Utils } from './utils.js?v=11.9';
+import { I18n } from './i18n.js?v=11.9';
+import { ScrollManager } from './scroll.js?v=11.9';
+import { Router } from './router.js?v=11.9';
+import { PdfViewer } from './pdf-viewer.js?v=11.9';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -723,12 +723,13 @@ export const ModalManager = {
         // Rendu et recalcul de la carte Leaflet Stationnement
         if (window.PropertyRenderer && AppState.currentProperty) {
             window.PropertyRenderer.renderParkingMap(AppState.currentProperty);
+            window.PropertyRenderer.resetParkingMapView(AppState.currentProperty);
         }
 
         [50, 150, 300, 500].forEach((delay) => {
             setTimeout(() => {
-                if (window.PropertyRenderer && window.PropertyRenderer.invalidateParkingMap) {
-                    window.PropertyRenderer.invalidateParkingMap();
+                if (window.PropertyRenderer && window.PropertyRenderer.resetParkingMapView && AppState.currentProperty) {
+                    window.PropertyRenderer.resetParkingMapView(AppState.currentProperty);
                 }
             }, delay);
         });
@@ -739,8 +740,13 @@ export const ModalManager = {
     },
 
     closeParking(immediate = false) {
-        if (window.PropertyRenderer && window.PropertyRenderer._activeFullscreenMap === 'parking') {
-            window.PropertyRenderer.exitMapFullscreen('parking');
+        if (window.PropertyRenderer) {
+            if (window.PropertyRenderer._activeFullscreenMap === 'parking') {
+                window.PropertyRenderer.exitMapFullscreen('parking');
+            }
+            if (window.PropertyRenderer.resetParkingMapView && AppState.currentProperty) {
+                window.PropertyRenderer.resetParkingMapView(AppState.currentProperty);
+            }
         }
         const modal = document.getElementById('modal-parking');
         if (!modal) return;
@@ -812,21 +818,27 @@ export const ModalManager = {
         // Assure le rendu et le recalcul dimensionnel de la carte 2D
         if (window.PropertyRenderer && AppState.currentProperty) {
             window.PropertyRenderer.renderReservationMap(AppState.currentProperty);
+            window.PropertyRenderer.resetReservationMapView(AppState.currentProperty);
         }
 
         // Multiples passes de recalcul de taille pour s'adapter à l'animation d'ouverture bottom-sheet
         [50, 150, 300, 500].forEach((delay) => {
             setTimeout(() => {
-                if (window.PropertyRenderer && window.PropertyRenderer.invalidateReservationMap) {
-                    window.PropertyRenderer.invalidateReservationMap();
+                if (window.PropertyRenderer && window.PropertyRenderer.resetReservationMapView && AppState.currentProperty) {
+                    window.PropertyRenderer.resetReservationMapView(AppState.currentProperty);
                 }
             }, delay);
         });
     },
 
     closeReservation(immediate = false) {
-        if (window.PropertyRenderer && window.PropertyRenderer._activeFullscreenMap === 'reservation') {
-            window.PropertyRenderer.exitMapFullscreen('reservation');
+        if (window.PropertyRenderer) {
+            if (window.PropertyRenderer._activeFullscreenMap === 'reservation') {
+                window.PropertyRenderer.exitMapFullscreen('reservation');
+            }
+            if (window.PropertyRenderer.resetReservationMapView && AppState.currentProperty) {
+                window.PropertyRenderer.resetReservationMapView(AppState.currentProperty);
+            }
         }
         const modal = document.getElementById('modal-reservation');
         if (!modal) return;

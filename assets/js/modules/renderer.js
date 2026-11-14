@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.8';
-import { Utils } from './utils.js?v=11.8';
-import { I18n } from './i18n.js?v=11.8';
-import { ScrollManager } from './scroll.js?v=11.8';
-import { Router, BASE_PATH } from './router.js?v=11.8';
-import { ModalManager } from './modals.js?v=11.8';
-import { PdfViewer } from './pdf-viewer.js?v=11.8';
+import { AppState } from './state.js?v=11.9';
+import { Utils } from './utils.js?v=11.9';
+import { I18n } from './i18n.js?v=11.9';
+import { ScrollManager } from './scroll.js?v=11.9';
+import { Router, BASE_PATH } from './router.js?v=11.9';
+import { ModalManager } from './modals.js?v=11.9';
+import { PdfViewer } from './pdf-viewer.js?v=11.9';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -418,6 +418,7 @@ export const PropertyRenderer = {
     _parkingMap: null,
     _parkingMarkersGroup: null,
     _currentParkingSlug: null,
+    _currentParkingLang: null,
 
     PROPERTY_COORDINATES: {
         'marietton-cosy': { lat: 45.77526, lng: 4.80609 },
@@ -556,17 +557,27 @@ export const PropertyRenderer = {
 
         const coords = this.getPropertyCoordinates(prop);
         const propSlug = prop ? prop.slug : '';
+        const isEn = I18n.currentLang === 'en';
+
+        const resPopup = `
+            <div style="text-align: left; min-width: 170px;">
+                <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #b8995a; display: block; margin-bottom: 2px;">✦ ${isEn ? 'Your Accommodation' : 'Votre hébergement'}</span>
+                <strong style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 3px; color: #1e293b;">${Utils.escapeHtml(prop ? prop.name : '')}</strong>
+                ${prop && prop.address ? `<p style="font-size: 11px; color: #64748b; margin-bottom: 2px;">📍 ${Utils.escapeHtml(prop.address)}</p>` : ''}
+            </div>
+        `;
 
         // Si la carte Leaflet existe déjà
         if (this._resMap) {
+            if (this._resMarker) {
+                this._resMarker.setLatLng([coords.lat, coords.lng]);
+                this._resMarker.setPopupContent(resPopup);
+            }
             if (this._currentMapSlug !== propSlug) {
                 this._currentMapSlug = propSlug;
-                this._resMap.setView([coords.lat, coords.lng], 16);
-                if (this._resMarker) {
-                    this._resMarker.setLatLng([coords.lat, coords.lng]);
-                }
+                this._resMap.setView([coords.lat, coords.lng], 16, { animate: false });
             }
-            this.invalidateReservationMap();
+            this.resetReservationMapView(prop);
             return;
         }
 
@@ -609,24 +620,30 @@ export const PropertyRenderer = {
             });
 
             this._resMarker = L.marker([coords.lat, coords.lng], { icon: customIcon }).addTo(map);
+            this._resMarker.bindPopup(resPopup, { autoPan: true, autoPanPaddingTopLeft: [75, 75], autoPanPaddingBottomRight: [25, 25] });
             this._resMap = map;
 
-            this.invalidateReservationMap();
+            this.resetReservationMapView(prop);
         } catch(err) {
             console.warn('[PropertyRenderer] Erreur carte Leaflet :', err);
         }
     },
 
     invalidateReservationMap() {
-        if (this._resMap) {
-            try {
-                this._resMap.invalidateSize(true);
-                if (AppState.currentProperty) {
-                    const coords = this.getPropertyCoordinates(AppState.currentProperty);
-                    this._resMap.setView([coords.lat, coords.lng], 16, { animate: false });
-                }
-            } catch(e) {}
-        }
+        this.resetReservationMapView(AppState.currentProperty);
+    },
+
+    resetReservationMapView(prop) {
+        if (!this._resMap) return;
+        try {
+            this._resMap.closePopup();
+            this._resMap.invalidateSize(true);
+            const p = prop || AppState.currentProperty;
+            if (p) {
+                const coords = this.getPropertyCoordinates(p);
+                this._resMap.setView([coords.lat, coords.lng], 16, { animate: false });
+            }
+        } catch(e) {}
     },
 
     renderParkingMap(prop) {
@@ -649,15 +666,16 @@ export const PropertyRenderer = {
 
         // Si la carte Leaflet existe déjà
         if (this._parkingMap) {
-            if (this._currentParkingSlug !== propSlug) {
+            if (this._currentParkingSlug !== propSlug || this._currentParkingLang !== I18n.currentLang) {
                 this.populateParkingMarkers(prop);
             }
-            this.invalidateParkingMap();
+            this.resetParkingMapView(prop);
             return;
         }
 
         try {
             this._currentParkingSlug = propSlug;
+            this._currentParkingLang = I18n.currentLang;
 
             const map = L.map('parking-modal-map', {
                 center: [propCoords.lat, propCoords.lng],
@@ -680,7 +698,7 @@ export const PropertyRenderer = {
             this._parkingMarkersGroup = L.layerGroup().addTo(map);
 
             this.populateParkingMarkers(prop);
-            this.invalidateParkingMap();
+            this.resetParkingMapView(prop);
         } catch(err) {
             console.warn('[PropertyRenderer] Erreur carte parking Leaflet :', err);
         }
@@ -689,7 +707,9 @@ export const PropertyRenderer = {
     populateParkingMarkers(prop) {
         if (!this._parkingMap || !this._parkingMarkersGroup) return;
         this._parkingMarkersGroup.clearLayers();
+        this._parkingMap.closePopup();
         this._currentParkingSlug = prop ? prop.slug : '';
+        this._currentParkingLang = I18n.currentLang;
 
         const isEn = I18n.currentLang === 'en';
         const propCoords = this.getPropertyCoordinates(prop);
@@ -732,7 +752,7 @@ export const PropertyRenderer = {
         locations.forEach((loc) => {
             const coords = this.getParkingCoordinates(loc, prop);
             const category = loc.category || 'free_street';
-            const name = isEn ? (loc.name_en || loc.name_fr) : loc.name_fr;
+            const name = isEn ? (loc.name_en || loc.name_fr) : (loc.name_fr || loc.name_en);
             const time = isEn ? (loc.walking_time_en || loc.walking_time_fr || loc.transit_time_en || loc.transit_time_fr) : (loc.walking_time_fr || loc.walking_time_en || loc.transit_time_fr || loc.transit_time_en);
             const addr = loc.address || '';
             const mapsQuery = encodeURIComponent(addr ? (addr + ', Lyon') : `${coords.lat},${coords.lng}`);
@@ -748,7 +768,7 @@ export const PropertyRenderer = {
                 iconSvg = '<svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="4"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>';
             } else if (category === 'tcl_pr') {
                 bgColor = '#ef4444'; // Rouge TCL P+R
-                badgeText = 'Parc Relais TCL';
+                badgeText = isEn ? 'TCL Park & Ride' : 'Parc Relais TCL';
                 iconSvg = '<svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>';
             }
 
@@ -766,15 +786,21 @@ export const PropertyRenderer = {
             });
 
             const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon });
+            const directionsBtnText = isEn ? 'GPS Directions ↗' : 'Itinéraire GPS ↗';
+            const notes = isEn ? (loc.notes_en || loc.notes_fr) : (loc.notes_fr || loc.notes_en);
+            const pricing = isEn ? (loc.pricing_details_en || loc.pricing_details_fr) : (loc.pricing_details_fr || loc.pricing_details_en);
+
             const popupHtml = `
                 <div style="text-align: left; min-width: 175px;">
                     <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${bgColor}; display: block; margin-bottom: 2px;">${badgeText}</span>
                     <strong style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 2px; color: #1e293b;">${Utils.escapeHtml(name)}</strong>
                     ${addr ? `<p style="font-size: 10px; color: #64748b; margin-bottom: 3px;">📍 ${Utils.escapeHtml(addr)}</p>` : ''}
-                    ${time ? `<p style="font-size: 10px; font-weight: 600; color: #334155; margin-bottom: 6px;">⏱️ ${Utils.escapeHtml(time)}</p>` : ''}
+                    ${time ? `<p style="font-size: 10px; font-weight: 600; color: #334155; margin-bottom: 4px;">⏱️ ${Utils.escapeHtml(time)}</p>` : ''}
+                    ${pricing ? `<p style="font-size: 10px; color: #b8995a; font-weight: 600; margin-bottom: 4px;">💶 ${Utils.escapeHtml(pricing)}</p>` : ''}
+                    ${notes ? `<p style="font-size: 10px; color: #64748b; margin-bottom: 6px; font-style: italic;">ℹ️ ${Utils.escapeHtml(notes)}</p>` : ''}
                     <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer"
                        style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: #b8995a; color: #ffffff; text-decoration: none; font-size: 10px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
-                        <span>Itinéraire GPS ↗</span>
+                        <span>${directionsBtnText}</span>
                     </a>
                 </div>
             `;
@@ -783,22 +809,41 @@ export const PropertyRenderer = {
             allBounds.push([coords.lat, coords.lng]);
         });
 
-        // Ajuster la vue pour englober tous les points (Logement + Parkings)
-        if (allBounds.length > 1) {
-            try {
-                this._parkingMap.fitBounds(allBounds, { padding: [30, 30], maxZoom: 16 });
-            } catch(e) {}
-        } else {
-            this._parkingMap.setView([propCoords.lat, propCoords.lng], 15);
-        }
+        // Recadrage initial selon tous les points
+        this.resetParkingMapView(prop);
     },
 
     invalidateParkingMap() {
-        if (this._parkingMap) {
-            try {
-                this._parkingMap.invalidateSize(true);
-            } catch(e) {}
-        }
+        this.resetParkingMapView(AppState.currentProperty);
+    },
+
+    resetParkingMapView(prop) {
+        if (!this._parkingMap) return;
+        try {
+            this._parkingMap.closePopup();
+            this._parkingMap.invalidateSize(true);
+
+            const p = prop || AppState.currentProperty;
+            if (!p) return;
+
+            const propCoords = this.getPropertyCoordinates(p);
+            const allBounds = [[propCoords.lat, propCoords.lng]];
+            const locations = p.parking && p.parking.locations ? (p.parking.locations.all || []) : [];
+            locations.forEach((loc) => {
+                const coords = this.getParkingCoordinates(loc, p);
+                allBounds.push([coords.lat, coords.lng]);
+            });
+
+            const isFullscreen = this._activeFullscreenMap === 'parking';
+            const padding = isFullscreen ? [60, 60] : [30, 30];
+            const maxZoom = isFullscreen ? 17 : 16;
+
+            if (allBounds.length > 1) {
+                this._parkingMap.fitBounds(allBounds, { padding, maxZoom, animate: false });
+            } else {
+                this._parkingMap.setView([propCoords.lat, propCoords.lng], 15, { animate: false });
+            }
+        } catch(e) {}
     },
 
     _activeFullscreenMap: null,
@@ -944,27 +989,9 @@ export const PropertyRenderer = {
                     try {
                         map.invalidateSize(true);
                         if (isParking) {
-                            if (AppState.currentProperty) {
-                                const allBounds = [];
-                                const propCoords = this.getPropertyCoordinates(AppState.currentProperty);
-                                allBounds.push([propCoords.lat, propCoords.lng]);
-                                const locations = AppState.currentProperty.parking && AppState.currentProperty.parking.locations 
-                                    ? (AppState.currentProperty.parking.locations.all || []) : [];
-                                locations.forEach(loc => {
-                                    const c = this.getParkingCoordinates(loc, AppState.currentProperty);
-                                    allBounds.push([c.lat, c.lng]);
-                                });
-                                if (allBounds.length > 1) {
-                                    map.fitBounds(allBounds, { padding: [30, 30], maxZoom: 16 });
-                                } else {
-                                    map.setView([propCoords.lat, propCoords.lng], 15);
-                                }
-                            }
+                            this.resetParkingMapView();
                         } else {
-                            if (AppState.currentProperty) {
-                                const coords = this.getPropertyCoordinates(AppState.currentProperty);
-                                map.setView([coords.lat, coords.lng], 16);
-                            }
+                            this.resetReservationMapView();
                         }
                     } catch(e) {}
                 }, delay);
@@ -1079,6 +1106,14 @@ export const PropertyRenderer = {
             if (txt) txt.textContent = isFs ? I18n.t('map_fullscreen_collapse') : I18n.t('map_fullscreen_expand');
             resFsBtn.setAttribute('title', isFs ? I18n.t('map_fullscreen_close_title') : I18n.t('map_fullscreen_title'));
             resFsBtn.setAttribute('aria-label', isFs ? I18n.t('map_fullscreen_close_title') : I18n.t('map_fullscreen_title'));
+        }
+
+        // Actualise immédiatement les marqueurs et popups des cartes 2D dans la nouvelle langue
+        if (this._parkingMap && AppState.currentProperty) {
+            this.populateParkingMarkers(AppState.currentProperty);
+        }
+        if (this._resMap && AppState.currentProperty) {
+            this.renderReservationMap(AppState.currentProperty);
         }
 
         // 4. Préchargement réactif du livret de bienvenue dans la nouvelle langue pour affichage 0ms
