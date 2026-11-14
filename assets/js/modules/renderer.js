@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.0';
-import { Utils } from './utils.js?v=12.0';
-import { I18n } from './i18n.js?v=12.0';
-import { ScrollManager } from './scroll.js?v=12.0';
-import { Router, BASE_PATH } from './router.js?v=12.0';
-import { ModalManager } from './modals.js?v=12.0';
-import { PdfViewer } from './pdf-viewer.js?v=12.0';
+import { AppState } from './state.js?v=12.1';
+import { Utils } from './utils.js?v=12.1';
+import { I18n } from './i18n.js?v=12.1';
+import { ScrollManager } from './scroll.js?v=12.1';
+import { Router, BASE_PATH } from './router.js?v=12.1';
+import { ModalManager } from './modals.js?v=12.1';
+import { PdfViewer } from './pdf-viewer.js?v=12.1';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -115,19 +115,22 @@ export const PropertyRenderer = {
         // Mise à jour de la carte du livret et des éléments dépendant de la langue
         this.updateLanguageContent();
 
-        // Onglets et Vidéos (toujours visibles pour maintenir la cohérence de navigation)
+        // Onglets et Vidéos : affichés uniquement si le logement possède au moins une vidéo
         const tabsContainer = document.getElementById('property-tabs-container');
-        if (tabsContainer) {
-            tabsContainer.classList.remove('hidden');
-        }
-        const badgeCountEl = document.getElementById('videos-badge-count');
-        if (badgeCountEl) {
-            badgeCountEl.textContent = (AppState.currentVideos && AppState.currentVideos.length) ? AppState.currentVideos.length : 0;
-        }
-        this.renderVideos(AppState.currentVideos || []);
+        if (AppState.currentVideos && AppState.currentVideos.length > 0) {
+            if (tabsContainer) tabsContainer.classList.remove('hidden');
+            const badgeCountEl = document.getElementById('videos-badge-count');
+            if (badgeCountEl) {
+                badgeCountEl.textContent = AppState.currentVideos.length;
+            }
+            this.renderVideos(AppState.currentVideos);
 
-        const targetTab = route.section === 'videos' ? 'videos' : 'guides';
-        this.switchTab(targetTab);
+            const targetTab = route.section === 'videos' ? 'videos' : 'guides';
+            this.switchTab(targetTab);
+        } else {
+            if (tabsContainer) tabsContainer.classList.add('hidden');
+            this.switchTab('guides');
+        }
 
         document.getElementById('view-property').classList.remove('hidden');
         ScrollManager.updateTopbarHeight();
@@ -1072,8 +1075,10 @@ export const PropertyRenderer = {
         // Statut d'Anthony en direct (heure française : Vert de 9h à 21h, Rouge de 21h à 9h)
         this.updateAnthonyStatus();
 
-        // 3. Actualiser la grille des vidéos avec les titres traduits ou l'état vide
-        this.renderVideos(AppState.currentVideos || []);
+        // 3. Actualiser la grille des vidéos avec les titres traduits
+        if (AppState.currentVideos && AppState.currentVideos.length > 0) {
+            this.renderVideos(AppState.currentVideos);
+        }
 
         // Configuration anticipée du lien direct WhatsApp
         const btnWhatsApp = document.getElementById('btn-whatsapp-anthony');
