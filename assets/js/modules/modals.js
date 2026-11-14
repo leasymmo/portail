@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.5';
-import { Utils } from './utils.js?v=11.5';
-import { I18n } from './i18n.js?v=11.5';
-import { ScrollManager } from './scroll.js?v=11.5';
-import { Router } from './router.js?v=11.5';
-import { PdfViewer } from './pdf-viewer.js?v=11.5';
+import { AppState } from './state.js?v=11.6';
+import { Utils } from './utils.js?v=11.6';
+import { I18n } from './i18n.js?v=11.6';
+import { ScrollManager } from './scroll.js?v=11.6';
+import { Router } from './router.js?v=11.6';
+import { PdfViewer } from './pdf-viewer.js?v=11.6';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -719,6 +719,19 @@ export const ModalManager = {
         // Réinitialise le défilement du conteneur en haut de page
         const bodyEl = document.getElementById('parking-modal-body');
         if (bodyEl) bodyEl.scrollTop = 0;
+
+        // Rendu et recalcul de la carte Leaflet Stationnement
+        if (window.PropertyRenderer && AppState.currentProperty) {
+            window.PropertyRenderer.renderParkingMap(AppState.currentProperty);
+        }
+
+        [50, 150, 300, 500].forEach((delay) => {
+            setTimeout(() => {
+                if (window.PropertyRenderer && window.PropertyRenderer.invalidateParkingMap) {
+                    window.PropertyRenderer.invalidateParkingMap();
+                }
+            }, delay);
+        });
 
         if (updateUrl) {
             Router.setUrl(AppState.currentSlug, 'parking');

@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { BASE_PATH } from './router.js?v=11.5';
+import { BASE_PATH } from './router.js?v=11.6';
 
 export const ApiService = {
     async fetchRouteData(slug, reservationId = '') {

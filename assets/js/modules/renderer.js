@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.5';
-import { Utils } from './utils.js?v=11.5';
-import { I18n } from './i18n.js?v=11.5';
-import { ScrollManager } from './scroll.js?v=11.5';
-import { Router, BASE_PATH } from './router.js?v=11.5';
-import { ModalManager } from './modals.js?v=11.5';
-import { PdfViewer } from './pdf-viewer.js?v=11.5';
+import { AppState } from './state.js?v=11.6';
+import { Utils } from './utils.js?v=11.6';
+import { I18n } from './i18n.js?v=11.6';
+import { ScrollManager } from './scroll.js?v=11.6';
+import { Router, BASE_PATH } from './router.js?v=11.6';
+import { ModalManager } from './modals.js?v=11.6';
+import { PdfViewer } from './pdf-viewer.js?v=11.6';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -400,8 +400,9 @@ export const PropertyRenderer = {
             const addrString = prop.address || prop.name;
             if (modalAddressText) modalAddressText.textContent = addrString;
             if (modalMapsBtn) {
-                const mapsQuery = encodeURIComponent(prop.address ? `${prop.address}, Lyon` : `${prop.name}, Lyon`);
-                modalMapsBtn.href = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+                const coords = this.getPropertyCoordinates(prop);
+                const mapsQuery = encodeURIComponent(prop.address ? prop.address : `${coords.lat},${coords.lng}`);
+                modalMapsBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`;
             }
             if (modalAddressBlock) modalAddressBlock.classList.remove('hidden');
             this.renderReservationMap(prop);
@@ -413,6 +414,10 @@ export const PropertyRenderer = {
     _resMap: null,
     _resMarker: null,
     _currentMapSlug: null,
+
+    _parkingMap: null,
+    _parkingMarkersGroup: null,
+    _currentParkingSlug: null,
 
     PROPERTY_COORDINATES: {
         'marietton-cosy': { lat: 45.77526, lng: 4.80609 },
@@ -429,6 +434,65 @@ export const PropertyRenderer = {
         'villa-soleil-printemps': { lat: 45.75000, lng: 4.85000 }
     },
 
+    PARKING_COORDINATES: {
+        '3 rue lionel-terray': { lat: 45.73059, lng: 4.88944 },
+        'mermoz-pinel': { lat: 45.73059, lng: 4.88944 },
+        '419 cours emile-zola': { lat: 45.76578, lng: 4.89986 },
+        'laurent bonnevay': { lat: 45.76578, lng: 4.89986 },
+        '3 rue maurice-moissonnier': { lat: 45.76010, lng: 4.92192 },
+        'la soie': { lat: 45.76010, lng: 4.92192 },
+        '62 boulevard niels-bohr': { lat: 45.78666, lng: 4.88059 },
+        'feyssine': { lat: 45.78666, lng: 4.88059 },
+        'rue de la pepiniere royale': { lat: 45.76681, lng: 4.80319 },
+        'gorge de loup': { lat: 45.76681, lng: 4.80319 },
+        '53 rue de saint-cyr': { lat: 45.78350, lng: 4.80768 },
+        'vaise 2': { lat: 45.78350, lng: 4.80768 },
+        '10 rue de la gare': { lat: 45.77112, lng: 5.00079 },
+        'meyzieu gare': { lat: 45.77112, lng: 5.00079 },
+        '17 rue de la rosiere': { lat: 45.73852, lng: 4.86399 },
+        '87 rue villon': { lat: 45.73885, lng: 4.86305 },
+        'paul-cazeneuve': { lat: 45.73445, lng: 4.86327 },
+        'maryse-bastie': { lat: 45.73314, lng: 4.87397 },
+        'bataille': { lat: 45.73611, lng: 4.88549 },
+        'jacqueline-auriol': { lat: 45.73591, lng: 4.87535 },
+        'jean-d\'esparnet': { lat: 45.73534, lng: 4.87778 },
+        'desparmet': { lat: 45.73534, lng: 4.87778 },
+        'professeur-morat': { lat: 45.73510, lng: 4.87650 },
+        'thomas-blanchet': { lat: 45.73678, lng: 4.88238 },
+        '82 rue feuillat': { lat: 45.74425, lng: 4.87444 },
+        'jules verne': { lat: 45.75047, lng: 4.87732 },
+        'bonnefond': { lat: 45.74914, lng: 4.87889 },
+        'acacias': { lat: 45.75187, lng: 4.88007 },
+        '15 rue du dauphine': { lat: 45.75035, lng: 4.86462 },
+        '29 rue danton': { lat: 45.75400, lng: 4.85753 },
+        'rue de l\'est': { lat: 45.75218, lng: 4.87819 },
+        '39 rue de la cite': { lat: 45.75937, lng: 4.87265 },
+        '34 rue jeanne-hachette': { lat: 45.75215, lng: 4.86413 },
+        'general-dayan': { lat: 45.77331, lng: 4.86108 },
+        'louis-malle': { lat: 45.77335, lng: 4.86044 },
+        'louis-guerin': { lat: 45.77699, lng: 4.86022 },
+        'inkermann': { lat: 45.77034, lng: 4.86564 },
+        'jules-ferry': { lat: 45.76721, lng: 4.85941 },
+        '94 rue ney': { lat: 45.76513, lng: 4.85592 },
+        'bourgogne': { lat: 45.77799, lng: 4.80299 },
+        'gare de vaise': { lat: 45.77878, lng: 4.80065 },
+        'laure-diebold': { lat: 45.77812, lng: 4.80013 },
+        'saint-simon': { lat: 45.77877, lng: 4.79842 },
+        'berjon': { lat: 45.77724, lng: 4.79917 },
+        'vanderpol': { lat: 45.77248, lng: 4.80815 },
+        '31 rue tissot': { lat: 45.77500, lng: 4.80141 },
+        '305 cours emile-zola': { lat: 45.76715, lng: 4.89363 },
+        'pierre-cacard': { lat: 45.76598, lng: 4.89305 },
+        'docteur-rollet': { lat: 45.76750, lng: 4.89120 },
+        'auguste-blanqui': { lat: 45.76122, lng: 4.88476 },
+        '51 rue racine': { lat: 45.76606, lng: 4.87924 },
+        '30 rue flachet': { lat: 45.76919, lng: 4.88976 },
+        '2 rue victor-subit': { lat: 45.76627, lng: 4.89543 },
+        '82 avenue du carreau': { lat: 45.78496, lng: 4.99063 },
+        'chemin de pommier': { lat: 45.77792, lng: 5.01189 },
+        'pierre-brossolette': { lat: 45.77041, lng: 4.99398 }
+    },
+
     getPropertyCoordinates(prop) {
         if (!prop) return { lat: 45.7640, lng: 4.8357 };
         const slug = (prop.slug || '').toLowerCase().trim();
@@ -441,6 +505,38 @@ export const PropertyRenderer = {
             }
         }
         return { lat: 45.7640, lng: 4.8357 };
+    },
+
+    getParkingCoordinates(loc, prop) {
+        if (!loc) return this.getPropertyCoordinates(prop);
+
+        if (loc.latitude && loc.longitude) {
+            return { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+        }
+        if (loc.lat && loc.lng) {
+            return { lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) };
+        }
+
+        const raw = ((loc.address || '') + ' ' + (loc.name_fr || '') + ' ' + (loc.name_en || '')).toLowerCase();
+        const address = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        for (const [key, coords] of Object.entries(this.PARKING_COORDINATES)) {
+            const cleanKey = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            if (address.includes(cleanKey) || cleanKey.includes(address.trim())) {
+                return coords;
+            }
+        }
+
+        // Fallback déterministe à proximité du logement (légère dispersion naturelle)
+        const baseCoords = this.getPropertyCoordinates(prop);
+        const hash = ((loc.id || 1) * 19 + (loc.name_fr ? loc.name_fr.length : 5)) % 100;
+        const offsetLat = ((hash % 10) - 5) * 0.0006;
+        const offsetLng = ((Math.floor(hash / 10) % 10) - 5) * 0.0008;
+
+        return {
+            lat: parseFloat((baseCoords.lat + offsetLat).toFixed(5)),
+            lng: parseFloat((baseCoords.lng + offsetLng).toFixed(5))
+        };
     },
 
     renderReservationMap(prop) {
@@ -459,14 +555,6 @@ export const PropertyRenderer = {
         }
 
         const coords = this.getPropertyCoordinates(prop);
-
-        // Lien direct Google Maps pour itinéraire
-        const openLink = document.getElementById('res-modal-map-open-link');
-        if (openLink) {
-            const query = encodeURIComponent(prop && prop.address ? prop.address : `${coords.lat},${coords.lng}`);
-            openLink.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
-        }
-
         const propSlug = prop ? prop.slug : '';
 
         // Si la carte Leaflet existe déjà
@@ -537,6 +625,178 @@ export const PropertyRenderer = {
                     const coords = this.getPropertyCoordinates(AppState.currentProperty);
                     this._resMap.setView([coords.lat, coords.lng], 16, { animate: false });
                 }
+            } catch(e) {}
+        }
+    },
+
+    renderParkingMap(prop) {
+        const mapContainer = document.getElementById('parking-modal-map');
+        if (!mapContainer) return;
+
+        if (typeof window.L === 'undefined') {
+            const checkTimer = setInterval(() => {
+                if (typeof window.L !== 'undefined') {
+                    clearInterval(checkTimer);
+                    this.renderParkingMap(prop);
+                }
+            }, 60);
+            setTimeout(() => clearInterval(checkTimer), 4000);
+            return;
+        }
+
+        const propSlug = prop ? prop.slug : '';
+        const propCoords = this.getPropertyCoordinates(prop);
+
+        // Si la carte Leaflet existe déjà
+        if (this._parkingMap) {
+            if (this._currentParkingSlug !== propSlug) {
+                this.populateParkingMarkers(prop);
+            }
+            this.invalidateParkingMap();
+            return;
+        }
+
+        try {
+            this._currentParkingSlug = propSlug;
+
+            const map = L.map('parking-modal-map', {
+                center: [propCoords.lat, propCoords.lng],
+                zoom: 15,
+                minZoom: 11,
+                maxZoom: 19,
+                zoomControl: true,
+                attributionControl: false,
+                scrollWheelZoom: false,
+                touchZoom: true
+            });
+
+            // Fond de carte OpenStreetMap
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            this._parkingMap = map;
+            this._parkingMarkersGroup = L.layerGroup().addTo(map);
+
+            this.populateParkingMarkers(prop);
+            this.invalidateParkingMap();
+        } catch(err) {
+            console.warn('[PropertyRenderer] Erreur carte parking Leaflet :', err);
+        }
+    },
+
+    populateParkingMarkers(prop) {
+        if (!this._parkingMap || !this._parkingMarkersGroup) return;
+        this._parkingMarkersGroup.clearLayers();
+        this._currentParkingSlug = prop ? prop.slug : '';
+
+        const isEn = I18n.currentLang === 'en';
+        const propCoords = this.getPropertyCoordinates(prop);
+        const allBounds = [];
+
+        // 1. Marqueur Logement (Doré prestige)
+        const propertyIcon = L.divIcon({
+            className: 'cdh-parking-marker',
+            html: `
+                <div style="position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                    <span style="position: absolute; width: 34px; height: 34px; border-radius: 9999px; background: rgba(184, 153, 90, 0.45); animation: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;"></span>
+                    <div style="position: relative; width: 30px; height: 30px; border-radius: 9999px; background: linear-gradient(135deg, #c5a869 0%, #b8995a 100%); border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white;">
+                        <svg style="width: 15px; height: 15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                    </div>
+                </div>
+            `,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
+        });
+
+        const propMarker = L.marker([propCoords.lat, propCoords.lng], { icon: propertyIcon, zIndexOffset: 1000 });
+        const propPopup = `
+            <div style="text-align: left; min-width: 170px;">
+                <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #b8995a; display: block; margin-bottom: 2px;">✦ ${isEn ? 'Your Accommodation' : 'Votre hébergement'}</span>
+                <strong style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 3px; color: #1e293b;">${Utils.escapeHtml(prop ? prop.name : '')}</strong>
+                ${prop && prop.address ? `<p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">📍 ${Utils.escapeHtml(prop.address)}</p>` : ''}
+            </div>
+        `;
+        propMarker.bindPopup(propPopup);
+        this._parkingMarkersGroup.addLayer(propMarker);
+        allBounds.push([propCoords.lat, propCoords.lng]);
+
+        // 2. Marqueurs de chaque stationnement enregistré
+        const parking = prop ? prop.parking : null;
+        const locations = parking && parking.locations ? (parking.locations.all || []) : [];
+
+        locations.forEach((loc) => {
+            const coords = this.getParkingCoordinates(loc, prop);
+            const category = loc.category || 'free_street';
+            const name = isEn ? (loc.name_en || loc.name_fr) : loc.name_fr;
+            const time = isEn ? (loc.walking_time_en || loc.walking_time_fr || loc.transit_time_en || loc.transit_time_fr) : (loc.walking_time_fr || loc.walking_time_en || loc.transit_time_fr || loc.transit_time_en);
+            const addr = loc.address || '';
+            const mapsQuery = encodeURIComponent(addr ? (addr + ', Lyon') : `${coords.lat},${coords.lng}`);
+            const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`;
+
+            let bgColor = '#10b981'; // Vert Gratuit
+            let badgeText = isEn ? 'Free Street' : 'Gratuit';
+            let iconSvg = '<span style="font-weight: 800; font-size: 13px;">P</span>';
+
+            if (category === 'private_parking') {
+                bgColor = '#8b5cf6'; // Violet Privé / Couvert
+                badgeText = isEn ? 'Private Parking' : 'Privé / Couvert';
+                iconSvg = '<svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="4"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>';
+            } else if (category === 'tcl_pr') {
+                bgColor = '#ef4444'; // Rouge TCL P+R
+                badgeText = 'Parc Relais TCL';
+                iconSvg = '<svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>';
+            }
+
+            const markerIcon = L.divIcon({
+                className: 'cdh-parking-marker',
+                html: `
+                    <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                        <div style="width: 26px; height: 26px; border-radius: 9999px; background: ${bgColor}; border: 2px solid #ffffff; box-shadow: 0 3px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white;">
+                            ${iconSvg}
+                        </div>
+                    </div>
+                `,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon });
+            const popupHtml = `
+                <div style="text-align: left; min-width: 175px;">
+                    <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${bgColor}; display: block; margin-bottom: 2px;">${badgeText}</span>
+                    <strong style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 2px; color: #1e293b;">${Utils.escapeHtml(name)}</strong>
+                    ${addr ? `<p style="font-size: 10px; color: #64748b; margin-bottom: 3px;">📍 ${Utils.escapeHtml(addr)}</p>` : ''}
+                    ${time ? `<p style="font-size: 10px; font-weight: 600; color: #334155; margin-bottom: 6px;">⏱️ ${Utils.escapeHtml(time)}</p>` : ''}
+                    <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer"
+                       style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: #b8995a; color: #ffffff; text-decoration: none; font-size: 10px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
+                        <span>Itinéraire GPS ↗</span>
+                    </a>
+                </div>
+            `;
+            marker.bindPopup(popupHtml);
+            this._parkingMarkersGroup.addLayer(marker);
+            allBounds.push([coords.lat, coords.lng]);
+        });
+
+        // Ajuster la vue pour englober tous les points (Logement + Parkings)
+        if (allBounds.length > 1) {
+            try {
+                this._parkingMap.fitBounds(allBounds, { padding: [30, 30], maxZoom: 16 });
+            } catch(e) {}
+        } else {
+            this._parkingMap.setView([propCoords.lat, propCoords.lng], 15);
+        }
+    },
+
+    invalidateParkingMap() {
+        if (this._parkingMap) {
+            try {
+                this._parkingMap.invalidateSize(true);
             } catch(e) {}
         }
     },
@@ -761,12 +1021,27 @@ export const PropertyRenderer = {
         const content = document.getElementById(`parking-acc-content-${id}`);
         const trigger = document.getElementById(`parking-acc-trigger-${id}`);
         if (!content || !trigger) return;
+
         const isHidden = content.classList.contains('hidden');
-        content.classList.toggle('hidden', !isHidden);
-        trigger.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
-        const chevron = trigger.querySelector('.acc-chevron');
-        if (chevron) {
-            chevron.classList.toggle('rotate-180', isHidden);
+
+        // Ferme automatiquement tous les accordéons (un seul ouvert à la fois)
+        const allContents = document.querySelectorAll('[id^="parking-acc-content-"]');
+        const allTriggers = document.querySelectorAll('[id^="parking-acc-trigger-"]');
+        allContents.forEach(el => el.classList.add('hidden'));
+        allTriggers.forEach(btn => {
+            btn.setAttribute('aria-expanded', 'false');
+            const ch = btn.querySelector('.acc-chevron');
+            if (ch) ch.classList.remove('rotate-180');
+        });
+
+        // Si la section cliquée était fermée, on l'ouvre
+        if (isHidden) {
+            content.classList.remove('hidden');
+            trigger.setAttribute('aria-expanded', 'true');
+            const chevron = trigger.querySelector('.acc-chevron');
+            if (chevron) {
+                chevron.classList.add('rotate-180');
+            }
         }
     },
 
@@ -882,7 +1157,7 @@ export const PropertyRenderer = {
 
             html += `
                 <div class="rounded-2xl border border-[#e2e4e6] dark:border-[#38455d] overflow-hidden bg-white dark:bg-[#243047] shadow-2xs">
-                    <button type="button" id="parking-acc-trigger-free" onclick="toggleParkingSection('free')" aria-expanded="true"
+                    <button type="button" id="parking-acc-trigger-free" onclick="toggleParkingSection('free')" aria-expanded="false"
                             class="w-full flex items-center justify-between p-3.5 bg-[#faf9f6] dark:bg-[#1e2739] hover:bg-gold/5 transition text-left cursor-pointer group">
                         <div class="flex items-center space-x-3 min-w-0 pr-2">
                             <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 text-sm">
@@ -898,7 +1173,7 @@ export const PropertyRenderer = {
                         </div>
                         <svg class="w-4 h-4 text-ink-faint dark:text-gray-400 transform transition-transform duration-200 acc-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div id="parking-acc-content-free" class="p-3.5 space-y-2.5 border-t border-[#e2e4e6] dark:border-[#38455d]">
+                    <div id="parking-acc-content-free" class="p-3.5 space-y-2.5 border-t border-[#e2e4e6] dark:border-[#38455d] hidden">
                         ${freeCards}
                     </div>
                 </div>
@@ -1126,7 +1401,14 @@ export const PropertyRenderer = {
             `;
         }
 
-        container.innerHTML = html;
+        const accordionsContainer = document.getElementById('parking-accordions-container');
+        if (accordionsContainer) {
+            accordionsContainer.innerHTML = html;
+        } else if (container) {
+            container.innerHTML = html;
+        }
+
+        this.renderParkingMap(AppState.currentProperty);
     },
 
     renderVideos(videos) {

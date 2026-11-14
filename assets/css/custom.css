@@ -1249,7 +1249,9 @@ body.modal-open .pwa-install-prompt {
 }
 
 /* Rendu sombre élégant des tuiles en mode Dark */
-.dark #res-modal-map .leaflet-tile {
+.dark #res-modal-map .leaflet-tile,
+.dark #parking-modal-map .leaflet-tile,
+.dark .leaflet-tile {
     filter: brightness(0.72) invert(1) contrast(1.15) hue-rotate(200deg) saturate(0.65) !important;
 }
 
@@ -1288,9 +1290,55 @@ body.modal-open .pwa-install-prompt {
     color: #ffffff !important;
 }
 
-.cdh-leaflet-marker {
+.cdh-leaflet-marker,
+.cdh-parking-marker {
     background: transparent !important;
     border: none !important;
+}
+
+/* Infobulles / Popups Leaflet élégantes Carré d'Hôtes */
+.leaflet-popup-content-wrapper {
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+    background: #1e2739 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+.leaflet-popup-content {
+    margin: 10px 12px !important;
+    line-height: 1.35 !important;
+    font-size: 11px !important;
+}
+
+.leaflet-popup-tip {
+    background: #ffffff !important;
+}
+
+.dark .leaflet-popup-tip {
+    background: #1e2739 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+    top: 6px !important;
+    right: 6px !important;
+    color: #94a3b8 !important;
+    font-size: 14px !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+    color: #b8995a !important;
 }
 
 /* ==============================================================================

@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.5';
-import { Utils } from './utils.js?v=11.5';
+import { AppState } from './state.js?v=11.6';
+import { Utils } from './utils.js?v=11.6';
 
 export const I18n = {
     currentLang: 'fr',
@@ -142,7 +142,14 @@ export const I18n = {
             vip_welcome_at: "au",
             vip_welcome_subtitle: "Nous vous souhaitons un séjour d'exception à Lyon.",
             reservation_card_title: "Détails de votre séjour",
-            reservation_modal_title: "Détails de votre réservation",
+            reservation_modal_title: "Détails de votre séjour",
+            reservation_modal_subtitle: "Toutes les informations pratiques",
+            parking_map_title: "Carte des stationnements",
+            parking_map_subtitle: "Logement & solutions à proximité",
+            parking_legend_property: "Logement",
+            parking_legend_free: "Gratuit",
+            parking_legend_private: "Privé / Couvert",
+            parking_legend_tcl: "Relais TCL",
             res_chip_in: "Du",
             res_chip_out: "au",
             res_modal_ref_label: "Numéro de réservation",
@@ -322,7 +329,14 @@ export const I18n = {
             vip_welcome_at: "at",
             vip_welcome_subtitle: "We wish you an exceptional stay in Lyon.",
             reservation_card_title: "Your Stay Details",
-            reservation_modal_title: "Your Booking Details",
+            reservation_modal_title: "Your Stay Details",
+            reservation_modal_subtitle: "All practical information",
+            parking_map_title: "Parking Map & Access",
+            parking_map_subtitle: "Property & nearby solutions",
+            parking_legend_property: "Property",
+            parking_legend_free: "Free",
+            parking_legend_private: "Private / Covered",
+            parking_legend_tcl: "TCL Park & Ride",
             res_chip_in: "From",
             res_chip_out: "to",
             res_modal_ref_label: "Booking reference",

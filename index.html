@@ -78,7 +78,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=11.5">
+    <link rel="stylesheet" href="assets/css/custom.css?v=11.6">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -236,37 +236,20 @@
         <!-- =============================================================== -->
         <div id="view-property" class="hidden flex-1 flex flex-col">
             
-            <!-- EN-TÊTE HERO DE PRESTIGE DU LOGEMENT (DESIGN ACCUEIL HÔTELIER) -->
-            <header class="relative px-5 sm:px-8 pt-4 sm:pt-5 pb-3.5 sm:pb-4 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] via-white dark:via-[#263249] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d] overflow-hidden">
-                <!-- Halo doré d'ambiance feutrée -->
-                <div class="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20 flex justify-center items-center" aria-hidden="true">
-                    <div class="w-80 h-32 bg-gold/15 rounded-full blur-2xl"></div>
-                </div>
-
+            <!-- EN-TÊTE DU LOGEMENT (DESIGN ÉPURÉ & MINIMALISTE) -->
+            <header class="relative px-5 sm:px-8 py-3 sm:py-4 text-center bg-gradient-to-b from-[#faf9f6] dark:from-[#243047] via-white dark:via-[#263249] to-white dark:to-[#28344c] border-b border-[#e2e4e6] dark:border-[#38455d]">
                 <div class="relative z-10 max-w-xl mx-auto flex flex-col items-center">
-                    <!-- Sceau / Badge de conciergerie privée haute fidélité -->
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold/10 dark:bg-gold/15 border border-gold/30 dark:border-gold/40 text-[10px] sm:text-[11px] font-semibold tracking-wider uppercase text-gold-text dark:text-gold shadow-2xs mb-2 transition-transform hover:scale-105">
-                        <span class="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" aria-hidden="true"></span>
-                        <span id="prop-subtitle" data-i18n="hero_badge">Conciergerie Privée • Séjour d'Exception</span>
-                    </div>
-
-                    <!-- Message d'accueil VIP personnalisé au prénom du voyageur -->
-                    <p id="prop-vip-greeting" class="hidden text-gold font-serif-brand italic text-base sm:text-xl font-bold tracking-wide mb-1 leading-snug"></p>
+                    <!-- Message d'accueil VIP personnalisé au prénom du voyageur (affiché uniquement sur réservation) -->
+                    <p id="prop-vip-greeting" class="hidden text-gold font-serif-brand italic text-base sm:text-lg font-bold tracking-wide mb-0.5 leading-snug"></p>
 
                     <!-- Nom du logement en majesté (Cormorant Garamond) -->
-                    <h1 id="prop-name" class="text-2xl sm:text-3xl md:text-4xl font-bold text-ink dark:text-white tracking-tight font-serif-brand leading-tight">
+                    <h1 id="prop-name" class="text-2xl sm:text-3xl font-bold text-ink dark:text-white tracking-tight font-serif-brand leading-tight">
                         <!-- Nom du logement injecté en JS -->
                     </h1>
 
-                    <!-- Sous-titre personnalisé VIP optionnel -->
-                    <p id="prop-vip-welcome-sub" class="hidden text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-1 max-w-md mx-auto"></p>
-
-                    <!-- Liseré de prestige aux extrémités estompées -->
-                    <div class="flex items-center justify-center gap-2 mt-2.5 w-full" aria-hidden="true">
-                        <span class="h-px w-10 sm:w-16 bg-gradient-to-r from-transparent to-gold/50"></span>
-                        <span class="w-1.5 h-1.5 rotate-45 bg-gold" aria-hidden="true"></span>
-                        <span class="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-gold/50"></span>
-                    </div>
+                    <!-- Éléments masqués conservés pour rétrocompatibilité JS -->
+                    <span id="prop-subtitle" class="hidden"></span>
+                    <span id="prop-vip-welcome-sub" class="hidden"></span>
                 </div>
             </header>
 
@@ -324,10 +307,9 @@
                 <!-- SECTION 1 : INFOS & GUIDES DE BIENVENUE                     -->
                 <!-- ----------------------------------------------------------- -->
                 <section id="content-guides" class="space-y-3 sm:space-y-4 pb-10 sm:pb-6">
-                    <div class="text-center mb-2.5 sm:mb-4">
-                        <h2 id="prop-welcome-title" data-i18n="welcome_title" class="text-base sm:text-xl font-bold text-ink dark:text-white">Guide de bienvenue</h2>
-                        <p id="prop-welcome-subtitle" data-i18n="welcome_subtitle" class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 mt-0.5 sm:mt-1">Toutes les informations pratiques pour votre séjour</p>
-                    </div>
+                    <!-- Éléments masqués conservés pour rétrocompatibilité JS -->
+                    <span id="prop-welcome-title" class="hidden"></span>
+                    <span id="prop-welcome-subtitle" class="hidden"></span>
 
                     <div id="info-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl mx-auto">
                         <!-- Carte 0 : Informations de Réservation Personnalisée (VIP Compacte) -->
@@ -985,9 +967,36 @@
                 </div>
             </div>
 
-            <!-- Contenu défilant : Accordéon et détails -->
+            <!-- Contenu défilant : Carte et Accordéon -->
             <div id="parking-modal-body" class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 w-full max-w-3xl mx-auto">
-                <!-- Rendu dynamique par PropertyRenderer.renderParkingContent() -->
+                <!-- Bloc Carte 2D Interactive des Stationnements & Accès -->
+                <div id="parking-map-section" class="p-3.5 sm:p-4 rounded-2xl bg-[#faf9f6] dark:bg-[#1e2739] border border-[#e2e4e6] dark:border-[#38455d] space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-gold uppercase tracking-wider">
+                            <span>🗺️</span>
+                            <span data-i18n="parking_map_title">Carte des stationnements</span>
+                        </div>
+                        <span class="text-[10px] text-ink-faint dark:text-gray-400 truncate" data-i18n="parking_map_subtitle">Logement & solutions à proximité</span>
+                    </div>
+
+                    <!-- Conteneur Carte Leaflet 2D OpenStreetMap -->
+                    <div class="relative w-full h-48 sm:h-64 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner">
+                        <div id="parking-modal-map" class="w-full h-full z-0" style="min-height: 192px;"></div>
+                    </div>
+
+                    <!-- Légende visuelle épurée -->
+                    <div class="flex items-center justify-center gap-3 sm:gap-4 flex-wrap text-[10px] text-ink-soft dark:text-gray-300 pt-0.5 font-medium">
+                        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold shadow-2xs"></span> <span data-i18n="parking_legend_property">Logement</span></span>
+                        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-2xs"></span> <span data-i18n="parking_legend_free">Gratuit</span></span>
+                        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-2xs"></span> <span data-i18n="parking_legend_private">Privé / Couvert</span></span>
+                        <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-2xs"></span> <span data-i18n="parking_legend_tcl">Relais TCL</span></span>
+                    </div>
+                </div>
+
+                <!-- Conteneur dynamique des accordéons de stationnement -->
+                <div id="parking-accordions-container" class="space-y-4">
+                    <!-- Rendu dynamique par PropertyRenderer.renderParkingContent() -->
+                </div>
             </div>
         </div>
     </div>
@@ -1194,13 +1203,15 @@
                         </svg>
                     </div>
                     <div class="truncate">
-                        <h3 id="reservation-modal-title" data-i18n="reservation_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Détails de votre réservation</h3>
-                        <p id="reservation-modal-subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate font-mono">Carré d'Hôtes &middot; Séjour Privilège</p>
+                        <h3 id="reservation-modal-title" data-i18n="reservation_modal_title" class="text-sm font-bold text-ink dark:text-white truncate">Détails de votre séjour</h3>
+                        <p id="reservation-modal-subtitle" data-i18n="reservation_modal_subtitle" class="text-[10px] text-ink-faint dark:text-gray-400 truncate">Toutes les informations pratiques</p>
                     </div>
                 </div>
-                <button onclick="closeReservationModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
-                    ✕
-                </button>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <button onclick="closeReservationModal()" class="btn-close-modal flex-shrink-0" title="Fermer" aria-label="Fermer la fenêtre (ou touche Échap)" data-i18n-title="pdf_close">
+                        ✕
+                    </button>
+                </div>
             </div>
 
             <!-- Contenu défilant : Détails complets de la réservation -->
@@ -1222,10 +1233,6 @@
                             </span>
                             <span id="res-modal-platform-badge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 dark:bg-[#161f30] text-ink-soft dark:text-gray-300 border border-[#e2e4e6] dark:border-[#38455d]"></span>
                         </div>
-                    </div>
-                    <div class="mt-2.5 pt-2.5 border-t border-gold/20 flex items-center justify-between text-[11px] text-ink-faint dark:text-gray-400 font-mono">
-                        <span data-i18n="res_modal_ref_label">Numéro de réservation</span>
-                        <strong id="res-modal-ref-id" class="text-gold">#—</strong>
                     </div>
                 </div>
 
@@ -1291,19 +1298,15 @@
                             <p id="res-modal-address-text" class="text-xs sm:text-sm font-semibold text-ink dark:text-white leading-snug">—</p>
                         </div>
                         <a id="res-modal-maps-btn" href="#" target="_blank" rel="noopener noreferrer"
-                           class="px-3 py-1.5 rounded-lg bg-gold/15 text-gold-text dark:text-gold border border-gold/30 hover:bg-gold hover:text-white transition text-xs font-semibold flex items-center gap-1 flex-shrink-0 cursor-pointer shadow-sm">
+                           class="px-3 py-1.5 rounded-lg bg-gold/15 text-gold-text dark:text-gold border border-gold/30 hover:bg-gold hover:text-white transition text-xs font-semibold flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-sm">
                             <span>🗺️</span>
-                            <span data-i18n="parking_maps_btn">Itinéraire</span>
+                            <span>Itinéraire GPS ↗</span>
                         </a>
                     </div>
 
                     <!-- Aperçu Carte 2D (Leaflet Open-Source & OpenStreetMap) -->
-                    <div class="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner group">
+                    <div class="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner">
                         <div id="res-modal-map" class="w-full h-full z-0" style="min-height: 176px;"></div>
-                        <a id="res-modal-map-open-link" href="#" target="_blank" rel="noopener noreferrer"
-                           class="absolute bottom-2.5 right-2.5 z-[400] px-2.5 py-1 rounded-md bg-white/95 dark:bg-[#1e2739]/95 text-ink dark:text-white text-[11px] font-semibold shadow-md border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold flex items-center gap-1 backdrop-blur-sm transition cursor-pointer">
-                            <span>Itinéraire GPS ↗</span>
-                        </a>
                     </div>
                 </div>
 
@@ -1406,6 +1409,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=11.5"></script>
+    <script type="module" src="assets/js/app.js?v=11.6"></script>
 </body>
 </html>
