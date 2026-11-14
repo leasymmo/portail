@@ -1296,6 +1296,13 @@ body.modal-open .pwa-install-prompt {
     border: none !important;
 }
 
+/* S'assure que les fenêtres popups Leaflet s'affichent TOUJOURS au-dessus des boutons de zoom */
+.leaflet-pane.leaflet-popup-pane,
+.leaflet-popup-pane,
+.leaflet-popup {
+    z-index: 1200 !important;
+}
+
 /* Infobulles / Popups Leaflet élégantes Carré d'Hôtes */
 .leaflet-popup-content-wrapper {
     background: #ffffff !important;

@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.6';
-import { Utils } from './utils.js?v=11.6';
-import { I18n } from './i18n.js?v=11.6';
-import { ScrollManager } from './scroll.js?v=11.6';
-import { Router, BASE_PATH } from './router.js?v=11.6';
-import { ModalManager } from './modals.js?v=11.6';
-import { PdfViewer } from './pdf-viewer.js?v=11.6';
+import { AppState } from './state.js?v=11.7';
+import { Utils } from './utils.js?v=11.7';
+import { I18n } from './i18n.js?v=11.7';
+import { ScrollManager } from './scroll.js?v=11.7';
+import { Router, BASE_PATH } from './router.js?v=11.7';
+import { ModalManager } from './modals.js?v=11.7';
+import { PdfViewer } from './pdf-viewer.js?v=11.7';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -721,7 +721,7 @@ export const PropertyRenderer = {
                 ${prop && prop.address ? `<p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">📍 ${Utils.escapeHtml(prop.address)}</p>` : ''}
             </div>
         `;
-        propMarker.bindPopup(propPopup);
+        propMarker.bindPopup(propPopup, { autoPan: true, autoPanPaddingTopLeft: [75, 75], autoPanPaddingBottomRight: [25, 25] });
         this._parkingMarkersGroup.addLayer(propMarker);
         allBounds.push([propCoords.lat, propCoords.lng]);
 
@@ -778,7 +778,7 @@ export const PropertyRenderer = {
                     </a>
                 </div>
             `;
-            marker.bindPopup(popupHtml);
+            marker.bindPopup(popupHtml, { autoPan: true, autoPanPaddingTopLeft: [75, 75], autoPanPaddingBottomRight: [25, 25] });
             this._parkingMarkersGroup.addLayer(marker);
             allBounds.push([coords.lat, coords.lng]);
         });

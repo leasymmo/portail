@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.6';
-import { Utils } from './utils.js?v=11.6';
-import { I18n } from './i18n.js?v=11.6';
-import { ScrollManager } from './scroll.js?v=11.6';
-import { Router } from './router.js?v=11.6';
-import { PdfViewer } from './pdf-viewer.js?v=11.6';
+import { AppState } from './state.js?v=11.7';
+import { Utils } from './utils.js?v=11.7';
+import { I18n } from './i18n.js?v=11.7';
+import { ScrollManager } from './scroll.js?v=11.7';
+import { Router } from './router.js?v=11.7';
+import { PdfViewer } from './pdf-viewer.js?v=11.7';
 
 export const ModalManager = {
     // --- MODALE PDF ---
