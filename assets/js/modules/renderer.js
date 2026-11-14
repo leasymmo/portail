@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.2';
-import { Utils } from './utils.js?v=11.2';
-import { I18n } from './i18n.js?v=11.2';
-import { ScrollManager } from './scroll.js?v=11.2';
-import { Router, BASE_PATH } from './router.js?v=11.2';
-import { ModalManager } from './modals.js?v=11.2';
-import { PdfViewer } from './pdf-viewer.js?v=11.2';
+import { AppState } from './state.js?v=11.3';
+import { Utils } from './utils.js?v=11.3';
+import { I18n } from './i18n.js?v=11.3';
+import { ScrollManager } from './scroll.js?v=11.3';
+import { Router, BASE_PATH } from './router.js?v=11.3';
+import { ModalManager } from './modals.js?v=11.3';
+import { PdfViewer } from './pdf-viewer.js?v=11.3';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -20,6 +20,9 @@ export const PropertyRenderer = {
         AppState.currentProperty = prop;
         AppState.currentVideos = videos || [];
         AppState.currentReservation = reservation;
+        if (prop && prop.slug) {
+            AppState.currentSlug = prop.slug;
+        }
 
         // Mise à jour dynamique du manifeste PWA & des métadonnées pour ce logement spécifique
         const manifestLink = document.getElementById('app-manifest-link');
@@ -156,20 +159,22 @@ export const PropertyRenderer = {
             }
         }
 
-        // Préchargement échelonné en arrière-plan : d'abord le livret PDF dans le DOM, puis le moteur de réservation
+        // Préchargement immédiat et échelonné en arrière-plan : livret PDF en amont, moteur de réservation, puis langue alternative
+        const targetLang = I18n.currentLang || 'fr';
         if (route.subSection !== 'pdf-fr' && route.subSection !== 'pdf-en') {
-            setTimeout(() => {
-                const targetLang = I18n.currentLang || 'fr';
-                PdfViewer.preload(prop.slug, targetLang);
-            }, 150);
+            PdfViewer.preload(prop.slug, targetLang);
 
             setTimeout(() => {
                 ModalManager.preloadBooking();
-            }, 600);
+            }, 200);
+
+            setTimeout(() => {
+                PdfViewer.preloadAlternateLang(prop.slug, targetLang);
+            }, 800);
         } else {
             setTimeout(() => {
                 ModalManager.preloadBooking();
-            }, 800);
+            }, 500);
         }
     },
 

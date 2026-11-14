@@ -5,21 +5,25 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.2';
-import { BASE_PATH } from './router.js?v=11.2';
-import { I18n } from './i18n.js?v=11.2';
+import { AppState } from './state.js?v=11.3';
+import { BASE_PATH } from './router.js?v=11.3';
+import { I18n } from './i18n.js?v=11.3';
 
 export const PdfViewer = {
     pdfDoc: null,
     loadedSlug: null,
     loadedLang: null,
-    _cachedBuffer: null,
+    _bufferCache: new Map(), // Clé: `${slug}_${lang}` -> ArrayBuffer
     _isPreloading: false,
     _preloadPromise: null,
     _preloadSeq: 0,
     _targetPreloadSlug: null,
     _targetPreloadLang: null,
     currentRenderTasks: [],
+
+    getEffectiveSlug(slug) {
+        return slug || (AppState.currentProperty && AppState.currentProperty.slug) || AppState.currentSlug || '';
+    },
 
     // État de transformation vectorielle
     scale: 1.0,
@@ -354,26 +358,29 @@ export const PdfViewer = {
     },
 
     async preload(slug, lang) {
-        if (!slug) return;
-        const targetLang = lang || 'fr';
+        const effectiveSlug = this.getEffectiveSlug(slug);
+        const targetLang = lang || (typeof I18n !== 'undefined' ? I18n.currentLang : 'fr') || 'fr';
+        if (!effectiveSlug && !AppState.currentReservationId) return;
 
         const wrapper = document.getElementById('pdf-pages-wrapper');
         const renderedCount = wrapper ? wrapper.querySelectorAll('canvas').length : 0;
 
         // Si le document est déjà totalement chargé et pré-rendu dans la langue cible, aucun travail nécessaire
-        if (this.loadedSlug === slug && this.loadedLang === targetLang && this.pdfDoc && renderedCount >= this.pdfDoc.numPages) {
+        if (this.pdfDoc && this.loadedSlug === effectiveSlug && this.loadedLang === targetLang && renderedCount >= this.pdfDoc.numPages) {
+            const spinner = document.getElementById('pdf-loading-spinner');
+            if (spinner) spinner.classList.add('hidden');
             return;
         }
 
         // Si un préchargement identique est déjà en cours d'exécution, on renvoie sa promesse
-        if (this._isPreloading && this._preloadPromise && this._targetPreloadSlug === slug && this._targetPreloadLang === targetLang) {
+        if (this._isPreloading && this._preloadPromise && this._targetPreloadSlug === effectiveSlug && this._targetPreloadLang === targetLang) {
             return this._preloadPromise;
         }
 
         // Annule les rendus de pages précédents en cours
         this.cancelCurrentRenders();
 
-        this._targetPreloadSlug = slug;
+        this._targetPreloadSlug = effectiveSlug;
         this._targetPreloadLang = targetLang;
         this._preloadSeq = (this._preloadSeq || 0) + 1;
         const currentSeq = this._preloadSeq;
@@ -393,16 +400,24 @@ export const PdfViewer = {
 
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-                const base = document.baseURI || (window.location.origin + BASE_PATH);
-                const proxyUrl = new URL(`api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(targetLang)}`, base).href;
+                const cacheKey = `${effectiveSlug}_${targetLang}`;
+                let buffer = this._bufferCache ? this._bufferCache.get(cacheKey) : null;
 
-                // Téléchargement sécurisé en ArrayBuffer dans le thread principal (fiabilité universelle Safari/Chrome/iOS)
-                const resp = await fetch(proxyUrl);
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const buffer = await resp.arrayBuffer();
-                if (this._preloadSeq !== currentSeq) return;
+                if (!buffer) {
+                    const base = document.baseURI || (window.location.origin + BASE_PATH);
+                    const param = effectiveSlug ? `slug=${encodeURIComponent(effectiveSlug)}` : `reservation_id=${encodeURIComponent(AppState.currentReservationId)}`;
+                    const proxyUrl = new URL(`api.php?pdf=1&${param}&lang=${encodeURIComponent(targetLang)}`, base).href;
 
-                this._cachedBuffer = buffer;
+                    // Téléchargement sécurisé en ArrayBuffer dans le thread principal (fiabilité universelle Safari/Chrome/iOS)
+                    const resp = await fetch(proxyUrl);
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    buffer = await resp.arrayBuffer();
+                    if (this._preloadSeq !== currentSeq) return;
+
+                    if (this._bufferCache) {
+                        this._bufferCache.set(cacheKey, buffer);
+                    }
+                }
 
                 const loadingTask = pdfjsLib.getDocument({
                     data: new Uint8Array(buffer),
@@ -414,23 +429,19 @@ export const PdfViewer = {
                 const doc = await loadingTask.promise;
                 if (this._preloadSeq !== currentSeq) return;
                 this.pdfDoc = doc;
+                this.loadedSlug = effectiveSlug;
+                this.loadedLang = targetLang;
 
                 // Pré-rendu immédiat dans le DOM pour un affichage instantané (0ms) dès l'ouverture
                 const currentWrapper = document.getElementById('pdf-pages-wrapper');
                 if (currentWrapper) {
-                    if (AppState.isPdfModalOpen) {
-                        const spinner = document.getElementById('pdf-loading-spinner');
-                        if (spinner) spinner.classList.remove('hidden');
-                    }
                     await this.renderAllPages(currentSeq);
                     if (this._preloadSeq !== currentSeq) return;
 
-                    this.loadedSlug = slug;
-                    this.loadedLang = targetLang;
+                    const spinner = document.getElementById('pdf-loading-spinner');
+                    if (spinner) spinner.classList.add('hidden');
 
                     if (AppState.isPdfModalOpen) {
-                        const spinner = document.getElementById('pdf-loading-spinner');
-                        if (spinner) spinner.classList.add('hidden');
                         this.resetZoom();
                     }
                 }
@@ -448,26 +459,25 @@ export const PdfViewer = {
     },
 
     async load(slug, lang, directUrl) {
-        const targetLang = lang || 'fr';
+        const effectiveSlug = this.getEffectiveSlug(slug);
+        const targetLang = lang || (typeof I18n !== 'undefined' ? I18n.currentLang : 'fr') || 'fr';
         const wrapper = document.getElementById('pdf-pages-wrapper');
         const spinner = document.getElementById('pdf-loading-spinner');
         const statusEl = document.getElementById('pdf-loading-status');
 
         // Cas 1 : Document déjà préchargé et pages déjà dans le DOM -> affichage immédiat 0ms
-        if (this.pdfDoc && this.loadedSlug === slug && this.loadedLang === targetLang && wrapper) {
+        if (this.pdfDoc && this.loadedSlug === effectiveSlug && this.loadedLang === targetLang && wrapper) {
             const renderedCount = wrapper.querySelectorAll('canvas').length;
-            if (renderedCount >= this.pdfDoc.numPages) {
+            if (renderedCount > 0) {
                 if (spinner) spinner.classList.add('hidden');
                 this.resetZoom();
-                return;
-            } else if (renderedCount > 0) {
-                if (spinner) spinner.classList.add('hidden');
-                this.resetZoom();
-                const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-                for (let i = renderedCount + 1; i <= this.pdfDoc.numPages; i++) {
-                    if (!AppState.isPdfModalOpen) break;
-                    const page = await this.pdfDoc.getPage(i);
-                    await this.renderSinglePage(page, i, this.baseScale, dpr, wrapper);
+                if (renderedCount < this.pdfDoc.numPages) {
+                    const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+                    for (let i = renderedCount + 1; i <= this.pdfDoc.numPages; i++) {
+                        if (!AppState.isPdfModalOpen) break;
+                        const page = await this.pdfDoc.getPage(i);
+                        await this.renderSinglePage(page, i, this.baseScale, dpr, wrapper);
+                    }
                 }
                 return;
             }
@@ -478,9 +488,9 @@ export const PdfViewer = {
             if (spinner) spinner.classList.remove('hidden');
             if (statusEl) statusEl.textContent = (typeof I18n !== 'undefined' && I18n.t) ? I18n.t('pdf_loading') : "Chargement du guide de bienvenue...";
             await this._preloadPromise;
-            if (this.pdfDoc && this.loadedSlug === slug && this.loadedLang === targetLang) {
+            if (this.pdfDoc && this.loadedSlug === effectiveSlug && this.loadedLang === targetLang) {
                 const renderedCount = wrapper ? wrapper.querySelectorAll('canvas').length : 0;
-                if (!wrapper || renderedCount < this.pdfDoc.numPages) {
+                if (!wrapper || renderedCount < 1) {
                     await this.renderAllPages();
                 }
                 if (spinner) spinner.classList.add('hidden');
@@ -489,7 +499,7 @@ export const PdfViewer = {
             }
         }
 
-        // Cas 3 : Chargement direct (accès direct par lien profond ou premier chargement)
+        // Cas 3 : Chargement direct (accès direct par lien profond ou premier chargement non préchargé)
         this.scale = 1.0;
         this.x = 0;
         this.y = 0;
@@ -502,8 +512,8 @@ export const PdfViewer = {
         }
 
         const base = document.baseURI || (window.location.origin + BASE_PATH);
-        const proxyUrl = new URL(`api.php?pdf=1&slug=${encodeURIComponent(slug)}&lang=${encodeURIComponent(targetLang)}`, base).href;
-        const sourceUrl = slug ? proxyUrl : directUrl;
+        const param = effectiveSlug ? `slug=${encodeURIComponent(effectiveSlug)}` : (AppState.currentReservationId ? `reservation_id=${encodeURIComponent(AppState.currentReservationId)}` : '');
+        const proxyUrl = param ? new URL(`api.php?pdf=1&${param}&lang=${encodeURIComponent(targetLang)}`, base).href : null;
 
         try {
             if (!window.pdfjsLib) {
@@ -512,12 +522,20 @@ export const PdfViewer = {
 
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-            let arrayBuffer = (this.loadedSlug === slug && this.loadedLang === targetLang) ? this._cachedBuffer : null;
-            if (!arrayBuffer) {
-                const resp = await fetch(sourceUrl);
+            const cacheKey = `${effectiveSlug}_${targetLang}`;
+            let arrayBuffer = this._bufferCache ? this._bufferCache.get(cacheKey) : null;
+
+            if (!arrayBuffer && proxyUrl) {
+                const resp = await fetch(proxyUrl);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 arrayBuffer = await resp.arrayBuffer();
-                this._cachedBuffer = arrayBuffer;
+                if (this._bufferCache) {
+                    this._bufferCache.set(cacheKey, arrayBuffer);
+                }
+            }
+
+            if (!arrayBuffer) {
+                throw new Error("Impossible de récupérer le document");
             }
 
             const loadingTask = pdfjsLib.getDocument({
@@ -528,13 +546,13 @@ export const PdfViewer = {
             });
 
             this.pdfDoc = await loadingTask.promise;
-            this.loadedSlug = slug;
+            this.loadedSlug = effectiveSlug;
             this.loadedLang = targetLang;
             await this.renderAllPages();
         } catch (err) {
             console.error('[PdfViewer] Erreur de chargement PDF.js :', err);
             // Fallback direct vers URL d'origine dans PDF.js (sans JAMAIS basculer en iframe natif)
-            if (directUrl && sourceUrl !== directUrl) {
+            if (directUrl) {
                 try {
                     const fallbackTask = pdfjsLib.getDocument({
                         url: directUrl,
@@ -543,7 +561,7 @@ export const PdfViewer = {
                         standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/'
                     });
                     this.pdfDoc = await fallbackTask.promise;
-                    this.loadedSlug = slug;
+                    this.loadedSlug = effectiveSlug;
                     this.loadedLang = targetLang;
                     await this.renderAllPages();
                     return;
@@ -554,7 +572,36 @@ export const PdfViewer = {
             if (statusEl) statusEl.textContent = "Impossible de charger le livret. Veuillez vérifier votre connexion.";
         } finally {
             if (spinner) spinner.classList.add('hidden');
+            this.resetZoom();
         }
+    },
+
+    preloadAlternateLang(slug, currentLang) {
+        const effectiveSlug = this.getEffectiveSlug(slug);
+        if (!effectiveSlug && !AppState.currentReservationId) return;
+        const activeLang = currentLang || (typeof I18n !== 'undefined' ? I18n.currentLang : 'fr') || 'fr';
+        const altLang = activeLang === 'fr' ? 'en' : 'fr';
+        const cacheKey = `${effectiveSlug}_${altLang}`;
+        if (this._bufferCache && this._bufferCache.has(cacheKey)) return;
+
+        const prop = AppState.currentProperty;
+        if (prop) {
+            const hasAltGuide = altLang === 'en' ? Boolean(prop.guide_en_url) : Boolean(prop.guide_fr_url);
+            if (!hasAltGuide) return;
+        }
+
+        const base = document.baseURI || (window.location.origin + BASE_PATH);
+        const param = effectiveSlug ? `slug=${encodeURIComponent(effectiveSlug)}` : `reservation_id=${encodeURIComponent(AppState.currentReservationId)}`;
+        const proxyUrl = new URL(`api.php?pdf=1&${param}&lang=${encodeURIComponent(altLang)}`, base).href;
+
+        fetch(proxyUrl)
+            .then(res => res.ok ? res.arrayBuffer() : null)
+            .then(buffer => {
+                if (buffer && this._bufferCache) {
+                    this._bufferCache.set(cacheKey, buffer);
+                }
+            })
+            .catch(() => {});
     },
 
     async waitForPdfJs() {
@@ -607,7 +654,7 @@ export const PdfViewer = {
         // 1. Rendu prioritaire immédiat de la Page 1 (apparition instantanée)
         await this.renderSinglePage(firstPage, 1, this.baseScale, dpr, wrapper);
         if (seq && this._preloadSeq !== seq) return;
-        if (spinner && AppState.isPdfModalOpen) spinner.classList.add('hidden');
+        if (spinner) spinner.classList.add('hidden');
 
         // 2. Rendu consécutif des pages suivantes en arrière-plan
         for (let i = 2; i <= numPages; i++) {
@@ -619,6 +666,7 @@ export const PdfViewer = {
         }
 
         // Calage final propre une fois toutes les pages en place
+        if (spinner) spinner.classList.add('hidden');
         if (!seq || this._preloadSeq === seq) {
             this.snapToBounds(false);
         }
@@ -697,6 +745,8 @@ export const PdfViewer = {
             wrapper.style.transform = '';
             wrapper.innerHTML = '';
         }
+        const spinner = document.getElementById('pdf-loading-spinner');
+        if (spinner) spinner.classList.add('hidden');
     }
 };
 

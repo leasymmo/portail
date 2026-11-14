@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.2';
-import { Utils } from './utils.js?v=11.2';
+import { AppState } from './state.js?v=11.3';
+import { Utils } from './utils.js?v=11.3';
 
 export const I18n = {
     currentLang: 'fr',
@@ -405,7 +405,7 @@ export const I18n = {
             window.ModalManager.updateBookingLanguage();
         }
 
-        if (window.PdfViewer && AppState.currentProperty && AppState.currentProperty.slug) {
+        if (AppState.currentProperty) {
             const prop = AppState.currentProperty;
             let targetLang = lang;
             if (lang === 'en' && !prop.guide_en_url && prop.guide_fr_url) {
@@ -413,7 +413,12 @@ export const I18n = {
             } else if (lang === 'fr' && !prop.guide_fr_url && prop.guide_en_url) {
                 targetLang = 'en';
             }
-            window.PdfViewer.preload(prop.slug, targetLang);
+
+            if (AppState.isPdfModalOpen && window.ModalManager) {
+                window.ModalManager.openPdf(targetLang, true);
+            } else if (window.PdfViewer && prop.slug) {
+                window.PdfViewer.preload(prop.slug, targetLang);
+            }
         }
         Utils.announceA11y(this.t('a11y_lang_changed'));
     },

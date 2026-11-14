@@ -5,17 +5,17 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.2';
-import { Utils } from './utils.js?v=11.2';
-import { I18n } from './i18n.js?v=11.2';
-import { Router } from './router.js?v=11.2';
-import { ApiService } from './api.js?v=11.2';
-import { PropertyRenderer, ListRenderer } from './renderer.js?v=11.2';
-import { ModalManager } from './modals.js?v=11.2';
-import { ScrollManager } from './scroll.js?v=11.2';
-import { PdfViewer } from './pdf-viewer.js?v=11.2';
-import { SheetGestureController, TabGestureController } from './gestures.js?v=11.2';
-import { PwaManager } from './pwa.js?v=11.2';
+import { AppState } from './state.js?v=11.3';
+import { Utils } from './utils.js?v=11.3';
+import { I18n } from './i18n.js?v=11.3';
+import { Router } from './router.js?v=11.3';
+import { ApiService } from './api.js?v=11.3';
+import { PropertyRenderer, ListRenderer } from './renderer.js?v=11.3';
+import { ModalManager } from './modals.js?v=11.3';
+import { ScrollManager } from './scroll.js?v=11.3';
+import { PdfViewer } from './pdf-viewer.js?v=11.3';
+import { SheetGestureController, TabGestureController } from './gestures.js?v=11.3';
+import { PwaManager } from './pwa.js?v=11.3';
 
 export const AppController = {
     async load() {
@@ -70,6 +70,9 @@ export const AppController = {
                     propertyData.parking = result.data.parking;
                 }
                 const reservation = result.data.reservation || null;
+                if (propertyData && propertyData.slug) {
+                    AppState.currentSlug = propertyData.slug;
+                }
                 PropertyRenderer.render(propertyData, videoList, route, reservation);
             } else if (result.type === 'list') {
                 ScrollManager.unlock();

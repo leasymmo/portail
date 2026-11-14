@@ -5,6 +5,8 @@
  * ==============================================================================
  */
 
+import { AppState } from './state.js?v=11.3';
+
 export const BASE_PATH = window.__CDH_BASE_PATH || (window.location.pathname.startsWith('/portail/dev') ? '/portail/dev/' : '/portail/');
 
 export const Router = {
@@ -36,6 +38,12 @@ export const Router = {
                 } else if (part2.startsWith('video-')) {
                     section = 'videos';
                     subSection = part2;
+                } else if (part2 === 'guides' || part2 === 'infos') {
+                    section = 'guides';
+                    subSection = part3;
+                } else if (part2.startsWith('pdf-')) {
+                    section = 'guides';
+                    subSection = part2;
                 }
                 return { slug: '', reservationId: second, section, subSection };
             }
@@ -55,6 +63,12 @@ export const Router = {
                 subSection = part2;
             } else if (part1.startsWith('video-')) {
                 section = 'videos';
+                subSection = part1;
+            } else if (part1 === 'guides' || part1 === 'infos') {
+                section = 'guides';
+                subSection = part2;
+            } else if (part1.startsWith('pdf-')) {
+                section = 'guides';
                 subSection = part1;
             }
             return { slug: '', reservationId: first, section, subSection };
@@ -90,12 +104,15 @@ export const Router = {
     },
 
     setUrl(slug, section, subSection = '', reservationId = '') {
+        const resId = reservationId || (AppState && AppState.currentReservationId) || '';
         let newPath = BASE_PATH;
-        if (reservationId) {
-            newPath += 'reservation/' + reservationId;
+        if (resId) {
+            newPath += 'reservation/' + resId;
             if (section === 'videos') {
                 newPath += '/videos';
                 if (subSection) newPath += '/' + subSection;
+            } else if (section === 'guides' || section === 'infos') {
+                if (subSection) newPath += '/guides/' + subSection;
             } else if (section === 'parking') {
                 newPath += '/parking';
             }
