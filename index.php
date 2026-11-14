@@ -20,11 +20,18 @@ $path = parse_url($requestUri, PHP_URL_PATH);
 $baseUri = (strpos((string)$path, '/portail/dev') === 0) ? '/portail/dev/' : '/portail/';
 $pathWithoutPrefix = preg_replace('#^' . preg_quote($baseUri, '#') . '#', '', (string)$path);
 $parts = explode('/', trim($pathWithoutPrefix, '/'));
-$slug = strtolower(trim($parts[0] ?? ''));
+$firstSegment = strtolower(trim($parts[0] ?? ''));
+$secondSegment = trim($parts[1] ?? '');
 
-// Exclusion des fichiers et routes spéciales
-if (in_array($slug, ['', 'index.html', 'index.php', 'reservation', 'api.php', 'sw.js', 'manifest.php', 'tools'])) {
-    $slug = '';
+$slug = '';
+$reservationId = '';
+
+if ($firstSegment === 'reservation' && preg_match('/^[0-9]+$/', $secondSegment)) {
+    $reservationId = $secondSegment;
+} elseif (preg_match('/^[0-9]{5,}$/', $firstSegment)) {
+    $reservationId = $firstSegment;
+} elseif (!in_array($firstSegment, ['', 'index.html', 'index.php', 'reservation', 'api.php', 'sw.js', 'manifest.php', 'tools'])) {
+    $slug = $firstSegment;
 }
 
 // Valeurs par défaut (Portail général)
@@ -33,7 +40,11 @@ $pageTitle = "Portail Voyageurs | Conciergerie Carré d'Hôtes";
 $manifestUrl = "manifest.php";
 $canonicalUrl = $baseUri;
 
-if (!empty($slug) && preg_match('/^[a-z0-9_\-]{1,100}$/', $slug)) {
+if (!empty($reservationId)) {
+    $canonicalUrl = $baseUri . "reservation/" . urlencode($reservationId);
+    $appName = "Votre Séjour";
+    $pageTitle = "Votre Séjour • Carré d'Hôtes";
+} elseif (!empty($slug) && preg_match('/^[a-z0-9_\-]{1,100}$/', $slug)) {
     $manifestUrl = "manifest.php?slug=" . urlencode($slug);
     $canonicalUrl = $baseUri . urlencode($slug);
     $prettySlug = ucwords(str_replace(['-', '_'], ' ', $slug));

@@ -16,10 +16,12 @@ if (!defined('APP_ROOT')) {
 require_once APP_ROOT . '/src/Env.php';
 require_once APP_ROOT . '/src/Database.php';
 require_once APP_ROOT . '/src/Repository/PropertyRepository.php';
+require_once APP_ROOT . '/src/Service/SuperhoteClient.php';
 
 use Cdh\Portal\Env;
 use Cdh\Portal\Database;
 use Cdh\Portal\Repository\PropertyRepository;
+use Cdh\Portal\Service\SuperhoteClient;
 
 // Initialisation précoce des variables d'environnement
 Env::load();
@@ -59,6 +61,15 @@ if (!function_exists('get_videos_table_name')) {
 if (!function_exists('get_property_by_slug')) {
     function get_property_by_slug(string $slug): ?array {
         return PropertyRepository::findBySlug($slug);
+    }
+}
+
+/**
+ * Recherche un logement par son identifiant SuperHote (rental_id)
+ */
+if (!function_exists('get_property_by_rental_id')) {
+    function get_property_by_rental_id(string|int $rentalId): ?array {
+        return PropertyRepository::findByRentalId($rentalId);
     }
 }
 

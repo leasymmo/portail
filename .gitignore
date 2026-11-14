@@ -40,3 +40,6 @@ uploads/guides/*
 uploads/videos/*
 !uploads/videos/.gitkeep
 
+# Captures d'écran locales
+assets/screenshot/
+

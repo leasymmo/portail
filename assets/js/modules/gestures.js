@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.9';
+import { AppState } from './state.js?v=11.0';
 
 export const SheetGestureController = {
     init() {

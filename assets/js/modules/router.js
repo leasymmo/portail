@@ -1,6 +1,6 @@
 /**
  * ==============================================================================
- * MODULE ROUTEUR SPA SANS HASH (/portail/{slug}/videos/{video})
+ * MODULE ROUTEUR SPA SANS HASH (/portail/{slug} ou /portail/reservation/{id})
  * Conciergerie Carré d'Hôtes - Portail Voyageurs
  * ==============================================================================
  */
@@ -14,16 +14,53 @@ export const Router = {
         path = path.replace(prefixRegex, '').replace(/\/$/, '');
 
         if (!path || path === 'index.html' || path === 'index.php') {
-            return { slug: '', section: '', subSection: '' };
+            return { slug: '', reservationId: '', section: '', subSection: '' };
         }
 
         const parts = path.split('/').filter(Boolean);
         const first = (parts[0] || '').toLowerCase().trim();
 
+        // 1. Route personnalisée /reservation/{reservationId}
         if (first === 'reservation') {
-            return { slug: '', section: 'reservation', subSection: '' };
+            const second = (parts[1] || '').trim();
+            if (second && /^[0-9]+$/.test(second)) {
+                const part2 = (parts[2] || '').toLowerCase().trim();
+                const part3 = (parts[3] || '').toLowerCase().trim();
+                let section = 'guides';
+                let subSection = '';
+                if (part2 === 'parking' || part2 === 'stationnement') {
+                    section = 'parking';
+                } else if (part2 === 'videos' || part2 === 'tutos') {
+                    section = 'videos';
+                    subSection = part3;
+                } else if (part2.startsWith('video-')) {
+                    section = 'videos';
+                    subSection = part2;
+                }
+                return { slug: '', reservationId: second, section, subSection };
+            }
+            return { slug: '', reservationId: '', section: 'reservation', subSection: '' };
         }
 
+        // 2. Route directe numérique /{reservationId}
+        if (/^[0-9]{5,}$/.test(first)) {
+            const part1 = (parts[1] || '').toLowerCase().trim();
+            const part2 = (parts[2] || '').toLowerCase().trim();
+            let section = 'guides';
+            let subSection = '';
+            if (part1 === 'parking' || part1 === 'stationnement') {
+                section = 'parking';
+            } else if (part1 === 'videos' || part1 === 'tutos') {
+                section = 'videos';
+                subSection = part2;
+            } else if (part1.startsWith('video-')) {
+                section = 'videos';
+                subSection = part1;
+            }
+            return { slug: '', reservationId: first, section, subSection };
+        }
+
+        // 3. Route standard par slug de logement /{slug}
         const slug = first;
         const part1 = (parts[1] || '').toLowerCase().trim();
         const part2 = (parts[2] || '').toLowerCase().trim();
@@ -49,12 +86,20 @@ export const Router = {
             subSection = part1;
         }
 
-        return { slug, section, subSection };
+        return { slug, reservationId: '', section, subSection };
     },
 
-    setUrl(slug, section, subSection = '') {
+    setUrl(slug, section, subSection = '', reservationId = '') {
         let newPath = BASE_PATH;
-        if (slug) {
+        if (reservationId) {
+            newPath += 'reservation/' + reservationId;
+            if (section === 'videos') {
+                newPath += '/videos';
+                if (subSection) newPath += '/' + subSection;
+            } else if (section === 'parking') {
+                newPath += '/parking';
+            }
+        } else if (slug) {
             newPath += slug;
             if (section === 'videos') {
                 newPath += '/videos';

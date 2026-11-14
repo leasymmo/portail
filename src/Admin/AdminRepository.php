@@ -87,12 +87,13 @@ class AdminRepository
     public function createProperty(array $data): int
     {
         $stmt = $this->db->prepare('
-            INSERT INTO properties (name, slug, guide_fr_url, guide_en_url, wifi_ssid, wifi_password, address, active)
-            VALUES (:name, :slug, :guide_fr, :guide_en, :wifi_ssid, :wifi_password, :address, :active)
+            INSERT INTO properties (name, slug, rental_id, guide_fr_url, guide_en_url, wifi_ssid, wifi_password, address, active)
+            VALUES (:name, :slug, :rental_id, :guide_fr, :guide_en, :wifi_ssid, :wifi_password, :address, :active)
         ');
         $stmt->execute([
             'name'          => trim($data['name']),
             'slug'          => trim(strtolower($data['slug'])),
+            'rental_id'     => !empty($data['rental_id']) ? trim((string)$data['rental_id']) : null,
             'guide_fr'      => !empty($data['guide_fr_url']) ? trim($data['guide_fr_url']) : null,
             'guide_en'      => !empty($data['guide_en_url']) ? trim($data['guide_en_url']) : null,
             'wifi_ssid'     => !empty($data['wifi_ssid']) ? trim($data['wifi_ssid']) : null,
@@ -103,7 +104,8 @@ class AdminRepository
         $id = (int)$this->db->lastInsertId();
 
         ActivityLogger::log('create', 'property', $id, $data['name'], [
-            'slug' => $data['slug']
+            'slug'      => $data['slug'],
+            'rental_id' => $data['rental_id'] ?? null
         ]);
 
         return $id;
@@ -118,6 +120,7 @@ class AdminRepository
             UPDATE properties
             SET name = :name,
                 slug = :slug,
+                rental_id = :rental_id,
                 guide_fr_url = :guide_fr,
                 guide_en_url = :guide_en,
                 wifi_ssid = :wifi_ssid,
@@ -130,6 +133,7 @@ class AdminRepository
             'id'            => $id,
             'name'          => trim($data['name']),
             'slug'          => trim(strtolower($data['slug'])),
+            'rental_id'     => !empty($data['rental_id']) ? trim((string)$data['rental_id']) : null,
             'guide_fr'      => !empty($data['guide_fr_url']) ? trim($data['guide_fr_url']) : null,
             'guide_en'      => !empty($data['guide_en_url']) ? trim($data['guide_en_url']) : null,
             'wifi_ssid'     => !empty($data['wifi_ssid']) ? trim($data['wifi_ssid']) : null,

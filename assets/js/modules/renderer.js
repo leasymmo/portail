@@ -5,23 +5,21 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.9';
-import { Utils } from './utils.js?v=10.9';
-import { I18n } from './i18n.js?v=10.9';
-import { ScrollManager } from './scroll.js?v=10.9';
-import { Router, BASE_PATH } from './router.js?v=10.9';
-import { ModalManager } from './modals.js?v=10.9';
-import { PdfViewer } from './pdf-viewer.js?v=10.9';
+import { AppState } from './state.js?v=11.0';
+import { Utils } from './utils.js?v=11.0';
+import { I18n } from './i18n.js?v=11.0';
+import { ScrollManager } from './scroll.js?v=11.0';
+import { Router, BASE_PATH } from './router.js?v=11.0';
+import { ModalManager } from './modals.js?v=11.0';
+import { PdfViewer } from './pdf-viewer.js?v=11.0';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
 export const PropertyRenderer = {
-    render(prop, videos, route) {
+    render(prop, videos, route, reservation = null) {
         AppState.currentProperty = prop;
         AppState.currentVideos = videos || [];
-
-        const portalLabel = I18n.currentLang === 'en' ? 'Guest Portal' : 'Portail Voyageurs';
-        document.title = `${prop.name} - ${portalLabel} | Carré d'Hôtes`;
+        AppState.currentReservation = reservation;
 
         // Mise à jour dynamique du manifeste PWA & des métadonnées pour ce logement spécifique
         const manifestLink = document.getElementById('app-manifest-link');
@@ -33,19 +31,23 @@ export const PropertyRenderer = {
             appleTitleMeta.setAttribute('content', prop.name);
         }
         const canonicalLink = document.getElementById('app-canonical-link');
-        if (canonicalLink && prop.slug) {
-            canonicalLink.href = `${BASE_PATH}${encodeURIComponent(prop.slug)}`;
+        if (canonicalLink) {
+            if (reservation && reservation.id) {
+                canonicalLink.href = `${BASE_PATH}reservation/${encodeURIComponent(reservation.id)}`;
+            } else if (prop.slug) {
+                canonicalLink.href = `${BASE_PATH}${encodeURIComponent(prop.slug)}`;
+            }
         }
         if (prop && prop.slug) {
             try { localStorage.setItem('cdh_saved_property', prop.slug); } catch(e) {}
         }
 
-        // Textes principaux
-        document.getElementById('prop-name').textContent = prop.name;
-        const propSub = document.getElementById('prop-subtitle');
-        if (propSub) propSub.textContent = I18n.t('hero_badge');
+        // Personnalisation des titres d'accueil et de la carte réservation VIP
+        this.updateHeroAndWelcomeTitles();
+        this.renderReservationCard(reservation);
 
         // Bloc Wi-Fi & Animation en cascade décalée des cartes principales
+        const resCard = document.getElementById('card-reservation-active');
         const guideCard = document.getElementById('card-guide-active');
         const parkingCard = document.getElementById('card-parking-active');
         const wifiCard = document.getElementById('prop-wifi-card');
@@ -171,20 +173,176 @@ export const PropertyRenderer = {
         }
     },
 
+    formatReservationDate(isoDate, lang = 'fr') {
+        if (!isoDate) return '—';
+        try {
+            const parts = isoDate.split('-');
+            if (parts.length === 3) {
+                const date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                const locale = lang === 'en' ? 'en-US' : 'fr-FR';
+                const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+                const formatted = date.toLocaleDateString(locale, options);
+                return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+            }
+        } catch(e) {}
+        return isoDate;
+    },
+
+    updateHeroAndWelcomeTitles() {
+        if (!AppState.currentProperty) return;
+        const prop = AppState.currentProperty;
+        const res = AppState.currentReservation;
+        const isEn = I18n.currentLang === 'en';
+        const portalLabel = isEn ? 'Guest Portal' : 'Portail Voyageurs';
+
+        const greetingEl = document.getElementById('prop-vip-greeting');
+        const subWelcomeEl = document.getElementById('prop-vip-welcome-sub');
+        const propNameEl = document.getElementById('prop-name');
+        const propSubEl = document.getElementById('prop-subtitle');
+        const welcomeTitleEl = document.getElementById('prop-welcome-title');
+        const welcomeSubtitleEl = document.getElementById('prop-welcome-subtitle');
+
+        if (res && res.guest_first_name) {
+            const firstName = Utils.escapeHtml(res.guest_first_name);
+            const prefix = I18n.t('vip_welcome_prefix');
+            if (greetingEl) {
+                greetingEl.textContent = `${prefix} ${firstName}`;
+                greetingEl.classList.remove('hidden');
+            }
+            if (propNameEl) {
+                propNameEl.textContent = prop.name;
+            }
+            if (subWelcomeEl) {
+                subWelcomeEl.textContent = I18n.t('vip_welcome_subtitle');
+                subWelcomeEl.classList.remove('hidden');
+            }
+            if (propSubEl) {
+                propSubEl.textContent = `${I18n.t('hero_badge_vip')} • ${firstName}`;
+            }
+            if (welcomeTitleEl) {
+                welcomeTitleEl.textContent = isEn 
+                    ? `Welcome Guide • ${firstName}'s Stay` 
+                    : `Guide de bienvenue • Séjour de ${firstName}`;
+            }
+            if (welcomeSubtitleEl) {
+                welcomeSubtitleEl.textContent = I18n.t('welcome_subtitle');
+            }
+            document.title = `${firstName} • ${prop.name} - ${portalLabel} | Carré d'Hôtes`;
+        } else {
+            if (greetingEl) {
+                greetingEl.textContent = '';
+                greetingEl.classList.add('hidden');
+            }
+            if (propNameEl) {
+                propNameEl.textContent = prop.name;
+            }
+            if (subWelcomeEl) {
+                subWelcomeEl.textContent = '';
+                subWelcomeEl.classList.add('hidden');
+            }
+            if (propSubEl) {
+                propSubEl.textContent = I18n.t('hero_badge');
+            }
+            if (welcomeTitleEl) {
+                welcomeTitleEl.textContent = I18n.t('welcome_title');
+            }
+            if (welcomeSubtitleEl) {
+                welcomeSubtitleEl.textContent = I18n.t('welcome_subtitle');
+            }
+            document.title = `${prop.name} - ${portalLabel} | Carré d'Hôtes`;
+        }
+    },
+
+    renderReservationCard(res) {
+        const card = document.getElementById('card-reservation-active');
+        if (!card) return;
+
+        if (!res) {
+            card.classList.add('hidden');
+            return;
+        }
+
+        card.classList.remove('hidden');
+        card.classList.add('cascade-item');
+        card.style.animationDelay = '0.02s';
+
+        const isEn = I18n.currentLang === 'en';
+
+        // Nom voyageur
+        const guestEl = document.getElementById('res-card-guest');
+        if (guestEl) {
+            const guestName = [res.guest_first_name, res.guest_last_name].filter(Boolean).join(' ');
+            guestEl.textContent = guestName ? `${isEn ? 'Guest' : 'Voyageur'} : ${guestName}` : '';
+        }
+
+        // Plateforme
+        const platformEl = document.getElementById('res-card-platform');
+        if (platformEl) {
+            if (res.platform_name) {
+                platformEl.textContent = res.platform_name;
+                platformEl.classList.remove('hidden');
+            } else {
+                platformEl.classList.add('hidden');
+            }
+        }
+
+        // Statut
+        const statusEl = document.getElementById('res-card-status');
+        if (statusEl) {
+            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true"></span><span>${I18n.t('reservation_card_badge_confirmed')}</span>`;
+        }
+
+        // Dates d'arrivée & départ
+        const checkinDateEl = document.getElementById('res-card-checkin-date');
+        const checkinTimeEl = document.getElementById('res-card-checkin-time');
+        const checkoutDateEl = document.getElementById('res-card-checkout-date');
+        const checkoutTimeEl = document.getElementById('res-card-checkout-time');
+
+        if (checkinDateEl) checkinDateEl.textContent = this.formatReservationDate(res.checkin, I18n.currentLang);
+        if (checkinTimeEl) checkinTimeEl.textContent = `${I18n.t('reservation_card_checkin_time_prefix')} ${res.checkin_time || '15:00'}`;
+
+        if (checkoutDateEl) checkoutDateEl.textContent = this.formatReservationDate(res.checkout, I18n.currentLang);
+        if (checkoutTimeEl) checkoutTimeEl.textContent = `${I18n.t('reservation_card_checkout_time_prefix')} ${res.checkout_time || '10:00'}`;
+
+        // Durée & Référence
+        const nightsEl = document.getElementById('res-card-nights');
+        const refEl = document.getElementById('res-card-ref');
+        const nightsCount = parseInt(res.nights, 10) || 1;
+        const nightLabel = nightsCount > 1 ? I18n.t('reservation_card_nights_plural') : I18n.t('reservation_card_nights_single');
+        if (nightsEl) nightsEl.textContent = `${nightsCount} ${nightLabel}`;
+        if (refEl) refEl.textContent = `${I18n.t('reservation_card_ref')}${res.id || '—'}`;
+
+        // Voyageurs
+        const guestsCountEl = document.getElementById('res-card-guests-count');
+        const guestsDetailEl = document.getElementById('res-card-guests-detail');
+        const guestsTotal = parseInt(res.guests_count, 10) || (parseInt(res.adults_count, 10) + parseInt(res.children_count, 10)) || 1;
+        const guestLabel = guestsTotal > 1 ? I18n.t('reservation_card_guests_plural') : I18n.t('reservation_card_guests_single');
+        if (guestsCountEl) guestsCountEl.textContent = `${guestsTotal} ${guestLabel}`;
+
+        if (guestsDetailEl) {
+            const adults = parseInt(res.adults_count, 10) || 0;
+            const children = parseInt(res.children_count, 10) || 0;
+            if (adults > 0) {
+                let detail = `${adults} ${I18n.t('reservation_card_adults')}`;
+                if (children > 0) {
+                    detail += `, ${children} ${I18n.t('reservation_card_children')}`;
+                }
+                guestsDetailEl.textContent = detail;
+                guestsDetailEl.classList.remove('hidden');
+            } else {
+                guestsDetailEl.classList.add('hidden');
+            }
+        }
+    },
+
     updateLanguageContent() {
         if (!AppState.currentProperty) return;
         const prop = AppState.currentProperty;
         const isEn = I18n.currentLang === 'en';
 
-        // 1. Titres de bienvenue
-        const welcomeTitleEl = document.getElementById('prop-welcome-title');
-        const welcomeSubtitleEl = document.getElementById('prop-welcome-subtitle');
-        if (welcomeTitleEl) {
-            welcomeTitleEl.textContent = I18n.t('welcome_title');
-        }
-        if (welcomeSubtitleEl) {
-            welcomeSubtitleEl.textContent = I18n.t('welcome_subtitle');
-        }
+        // 1. Titres de bienvenue & personnalisation VIP
+        this.updateHeroAndWelcomeTitles();
+        this.renderReservationCard(AppState.currentReservation);
 
         // 2. Carte unique Guide de bienvenue (FR ou EN selon langue active)
         const cardActive = document.getElementById('card-guide-active');

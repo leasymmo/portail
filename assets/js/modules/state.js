@@ -7,6 +7,8 @@
 
 export const AppState = {
     currentProperty: null,
+    currentReservation: null,
+    currentReservationId: '',
     currentVideos: [],
     currentActiveTab: 'guides',
     currentSlug: '',
