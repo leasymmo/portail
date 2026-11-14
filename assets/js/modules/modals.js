@@ -5,12 +5,12 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.2';
-import { Utils } from './utils.js?v=11.2';
-import { I18n } from './i18n.js?v=11.2';
-import { ScrollManager } from './scroll.js?v=11.2';
-import { Router } from './router.js?v=11.2';
-import { PdfViewer } from './pdf-viewer.js?v=11.2';
+import { AppState } from './state.js?v=11.3';
+import { Utils } from './utils.js?v=11.3';
+import { I18n } from './i18n.js?v=11.3';
+import { ScrollManager } from './scroll.js?v=11.3';
+import { Router } from './router.js?v=11.3';
+import { PdfViewer } from './pdf-viewer.js?v=11.3';
 
 export const ModalManager = {
     // --- MODALE PDF ---
@@ -32,41 +32,46 @@ export const ModalManager = {
 
         if (titleEl) titleEl.textContent = I18n.t('booklet_title');
         if (descEl) descEl.textContent = I18n.t('booklet_desc');
-        extLink.href = Utils.safeUrl(pdfUrl);
+        if (extLink) extLink.href = Utils.safeUrl(pdfUrl);
 
-        // Réinitialise tout style restant d'un glissement gestuel
-        modal.classList.remove('is-closing');
-        const sheet = modal.querySelector('.modal-sheet');
-        if (sheet) {
-            sheet.style.transform = '';
-            sheet.style.transition = '';
+        const effectiveSlug = (AppState.currentProperty && AppState.currentProperty.slug) || AppState.currentSlug || '';
+
+        const isAlreadyOpen = modal.classList.contains('open');
+        if (!isAlreadyOpen) {
+            // Réinitialise tout style restant d'un glissement gestuel
+            modal.classList.remove('is-closing');
+            const sheet = modal.querySelector('.modal-sheet');
+            if (sheet) {
+                sheet.style.transform = '';
+                sheet.style.transition = '';
+            }
+            modal.style.opacity = '';
+            modal.style.backgroundColor = '';
+
+            // Étape 1 : active la modale dans le DOM (display: flex) à sa position fermée translateY(100%)
+            modal.classList.add('is-active');
+            void modal.offsetHeight; // Force le calcul du rendu initial
+
+            // Étape 2 : déclenche l'animation d'ouverture fluide (montée depuis le bas)
+            requestAnimationFrame(() => {
+                modal.classList.add('open');
+                modal.classList.remove('is-active');
+                modal.setAttribute('aria-hidden', 'false');
+            });
+
+            AppState.isPdfModalOpen = true;
+            ScrollManager.lock();
+
+            // Réinitialise le défilement du conteneur en haut de page
+            const container = document.getElementById('pdf-viewport');
+            if (container) container.scrollTop = 0;
         }
-        modal.style.opacity = '';
-        modal.style.backgroundColor = '';
-
-        // Étape 1 : active la modale dans le DOM (display: flex) à sa position fermée translateY(100%)
-        modal.classList.add('is-active');
-        void modal.offsetHeight; // Force le calcul du rendu initial
-
-        // Étape 2 : déclenche l'animation d'ouverture fluide (montée depuis le bas)
-        requestAnimationFrame(() => {
-            modal.classList.add('open');
-            modal.classList.remove('is-active');
-            modal.setAttribute('aria-hidden', 'false');
-        });
-
-        AppState.isPdfModalOpen = true;
-        ScrollManager.lock();
-
-        // Réinitialise le défilement du conteneur en haut de page
-        const container = document.getElementById('pdf-viewport');
-        if (container) container.scrollTop = 0;
 
         // Rendu vectoriel via PDF.js (fit-to-width parfait & zoom de contenu)
-        PdfViewer.load(AppState.currentSlug, activeLang, pdfUrl);
+        PdfViewer.load(effectiveSlug, activeLang, pdfUrl);
 
         if (updateUrl) {
-            Router.setUrl(AppState.currentSlug, 'guides', `pdf-${activeLang}`);
+            Router.setUrl(effectiveSlug, 'guides', `pdf-${activeLang}`);
         }
     },
 
@@ -77,11 +82,13 @@ export const ModalManager = {
         AppState.isPdfModalOpen = false;
         ScrollManager.unlock();
 
+        const effectiveSlug = (AppState.currentProperty && AppState.currentProperty.slug) || AppState.currentSlug || '';
+
         if (immediate || !modal.classList.contains('open')) {
             modal.classList.remove('open', 'is-active', 'is-closing');
             modal.setAttribute('aria-hidden', 'true');
             PdfViewer.resetZoom();
-            Router.setUrl(AppState.currentSlug, AppState.currentActiveTab);
+            Router.setUrl(effectiveSlug, AppState.currentActiveTab || 'guides');
             return;
         }
 
@@ -93,7 +100,7 @@ export const ModalManager = {
         setTimeout(() => {
             modal.classList.remove('is-closing', 'is-active');
             PdfViewer.resetZoom();
-            Router.setUrl(AppState.currentSlug, AppState.currentActiveTab);
+            Router.setUrl(effectiveSlug, AppState.currentActiveTab || 'guides');
         }, 360);
     },
 

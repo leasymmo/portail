@@ -11,19 +11,19 @@
 // -----------------------------------------------------------------------------
 // 1. IMPORTATION DES MODULES APPLICATIFS
 // -----------------------------------------------------------------------------
-import { AppState } from './modules/state.js?v=11.2';
-import { Utils } from './modules/utils.js?v=11.2';
-import { I18n } from './modules/i18n.js?v=11.2';
-import { ThemeManager } from './modules/theme.js?v=11.2';
-import { ScrollManager } from './modules/scroll.js?v=11.2';
-import { Router, BASE_PATH } from './modules/router.js?v=11.2';
-import { ApiService } from './modules/api.js?v=11.2';
-import { SheetGestureController, TabGestureController } from './modules/gestures.js?v=11.2';
-import { PdfViewer } from './modules/pdf-viewer.js?v=11.2';
-import { ModalManager } from './modules/modals.js?v=11.2';
-import { PropertyRenderer, ListRenderer, VideoSearch } from './modules/renderer.js?v=11.2';
-import { PwaManager } from './modules/pwa.js?v=11.2';
-import { AppController } from './modules/app-controller.js?v=11.2';
+import { AppState } from './modules/state.js?v=11.3';
+import { Utils } from './modules/utils.js?v=11.3';
+import { I18n } from './modules/i18n.js?v=11.3';
+import { ThemeManager } from './modules/theme.js?v=11.3';
+import { ScrollManager } from './modules/scroll.js?v=11.3';
+import { Router, BASE_PATH } from './modules/router.js?v=11.3';
+import { ApiService } from './modules/api.js?v=11.3';
+import { SheetGestureController, TabGestureController } from './modules/gestures.js?v=11.3';
+import { PdfViewer } from './modules/pdf-viewer.js?v=11.3';
+import { ModalManager } from './modules/modals.js?v=11.3';
+import { PropertyRenderer, ListRenderer, VideoSearch } from './modules/renderer.js?v=11.3';
+import { PwaManager } from './modules/pwa.js?v=11.3';
+import { AppController } from './modules/app-controller.js?v=11.3';
 
 // -----------------------------------------------------------------------------
 // 2. EXPOSITION DES MODULES SUR L'OBJET GLOBAL (POUR DÉBOGAGE & INTEROPÉRABILITÉ)
