@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { Utils } from './utils.js?v=11.4';
-import { I18n } from './i18n.js?v=11.4';
+import { Utils } from './utils.js?v=11.5';
+import { I18n } from './i18n.js?v=11.5';
 
 export const ThemeManager = {
     init() {

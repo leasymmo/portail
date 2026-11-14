@@ -42,9 +42,9 @@
     <!-- Moteur de rendu PDF vectoriel universel (Mozilla PDF.js - Standard du Web) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
 
-    <!-- Librairie cartographique vectorielle Leaflet 2D (Open-source, sécurisée & ultra-légère) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" integrity="sha512-Zcn6bjR/8RZbLEpLIeOwNtzREBAJnUKESxces60Mpoj+2okopSAcSUIUOseddDm0cxnGQzxIR7vJgsLZbdLE3w==" crossorigin="" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="" defer></script>
+    <!-- Librairie cartographique vectorielle Leaflet 2D (100% Open-source, gratuite & sans clé API) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 
     <!-- Tailwind CSS (CDN avec mode sombre configuré sur la classe dark) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -78,7 +78,7 @@
     </script>
 
     <!-- Styles de la charte Carré d'Hôtes & Dark Mode -->
-    <link rel="stylesheet" href="assets/css/custom.css?v=11.4">
+    <link rel="stylesheet" href="assets/css/custom.css?v=11.5">
 
     <!-- Détection précoce du thème, PWA Standalone & restauration du logement -->
     <script>
@@ -1297,12 +1297,12 @@
                         </a>
                     </div>
 
-                    <!-- Aperçu Carte 2D (Leaflet Open-Source & CartoDB Voyager) -->
+                    <!-- Aperçu Carte 2D (Leaflet Open-Source & OpenStreetMap) -->
                     <div class="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-[#e2e4e6] dark:border-[#38455d] bg-[#f0f0ea] dark:bg-[#131b2a] shadow-inner group">
-                        <div id="res-modal-map" class="w-full h-full z-0"></div>
+                        <div id="res-modal-map" class="w-full h-full z-0" style="min-height: 176px;"></div>
                         <a id="res-modal-map-open-link" href="#" target="_blank" rel="noopener noreferrer"
                            class="absolute bottom-2.5 right-2.5 z-[400] px-2.5 py-1 rounded-md bg-white/95 dark:bg-[#1e2739]/95 text-ink dark:text-white text-[11px] font-semibold shadow-md border border-[#e2e4e6] dark:border-[#38455d] hover:border-gold dark:hover:border-gold flex items-center gap-1 backdrop-blur-sm transition cursor-pointer">
-                            <span>Google Maps ↗</span>
+                            <span>Itinéraire GPS ↗</span>
                         </a>
                     </div>
                 </div>
@@ -1406,6 +1406,6 @@
     <!-- =================================================================== -->
     <!-- SCRIPT APPLICATION & PWA (MODULAIRE, OPTIMISÉ & EN CACHE SW)        -->
     <!-- =================================================================== -->
-    <script type="module" src="assets/js/app.js?v=11.4"></script>
+    <script type="module" src="assets/js/app.js?v=11.5"></script>
 </body>
 </html>

@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.4';
-import { Utils } from './utils.js?v=11.4';
-import { I18n } from './i18n.js?v=11.4';
-import { ScrollManager } from './scroll.js?v=11.4';
-import { Router, BASE_PATH } from './router.js?v=11.4';
-import { ModalManager } from './modals.js?v=11.4';
-import { PdfViewer } from './pdf-viewer.js?v=11.4';
+import { AppState } from './state.js?v=11.5';
+import { Utils } from './utils.js?v=11.5';
+import { I18n } from './i18n.js?v=11.5';
+import { ScrollManager } from './scroll.js?v=11.5';
+import { Router, BASE_PATH } from './router.js?v=11.5';
+import { ModalManager } from './modals.js?v=11.5';
+import { PdfViewer } from './pdf-viewer.js?v=11.5';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -496,10 +496,10 @@ export const PropertyRenderer = {
                 touchZoom: true
             });
 
-            // Fond de carte élégant et moderne CartoDB Voyager
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                subdomains: 'abcd',
-                maxZoom: 19
+            // Fond de carte OpenStreetMap standard (100% ouvert, libre, gratuit, zéro clé API, zéro restriction adblocker)
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
             // Marqueur doré Carré d'Hôtes avec douce onde de pulsation
@@ -531,11 +531,13 @@ export const PropertyRenderer = {
 
     invalidateReservationMap() {
         if (this._resMap) {
-            setTimeout(() => {
-                try {
-                    this._resMap.invalidateSize();
-                } catch(e) {}
-            }, 260);
+            try {
+                this._resMap.invalidateSize(true);
+                if (AppState.currentProperty) {
+                    const coords = this.getPropertyCoordinates(AppState.currentProperty);
+                    this._resMap.setView([coords.lat, coords.lng], 16, { animate: false });
+                }
+            } catch(e) {}
         }
     },
 
