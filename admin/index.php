@@ -729,10 +729,20 @@ $isDev = (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/po
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse physique complète</label>
-                    <input type="text" id="property-address" placeholder="91 rue Bataille, 69008 Lyon"
-                           class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-gray-300">ID SuperHote</label>
+                            <span class="text-[10px] text-blue-400 font-mono">rental_id API</span>
+                        </div>
+                        <input type="text" id="property-rental-id" placeholder="Ex: 11452648"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white font-mono focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-300 mb-1">Adresse physique complète</label>
+                        <input type="text" id="property-address" placeholder="91 rue Bataille, 69008 Lyon"
+                               class="w-full p-2.5 rounded-xl bg-night border border-night-border text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3.5 rounded-2xl bg-night/50 border border-night-border/40">

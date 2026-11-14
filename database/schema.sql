@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `properties` (
     `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `slug` VARCHAR(100) NOT NULL UNIQUE COMMENT 'Identifiant URL unique (ex: maisonnette-en-jouhet)',
     `name` VARCHAR(255) NOT NULL COMMENT 'Nom public du logement',
+    `rental_id` VARCHAR(50) DEFAULT NULL COMMENT 'ID du logement sur SuperHote',
     `guide_fr_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien Google Drive / PDF vers le livret FR',
     `guide_en_url` VARCHAR(1000) DEFAULT NULL COMMENT 'Lien Google Drive / PDF vers le livret EN',
     `wifi_ssid` VARCHAR(100) DEFAULT NULL COMMENT 'Nom du réseau WiFi (optionnel)',
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `properties` (
     `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1 = visible, 0 = masqué',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX `idx_properties_slug_active` (`slug`, `active`)
+    INDEX `idx_properties_slug_active` (`slug`, `active`),
+    INDEX `idx_properties_rental_id` (`rental_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------------------------

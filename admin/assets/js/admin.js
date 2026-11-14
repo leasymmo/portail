@@ -537,7 +537,10 @@ const AdminApp = {
                             </div>
                             <div class="min-w-0 flex-1">
                                 <h4 class="text-base font-bold text-white group-hover:text-gold transition truncate">${this.escape(p.name)}</h4>
-                                <span class="text-xs font-mono text-gray-400 block truncate">/${this.escape(p.slug)}</span>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-xs font-mono text-gray-400 truncate">/${this.escape(p.slug)}</span>
+                                    ${p.rental_id ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30 whitespace-nowrap" title="ID SuperHote : ${this.escape(p.rental_id)}">SH: ${this.escape(p.rental_id)}</span>` : '<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-400 whitespace-nowrap" title="Aucun ID SuperHote associé">SH: —</span>'}
+                                </div>
                             </div>
                         </div>
                         <button type="button" onclick="AdminApp.togglePropertyStatus(${p.id})" title="Cliquer pour activer/désactiver"
@@ -679,6 +682,7 @@ const AdminApp = {
             titleEl.textContent = `Modifier : ${prop.name}`;
             document.getElementById('property-name').value = prop.name || '';
             document.getElementById('property-slug').value = prop.slug || '';
+            document.getElementById('property-rental-id').value = prop.rental_id || '';
             document.getElementById('property-address').value = prop.address || '';
             document.getElementById('property-wifi-ssid').value = prop.wifi_ssid || '';
             document.getElementById('property-wifi-password').value = prop.wifi_password || '';
@@ -687,6 +691,7 @@ const AdminApp = {
             document.getElementById('property-active').checked = (prop.active == 1);
         } else {
             titleEl.textContent = 'Ajouter un nouvel hébergement';
+            document.getElementById('property-rental-id').value = '';
             document.getElementById('property-guide-fr').value = '';
             document.getElementById('property-guide-en').value = '';
             document.getElementById('property-active').checked = true;
@@ -898,6 +903,7 @@ const AdminApp = {
             id,
             name: name,
             slug: slug,
+            rental_id: (document.getElementById('property-rental-id').value || '').trim(),
             address: (document.getElementById('property-address').value || '').trim(),
             wifi_ssid: (document.getElementById('property-wifi-ssid').value || '').trim(),
             wifi_password: (document.getElementById('property-wifi-password').value || '').trim(),

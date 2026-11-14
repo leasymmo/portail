@@ -39,6 +39,28 @@ class PropertyRepository
     }
 
     /**
+     * Recherche un logement actif par son identifiant SuperHote (rental_id)
+     */
+    public static function findByRentalId(string|int $rentalId): ?array
+    {
+        $pdo = Database::getConnection();
+        $cleanId = trim((string)$rentalId);
+        if ($cleanId === '') {
+            return null;
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT * FROM properties 
+            WHERE rental_id = :rental_id AND active = 1 
+            LIMIT 1
+        ");
+        $stmt->execute([':rental_id' => $cleanId]);
+
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
+    /**
      * Récupère la liste ordonnée des vidéos explicatives d'un logement
      */
     public static function findVideosByPropertyId(int $propertyId): array
@@ -218,7 +240,7 @@ class PropertyRepository
         $table = Database::getVideoTableName();
 
         $stmt = $pdo->query("
-            SELECT id, slug, name, guide_fr_url, guide_en_url,
+            SELECT id, slug, rental_id, name, guide_fr_url, guide_en_url,
                    (SELECT COUNT(*) FROM {$table} WHERE {$table}.property_id = properties.id AND {$table}.active = 1) AS videos_count,
                    (SELECT COUNT(*) FROM {$table} WHERE {$table}.property_id = properties.id AND {$table}.active = 1) AS tutorials_count
             FROM properties 

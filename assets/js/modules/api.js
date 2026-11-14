@@ -5,12 +5,18 @@
  * ==============================================================================
  */
 
-import { BASE_PATH } from './router.js?v=10.9';
+import { BASE_PATH } from './router.js?v=11.0';
 
 export const ApiService = {
-    async fetchRouteData(slug) {
+    async fetchRouteData(slug, reservationId = '') {
         const base = document.baseURI || (window.location.origin + BASE_PATH);
-        const apiUrl = new URL(slug ? `api.php?slug=${encodeURIComponent(slug)}` : 'api.php', base).href;
+        let endpoint = 'api.php';
+        if (reservationId) {
+            endpoint = `api.php?reservation_id=${encodeURIComponent(reservationId)}`;
+        } else if (slug) {
+            endpoint = `api.php?slug=${encodeURIComponent(slug)}`;
+        }
+        const apiUrl = new URL(endpoint, base).href;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000);
 

@@ -5,17 +5,17 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=10.9';
-import { Utils } from './utils.js?v=10.9';
-import { I18n } from './i18n.js?v=10.9';
-import { Router } from './router.js?v=10.9';
-import { ApiService } from './api.js?v=10.9';
-import { PropertyRenderer, ListRenderer } from './renderer.js?v=10.9';
-import { ModalManager } from './modals.js?v=10.9';
-import { ScrollManager } from './scroll.js?v=10.9';
-import { PdfViewer } from './pdf-viewer.js?v=10.9';
-import { SheetGestureController, TabGestureController } from './gestures.js?v=10.9';
-import { PwaManager } from './pwa.js?v=10.9';
+import { AppState } from './state.js?v=11.0';
+import { Utils } from './utils.js?v=11.0';
+import { I18n } from './i18n.js?v=11.0';
+import { Router } from './router.js?v=11.0';
+import { ApiService } from './api.js?v=11.0';
+import { PropertyRenderer, ListRenderer } from './renderer.js?v=11.0';
+import { ModalManager } from './modals.js?v=11.0';
+import { ScrollManager } from './scroll.js?v=11.0';
+import { PdfViewer } from './pdf-viewer.js?v=11.0';
+import { SheetGestureController, TabGestureController } from './gestures.js?v=11.0';
+import { PwaManager } from './pwa.js?v=11.0';
 
 export const AppController = {
     async load() {
@@ -24,9 +24,10 @@ export const AppController = {
             PdfViewer.destroy();
         }
         AppState.currentSlug = route.slug;
+        AppState.currentReservationId = route.reservationId || '';
 
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        if (isStandalone && !AppState.currentSlug) {
+        if (isStandalone && !AppState.currentSlug && !AppState.currentReservationId) {
             try {
                 const savedSlug = localStorage.getItem('cdh_saved_property');
                 if (savedSlug && !savedSlug.includes('.')) {
@@ -38,33 +39,45 @@ export const AppController = {
         }
 
         try {
-            const response = await ApiService.fetchRouteData(AppState.currentSlug);
+            const response = await ApiService.fetchRouteData(AppState.currentSlug, AppState.currentReservationId);
             this.hideAllViews();
 
             if (!response.ok) {
-                if (response.status === 404) {
-                    this.renderNotFound(AppState.currentSlug);
+                if (response.data && response.data.type === 'reservation_not_found') {
+                    this.renderReservationNotFound(response.data.reservation_id || AppState.currentReservationId);
+                } else if (response.status === 404) {
+                    if (AppState.currentReservationId) {
+                        this.renderReservationNotFound(AppState.currentReservationId);
+                    } else {
+                        this.renderNotFound(AppState.currentSlug);
+                    }
                 } else {
-                    this.renderError(response.data.error || response.data.details);
+                    this.renderError(response.data.error || response.data.details || response.data.message);
                 }
                 return;
             }
 
             const result = response.data;
+            if (result.type === 'reservation_unconfirmed') {
+                this.renderReservationUnconfirmed(result);
+                return;
+            }
+
             if (result.type === 'property') {
                 const videoList = result.data.videos || result.data.tutorials || [];
                 const propertyData = result.data.property;
                 if (result.data.parking && !propertyData.parking) {
                     propertyData.parking = result.data.parking;
                 }
-                PropertyRenderer.render(propertyData, videoList, route);
+                const reservation = result.data.reservation || null;
+                PropertyRenderer.render(propertyData, videoList, route, reservation);
             } else if (result.type === 'list') {
                 ScrollManager.unlock();
                 AppState.allProperties = result.data.properties || [];
                 ListRenderer.render(AppState.allProperties);
             }
 
-            if (route.section === 'reservation') {
+            if (route.section === 'reservation' && !route.reservationId) {
                 ModalManager.openBooking(false);
             } else if (route.section === 'parking') {
                 ModalManager.openParking(false);
@@ -76,11 +89,49 @@ export const AppController = {
     },
 
     hideAllViews() {
-        const ids = ['view-loading', 'view-property', 'view-list', 'view-not-found', 'view-error'];
+        const ids = [
+            'view-loading', 
+            'view-property', 
+            'view-list', 
+            'view-not-found', 
+            'view-error', 
+            'view-reservation-not-found', 
+            'view-reservation-unconfirmed'
+        ];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.add('hidden');
         });
+    },
+
+    renderReservationNotFound(reservationId) {
+        const idEl = document.getElementById('res-not-found-id');
+        if (idEl) idEl.textContent = '#' + (reservationId || '—');
+        const view = document.getElementById('view-reservation-not-found');
+        if (view) view.classList.remove('hidden');
+        ScrollManager.unlock();
+    },
+
+    renderReservationUnconfirmed(data) {
+        const idEl = document.getElementById('res-unconfirmed-id');
+        if (idEl) idEl.textContent = '#' + (data.reservation_id || '—');
+
+        const statusLabelEl = document.getElementById('res-unconfirmed-status-label');
+        if (statusLabelEl) {
+            const rawStatus = (data.status_label || 'UNCONFIRMED').toUpperCase();
+            let displayStatus = rawStatus;
+            const isEn = I18n.currentLang === 'en';
+            if (rawStatus === 'UNCONFIRMED') displayStatus = isEn ? 'Unconfirmed' : 'Non confirmée';
+            else if (rawStatus === 'CANCELED') displayStatus = isEn ? 'Canceled' : 'Annulée';
+            else if (rawStatus === 'CANCELED_BY_TRAVELER') displayStatus = isEn ? 'Canceled by traveler' : 'Annulée par le voyageur';
+            else if (rawStatus === 'NO_SHOW') displayStatus = isEn ? 'No show' : 'Non présenté';
+            else if (rawStatus === 'REQUEST') displayStatus = isEn ? 'Pending request' : 'Demande en attente';
+            statusLabelEl.textContent = `${isEn ? 'Status' : 'Statut'} : ${displayStatus}`;
+        }
+
+        const view = document.getElementById('view-reservation-unconfirmed');
+        if (view) view.classList.remove('hidden');
+        ScrollManager.unlock();
     },
 
     renderNotFound(slug) {
