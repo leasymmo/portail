@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.9';
+import { AppState } from './state.js?v=12.0';
 
 export const SheetGestureController = {
     init() {
@@ -263,7 +263,7 @@ export const TabGestureController = {
             if (AppState.isPdfModalOpen || AppState.isVideoModalOpen || AppState.isBookingModalOpen ||
                 AppState.isWifiModalOpen || AppState.isReviewModalOpen || AppState.isContactModalOpen ||
                 AppState.isParkingModalOpen) return;
-            if (!AppState.currentProperty || AppState.currentVideos.length === 0) return;
+            if (!AppState.currentProperty) return;
             if (!e.touches || e.touches.length !== 1) return;
 
             const target = e.target;

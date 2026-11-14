@@ -129,6 +129,7 @@ footer {
 
 /* Onglets Guides / Vidéos collants sous la navbar lors du scroll */
 .property-tabs-sticky {
+    position: -webkit-sticky !important;
     position: sticky !important;
     top: var(--topbar-height, calc(55px + env(safe-area-inset-top, 0px))) !important;
     z-index: 40 !important;

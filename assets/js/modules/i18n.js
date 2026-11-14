@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.9';
-import { Utils } from './utils.js?v=11.9';
+import { AppState } from './state.js?v=12.0';
+import { Utils } from './utils.js?v=12.0';
 
 export const I18n = {
     currentLang: 'fr',
@@ -101,6 +101,9 @@ export const I18n = {
             videos_subtitle: "Fonctionnement des équipements en vidéo",
             video_search_placeholder: "Rechercher un équipement (ex: café, lave-linge...)",
             no_video_found: "Aucun équipement trouvé pour cette recherche.",
+            no_videos_title: "Aucune vidéo pour cet hébergement",
+            no_videos_desc: "Toutes les instructions essentielles et les détails de votre séjour sont disponibles dans votre Guide de bienvenue.",
+            no_videos_back_btn: "Retour aux informations",
             home_title: "Portail Voyageurs",
             home_subtitle: "Conciergerie Carré d'Hôtes",
             home_welcome: "Bienvenue",
@@ -292,6 +295,9 @@ export const I18n = {
             videos_subtitle: "How to use equipment in video",
             video_search_placeholder: "Search equipment (e.g. coffee, washer, stove)...",
             no_video_found: "No equipment found for this search.",
+            no_videos_title: "No video guides for this property",
+            no_videos_desc: "All essential instructions and details for your stay are available in your Welcome Guide.",
+            no_videos_back_btn: "Back to Information",
             home_title: "Guest Portal",
             home_subtitle: "Carré d'Hôtes Concierge",
             home_welcome: "Welcome",

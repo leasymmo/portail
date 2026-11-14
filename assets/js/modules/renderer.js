@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=11.9';
-import { Utils } from './utils.js?v=11.9';
-import { I18n } from './i18n.js?v=11.9';
-import { ScrollManager } from './scroll.js?v=11.9';
-import { Router, BASE_PATH } from './router.js?v=11.9';
-import { ModalManager } from './modals.js?v=11.9';
-import { PdfViewer } from './pdf-viewer.js?v=11.9';
+import { AppState } from './state.js?v=12.0';
+import { Utils } from './utils.js?v=12.0';
+import { I18n } from './i18n.js?v=12.0';
+import { ScrollManager } from './scroll.js?v=12.0';
+import { Router, BASE_PATH } from './router.js?v=12.0';
+import { ModalManager } from './modals.js?v=12.0';
+import { PdfViewer } from './pdf-viewer.js?v=12.0';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -115,19 +115,19 @@ export const PropertyRenderer = {
         // Mise à jour de la carte du livret et des éléments dépendant de la langue
         this.updateLanguageContent();
 
-        // Onglets et Vidéos
+        // Onglets et Vidéos (toujours visibles pour maintenir la cohérence de navigation)
         const tabsContainer = document.getElementById('property-tabs-container');
-        if (AppState.currentVideos.length > 0) {
+        if (tabsContainer) {
             tabsContainer.classList.remove('hidden');
-            document.getElementById('videos-badge-count').textContent = AppState.currentVideos.length;
-            this.renderVideos(AppState.currentVideos);
-
-            const targetTab = route.section === 'videos' ? 'videos' : 'guides';
-            this.switchTab(targetTab);
-        } else {
-            tabsContainer.classList.add('hidden');
-            this.switchTab('guides');
         }
+        const badgeCountEl = document.getElementById('videos-badge-count');
+        if (badgeCountEl) {
+            badgeCountEl.textContent = (AppState.currentVideos && AppState.currentVideos.length) ? AppState.currentVideos.length : 0;
+        }
+        this.renderVideos(AppState.currentVideos || []);
+
+        const targetTab = route.section === 'videos' ? 'videos' : 'guides';
+        this.switchTab(targetTab);
 
         document.getElementById('view-property').classList.remove('hidden');
         ScrollManager.updateTopbarHeight();
@@ -1072,10 +1072,8 @@ export const PropertyRenderer = {
         // Statut d'Anthony en direct (heure française : Vert de 9h à 21h, Rouge de 21h à 9h)
         this.updateAnthonyStatus();
 
-        // 3. Actualiser la grille des vidéos avec les titres traduits
-        if (AppState.currentVideos && AppState.currentVideos.length > 0) {
-            this.renderVideos(AppState.currentVideos);
-        }
+        // 3. Actualiser la grille des vidéos avec les titres traduits ou l'état vide
+        this.renderVideos(AppState.currentVideos || []);
 
         // Configuration anticipée du lien direct WhatsApp
         const btnWhatsApp = document.getElementById('btn-whatsapp-anthony');
@@ -1637,8 +1635,41 @@ export const PropertyRenderer = {
 
     renderVideos(videos) {
         const container = document.getElementById('videos-list');
+        if (!container) return;
         container.innerHTML = '';
         const isEn = I18n.currentLang === 'en';
+
+        const searchWrapper = document.getElementById('video-search-wrapper') || document.querySelector('#content-videos [role="search"]');
+        const noVideoFoundEl = document.getElementById('no-video-found');
+        if (noVideoFoundEl) noVideoFoundEl.classList.add('hidden');
+
+        if (!videos || videos.length === 0) {
+            if (searchWrapper) searchWrapper.classList.add('hidden');
+
+            const emptyCard = document.createElement('div');
+            emptyCard.className = 'col-span-full py-10 px-6 text-center rounded-2xl border border-dashed border-[#e2e4e6] dark:border-[#38455d] bg-[#faf9f6]/60 dark:bg-[#1e2739]/40 max-w-md mx-auto my-2';
+            emptyCard.innerHTML = `
+                <div class="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-gold/10 dark:bg-gold/15 flex items-center justify-center text-gold shadow-2xs">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-sm sm:text-base text-ink dark:text-white mb-1.5">
+                    ${I18n.t('no_videos_title')}
+                </h3>
+                <p class="text-xs sm:text-sm text-ink-soft dark:text-gray-300 max-w-xs mx-auto leading-relaxed mb-4">
+                    ${I18n.t('no_videos_desc')}
+                </p>
+                <button onclick="navigateToTab('guides')" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold text-white text-xs font-semibold shadow-xs hover:bg-gold-dark transition active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <span>${I18n.t('no_videos_back_btn')}</span>
+                </button>
+            `;
+            container.appendChild(emptyCard);
+            return;
+        }
+
+        if (searchWrapper) searchWrapper.classList.remove('hidden');
 
         videos.forEach((video, index) => {
             const card = document.createElement('div');
