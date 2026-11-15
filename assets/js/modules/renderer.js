@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.1';
-import { Utils } from './utils.js?v=12.1';
-import { I18n } from './i18n.js?v=12.1';
-import { ScrollManager } from './scroll.js?v=12.1';
-import { Router, BASE_PATH } from './router.js?v=12.1';
-import { ModalManager } from './modals.js?v=12.1';
-import { PdfViewer } from './pdf-viewer.js?v=12.1';
+import { AppState } from './state.js?v=12.2';
+import { Utils } from './utils.js?v=12.2';
+import { I18n } from './i18n.js?v=12.2';
+import { ScrollManager } from './scroll.js?v=12.2';
+import { Router, BASE_PATH } from './router.js?v=12.2';
+import { ModalManager } from './modals.js?v=12.2';
+import { PdfViewer } from './pdf-viewer.js?v=12.2';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -428,14 +428,17 @@ export const PropertyRenderer = {
         'chez-denise-studio-cosy': { lat: 45.75971, lng: 4.87250 },
         'cosy-et-design': { lat: 45.77388, lng: 4.86113 },
         'studio-cosy-de-mel': { lat: 45.76683, lng: 4.89461 },
+        'studio-cosy-mel': { lat: 45.76683, lng: 4.89461 },
         'studio-cosy-de-paul': { lat: 45.76683, lng: 4.89461 },
+        'studio-cosy-paul': { lat: 45.76683, lng: 4.89461 },
         'latelier-cosy-felix': { lat: 45.75472, lng: 4.86886 },
         'atelier-cosy-felix': { lat: 45.75472, lng: 4.86886 },
+        'l-atelier-cosy-felix': { lat: 45.75472, lng: 4.86886 },
         'berthelot-design': { lat: 45.73788, lng: 4.86507 },
         'bataille': { lat: 45.73743, lng: 4.87495 },
         'maisonnette-en-jouhet': { lat: 45.73300, lng: 4.85907 },
         'loft-cosy-annonay': { lat: 45.24150, lng: 4.67100 },
-        'villa-soleil-printemps': { lat: 45.75000, lng: 4.85000 }
+        'villa-soleil-printemps': { lat: 45.77809, lng: 4.98924 }
     },
 
     PARKING_COORDINATES: {
@@ -453,6 +456,7 @@ export const PropertyRenderer = {
         'vaise 2': { lat: 45.78350, lng: 4.80768 },
         '10 rue de la gare': { lat: 45.77112, lng: 5.00079 },
         'meyzieu gare': { lat: 45.77112, lng: 5.00079 },
+        'rue de la gare, lyon': { lat: 45.77887, lng: 4.80083 },
         '17 rue de la rosiere': { lat: 45.73852, lng: 4.86399 },
         '87 rue villon': { lat: 45.73885, lng: 4.86305 },
         'paul-cazeneuve': { lat: 45.73445, lng: 4.86327 },
@@ -492,13 +496,23 @@ export const PropertyRenderer = {
         '51 rue racine': { lat: 45.76606, lng: 4.87924 },
         '30 rue flachet': { lat: 45.76919, lng: 4.88976 },
         '2 rue victor-subit': { lat: 45.76627, lng: 4.89543 },
-        '82 avenue du carreau': { lat: 45.78496, lng: 4.99063 },
+        '82 avenue du carreau': { lat: 45.77809, lng: 4.98924 },
+        'avenue du carreau': { lat: 45.77809, lng: 4.98924 },
         'chemin de pommier': { lat: 45.77792, lng: 5.01189 },
         'pierre-brossolette': { lat: 45.77041, lng: 4.99398 }
     },
 
     getPropertyCoordinates(prop) {
         if (!prop) return { lat: 45.7640, lng: 4.8357 };
+
+        // Coordonnées directes si déjà renseignées
+        if (prop.latitude && prop.longitude) {
+            return { lat: parseFloat(prop.latitude), lng: parseFloat(prop.longitude) };
+        }
+        if (prop.lat && prop.lng) {
+            return { lat: parseFloat(prop.lat), lng: parseFloat(prop.lng) };
+        }
+
         const slug = (prop.slug || '').toLowerCase().trim();
         if (this.PROPERTY_COORDINATES[slug]) {
             return this.PROPERTY_COORDINATES[slug];
@@ -508,6 +522,19 @@ export const PropertyRenderer = {
                 return coords;
             }
         }
+
+        // Si l'adresse du logement correspond à un lieu connu dans PARKING_COORDINATES
+        if (prop.address) {
+            const raw = prop.address.toLowerCase();
+            const address = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            for (const [key, coords] of Object.entries(this.PARKING_COORDINATES)) {
+                const cleanKey = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                if (address.includes(cleanKey) || cleanKey.includes(address.trim())) {
+                    return coords;
+                }
+            }
+        }
+
         return { lat: 45.7640, lng: 4.8357 };
     },
 
@@ -758,7 +785,9 @@ export const PropertyRenderer = {
             const name = isEn ? (loc.name_en || loc.name_fr) : (loc.name_fr || loc.name_en);
             const time = isEn ? (loc.walking_time_en || loc.walking_time_fr || loc.transit_time_en || loc.transit_time_fr) : (loc.walking_time_fr || loc.walking_time_en || loc.transit_time_fr || loc.transit_time_en);
             const addr = loc.address || '';
-            const mapsQuery = encodeURIComponent(addr ? (addr + ', Lyon') : `${coords.lat},${coords.lng}`);
+            const mapsQuery = encodeURIComponent(
+                addr ? (/\b(lyon|villeurbanne|meyzieu|bron|vaulx-en-velin|annonay|\d{5})\b/i.test(addr) ? addr : addr + ', Lyon') : `${coords.lat},${coords.lng}`
+            );
             const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`;
 
             let bgColor = '#10b981'; // Vert Gratuit
