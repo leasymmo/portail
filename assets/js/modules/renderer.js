@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.2';
-import { Utils } from './utils.js?v=12.2';
-import { I18n } from './i18n.js?v=12.2';
-import { ScrollManager } from './scroll.js?v=12.2';
-import { Router, BASE_PATH } from './router.js?v=12.2';
-import { ModalManager } from './modals.js?v=12.2';
-import { PdfViewer } from './pdf-viewer.js?v=12.2';
+import { AppState } from './state.js?v=12.3';
+import { Utils } from './utils.js?v=12.3';
+import { I18n } from './i18n.js?v=12.3';
+import { ScrollManager } from './scroll.js?v=12.3';
+import { Router, BASE_PATH } from './router.js?v=12.3';
+import { ModalManager } from './modals.js?v=12.3';
+import { PdfViewer } from './pdf-viewer.js?v=12.3';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -420,8 +420,22 @@ export const PropertyRenderer = {
 
     _parkingMap: null,
     _parkingMarkersGroup: null,
+    _parkingPropMarker: null,
     _currentParkingSlug: null,
     _currentParkingLang: null,
+
+    centerMapOnPopup(map, latlng, offsetPx = 65) {
+        if (!map || !latlng) return;
+        try {
+            const zoom = map.getZoom();
+            const point = map.project(latlng, zoom);
+            const targetPoint = point.subtract([0, offsetPx]);
+            const targetLatLng = map.unproject(targetPoint, zoom);
+            map.panTo(targetLatLng, { animate: true, duration: 0.35 });
+        } catch (e) {
+            console.warn('[PropertyRenderer] Erreur recentrage popup :', e);
+        }
+    },
 
     PROPERTY_COORDINATES: {
         'marietton-cosy': { lat: 45.77526, lng: 4.80609 },
@@ -590,10 +604,10 @@ export const PropertyRenderer = {
         const isEn = I18n.currentLang === 'en';
 
         const resPopup = `
-            <div style="text-align: left; min-width: 170px;">
-                <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #b8995a; display: block; margin-bottom: 2px;">✦ ${isEn ? 'Your Accommodation' : 'Votre hébergement'}</span>
-                <strong style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 3px; color: #1e293b;">${Utils.escapeHtml(prop ? prop.name : '')}</strong>
-                ${prop && prop.address ? `<p style="font-size: 11px; color: #64748b; margin-bottom: 2px;">📍 ${Utils.escapeHtml(prop.address)}</p>` : ''}
+            <div class="cdh-map-popup">
+                <span class="cdh-popup-badge cdh-popup-badge-gold">✦ ${isEn ? 'Your Accommodation' : 'Votre hébergement'}</span>
+                <h4 class="cdh-popup-title">${Utils.escapeHtml(prop ? prop.name : '')}</h4>
+                ${prop && prop.address ? `<p class="cdh-popup-addr">📍 <span>${Utils.escapeHtml(prop.address)}</span></p>` : ''}
             </div>
         `;
 
@@ -631,6 +645,12 @@ export const PropertyRenderer = {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
+            // Centrage automatique au clic sur un marqueur
+            map.on('popupopen', (e) => {
+                const latlng = (e.popup && e.popup._source) ? e.popup._source.getLatLng() : (e.popup ? e.popup.getLatLng() : null);
+                if (latlng) this.centerMapOnPopup(map, latlng, 45);
+            });
+
             // Marqueur doré Carré d'Hôtes avec douce onde de pulsation
             const customIcon = L.divIcon({
                 className: 'cdh-leaflet-marker',
@@ -650,7 +670,7 @@ export const PropertyRenderer = {
             });
 
             this._resMarker = L.marker([coords.lat, coords.lng], { icon: customIcon }).addTo(map);
-            this._resMarker.bindPopup(resPopup, { autoPan: true, autoPanPaddingTopLeft: [75, 75], autoPanPaddingBottomRight: [25, 25] });
+            this._resMarker.bindPopup(resPopup, { autoPan: false, closeButton: true });
             this._resMap = map;
 
             this.resetReservationMapView(prop);
@@ -727,6 +747,18 @@ export const PropertyRenderer = {
             this._parkingMap = map;
             this._parkingMarkersGroup = L.layerGroup().addTo(map);
 
+            // Centrage automatique au clic sur un marqueur
+            map.on('popupopen', (e) => {
+                if (e.popup) {
+                    const source = e.popup._source;
+                    const latlng = source ? source.getLatLng() : e.popup.getLatLng();
+                    if (latlng) {
+                        const isAccom = source && (source === this._parkingPropMarker);
+                        this.centerMapOnPopup(map, latlng, isAccom ? 45 : 68);
+                    }
+                }
+            });
+
             this.populateParkingMarkers(prop);
             this.resetParkingMapView(prop);
         } catch(err) {
@@ -764,14 +796,15 @@ export const PropertyRenderer = {
         });
 
         const propMarker = L.marker([propCoords.lat, propCoords.lng], { icon: propertyIcon, zIndexOffset: 1000 });
+        this._parkingPropMarker = propMarker;
         const propPopup = `
-            <div style="text-align: left; min-width: 170px;">
-                <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #b8995a; display: block; margin-bottom: 2px;">✦ ${isEn ? 'Your Accommodation' : 'Votre hébergement'}</span>
-                <strong style="font-size: 13px; font-weight: 700; display: block; margin-bottom: 3px; color: #1e293b;">${Utils.escapeHtml(prop ? prop.name : '')}</strong>
-                ${prop && prop.address ? `<p style="font-size: 11px; color: #64748b; margin-bottom: 6px;">📍 ${Utils.escapeHtml(prop.address)}</p>` : ''}
+            <div class="cdh-map-popup">
+                <span class="cdh-popup-badge cdh-popup-badge-gold">✦ ${isEn ? 'Your Accommodation' : 'Votre hébergement'}</span>
+                <h4 class="cdh-popup-title">${Utils.escapeHtml(prop ? prop.name : '')}</h4>
+                ${prop && prop.address ? `<p class="cdh-popup-addr">📍 <span>${Utils.escapeHtml(prop.address)}</span></p>` : ''}
             </div>
         `;
-        propMarker.bindPopup(propPopup, { autoPan: true, autoPanPaddingTopLeft: [75, 75], autoPanPaddingBottomRight: [25, 25] });
+        propMarker.bindPopup(propPopup, { autoPan: false, closeButton: true });
         this._parkingMarkersGroup.addLayer(propMarker);
         allBounds.push([propCoords.lat, propCoords.lng]);
 
@@ -792,15 +825,18 @@ export const PropertyRenderer = {
 
             let bgColor = '#10b981'; // Vert Gratuit
             let badgeText = isEn ? 'Free Street' : 'Gratuit';
+            let badgeClass = 'cdh-popup-badge-green';
             let iconSvg = '<span style="font-weight: 800; font-size: 13px;">P</span>';
 
             if (category === 'private_parking') {
                 bgColor = '#8b5cf6'; // Violet Privé / Couvert
                 badgeText = isEn ? 'Private Parking' : 'Privé / Couvert';
+                badgeClass = 'cdh-popup-badge-purple';
                 iconSvg = '<svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="4"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>';
             } else if (category === 'tcl_pr') {
                 bgColor = '#ef4444'; // Rouge TCL P+R
                 badgeText = isEn ? 'TCL Park & Ride' : 'Parc Relais TCL';
+                badgeClass = 'cdh-popup-badge-red';
                 iconSvg = '<svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>';
             }
 
@@ -823,20 +859,19 @@ export const PropertyRenderer = {
             const pricing = isEn ? (loc.pricing_details_en || loc.pricing_details_fr) : (loc.pricing_details_fr || loc.pricing_details_en);
 
             const popupHtml = `
-                <div style="text-align: left; min-width: 175px;">
-                    <span style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${bgColor}; display: block; margin-bottom: 2px;">${badgeText}</span>
-                    <strong style="font-size: 12px; font-weight: 700; display: block; margin-bottom: 2px; color: #1e293b;">${Utils.escapeHtml(name)}</strong>
-                    ${addr ? `<p style="font-size: 10px; color: #64748b; margin-bottom: 3px;">📍 ${Utils.escapeHtml(addr)}</p>` : ''}
-                    ${time ? `<p style="font-size: 10px; font-weight: 600; color: #334155; margin-bottom: 4px;">⏱️ ${Utils.escapeHtml(time)}</p>` : ''}
-                    ${pricing ? `<p style="font-size: 10px; color: #b8995a; font-weight: 600; margin-bottom: 4px;">💶 ${Utils.escapeHtml(pricing)}</p>` : ''}
-                    ${notes ? `<p style="font-size: 10px; color: #64748b; margin-bottom: 6px; font-style: italic;">ℹ️ ${Utils.escapeHtml(notes)}</p>` : ''}
-                    <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer"
-                       style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: #b8995a; color: #ffffff; text-decoration: none; font-size: 10px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
+                <div class="cdh-map-popup">
+                    <span class="cdh-popup-badge ${badgeClass}">${badgeText}</span>
+                    <h4 class="cdh-popup-title">${Utils.escapeHtml(name)}</h4>
+                    ${addr ? `<p class="cdh-popup-addr">📍 <span>${Utils.escapeHtml(addr)}</span></p>` : ''}
+                    ${time ? `<div class="cdh-popup-time"><span>⏱️</span><span>${Utils.escapeHtml(time)}</span></div>` : ''}
+                    ${pricing ? `<p class="cdh-popup-pricing">💶 <span>${Utils.escapeHtml(pricing)}</span></p>` : ''}
+                    ${notes ? `<p class="cdh-popup-notes">ℹ️ <span>${Utils.escapeHtml(notes)}</span></p>` : ''}
+                    <a href="${directionsUrl}" target="_blank" rel="noopener noreferrer" class="cdh-popup-btn">
                         <span>${directionsBtnText}</span>
                     </a>
                 </div>
             `;
-            marker.bindPopup(popupHtml, { autoPan: true, autoPanPaddingTopLeft: [75, 75], autoPanPaddingBottomRight: [25, 25] });
+            marker.bindPopup(popupHtml, { autoPan: false, closeButton: true });
             this._parkingMarkersGroup.addLayer(marker);
             allBounds.push([coords.lat, coords.lng]);
         });

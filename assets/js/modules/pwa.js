@@ -5,8 +5,8 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.2';
-import { BASE_PATH } from './router.js?v=12.2';
+import { AppState } from './state.js?v=12.3';
+import { BASE_PATH } from './router.js?v=12.3';
 
 export const PwaManager = {
     deferredPrompt: null,

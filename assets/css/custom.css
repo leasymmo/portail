@@ -1308,19 +1308,21 @@ body.modal-open .pwa-install-prompt {
 .leaflet-popup-content-wrapper {
     background: #ffffff !important;
     border-radius: 14px !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.2), 0 4px 10px -2px rgba(0, 0, 0, 0.06) !important;
     padding: 0 !important;
     overflow: hidden !important;
 }
 
 .dark .leaflet-popup-content-wrapper {
     background: #1e2739 !important;
-    color: #f1f5f9 !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.35) !important;
 }
 
 .leaflet-popup-content {
-    margin: 10px 12px !important;
+    margin: 11px 13px !important;
     line-height: 1.35 !important;
     font-size: 11px !important;
 }
@@ -1334,19 +1336,194 @@ body.modal-open .pwa-install-prompt {
 }
 
 .leaflet-container a.leaflet-popup-close-button {
-    top: 6px !important;
-    right: 6px !important;
-    color: #94a3b8 !important;
-    font-size: 14px !important;
-    width: 20px !important;
-    height: 20px !important;
+    top: 8px !important;
+    right: 8px !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 9999px !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    transition: all 0.15s ease !important;
 }
 
-.leaflet-container a.leaflet-popup-close-button:hover {
-    color: #b8995a !important;
+.dark .leaflet-container a.leaflet-popup-close-button {
+    color: #cbd5e1 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover,
+.dark .leaflet-container a.leaflet-popup-close-button:hover {
+    color: #ffffff !important;
+    background: #b8995a !important;
+}
+
+/* Structure interne & Design System des popups */
+.cdh-map-popup {
+    text-align: left;
+    min-width: 180px;
+    max-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-right: 14px; /* Évite tout chevauchement avec le bouton fermer */
+}
+
+.cdh-popup-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    width: fit-content;
+    line-height: 1.25;
+    margin-bottom: 2px;
+}
+
+.cdh-popup-badge-gold {
+    background: rgba(184, 153, 90, 0.14);
+    color: #b8995a;
+    border: 1px solid rgba(184, 153, 90, 0.3);
+}
+.dark .cdh-popup-badge-gold {
+    background: rgba(197, 168, 105, 0.22);
+    color: #e6ca85;
+    border: 1px solid rgba(197, 168, 105, 0.45);
+}
+
+.cdh-popup-badge-green {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+.dark .cdh-popup-badge-green {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+.cdh-popup-badge-purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+}
+.dark .cdh-popup-badge-purple {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+}
+
+.cdh-popup-badge-red {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+.dark .cdh-popup-badge-red {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+.cdh-popup-title {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #0f172a;
+    margin: 0 0 2px 0;
+}
+.dark .cdh-popup-title {
+    color: #f8fafc;
+}
+
+.cdh-popup-addr {
+    font-size: 11px;
+    color: #475569;
+    margin: 0 0 3px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    line-height: 1.35;
+}
+.dark .cdh-popup-addr {
+    color: #cbd5e1;
+}
+
+/* Durée à pied / Transports - Haute lisibilité et contraste AAA */
+.cdh-popup-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    margin: 2px 0 3px 0;
+    width: fit-content;
+}
+.dark .cdh-popup-time {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.cdh-popup-pricing {
+    font-size: 11px;
+    font-weight: 600;
+    color: #b8995a;
+    margin: 0 0 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.dark .cdh-popup-pricing {
+    color: #e6ca85;
+}
+
+.cdh-popup-notes {
+    font-size: 10px;
+    color: #475569;
+    font-style: italic;
+    margin: 0 0 5px 0;
+    line-height: 1.35;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+.dark .cdh-popup-notes {
+    color: #94a3b8;
+}
+
+.cdh-popup-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #c5a869 0%, #b8995a 100%);
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(184, 153, 90, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    margin-top: 3px;
+}
+.cdh-popup-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(184, 153, 90, 0.5);
 }
 
 /* ==============================================================================
