@@ -498,7 +498,7 @@ export const PropertyRenderer = {
         '2 rue victor-subit': { lat: 45.76627, lng: 4.89543 },
         '82 avenue du carreau': { lat: 45.77809, lng: 4.98924 },
         'avenue du carreau': { lat: 45.77809, lng: 4.98924 },
-        'chemin de pommier': { lat: 45.77792, lng: 5.01189 },
+        'chemin de pommier': { lat: 45.77530, lng: 4.99137 },
         'pierre-brossolette': { lat: 45.77041, lng: 4.99398 }
     },
 
