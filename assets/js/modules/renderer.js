@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.4';
-import { Utils } from './utils.js?v=12.4';
-import { I18n } from './i18n.js?v=12.4';
-import { ScrollManager } from './scroll.js?v=12.4';
-import { Router, BASE_PATH } from './router.js?v=12.4';
-import { ModalManager } from './modals.js?v=12.4';
-import { PdfViewer } from './pdf-viewer.js?v=12.4';
+import { AppState } from './state.js?v=12.5';
+import { Utils } from './utils.js?v=12.5';
+import { I18n } from './i18n.js?v=12.5';
+import { ScrollManager } from './scroll.js?v=12.5';
+import { Router, BASE_PATH } from './router.js?v=12.5';
+import { ModalManager } from './modals.js?v=12.5';
+import { PdfViewer } from './pdf-viewer.js?v=12.5';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -424,14 +424,47 @@ export const PropertyRenderer = {
     _currentParkingSlug: null,
     _currentParkingLang: null,
 
-    centerMapOnPopup(map, latlng, offsetPx = 65) {
-        if (!map || !latlng) return;
+    centerMapOnPopup(map, popupOrLatLng, fallbackLatLng = null) {
+        if (!map) return;
         try {
-            const zoom = map.getZoom();
-            const point = map.project(latlng, zoom);
-            const targetPoint = point.subtract([0, offsetPx]);
-            const targetLatLng = map.unproject(targetPoint, zoom);
-            map.panTo(targetLatLng, { animate: true, duration: 0.35 });
+            const isPopup = popupOrLatLng && (typeof popupOrLatLng.getElement === 'function' || popupOrLatLng._container);
+            const popup = isPopup ? popupOrLatLng : null;
+            const latlng = isPopup ? (fallbackLatLng || (popup._source ? popup._source.getLatLng() : popup.getLatLng())) : popupOrLatLng;
+
+            requestAnimationFrame(() => {
+                const mapContainer = typeof map.getContainer === 'function' ? map.getContainer() : null;
+                const popupEl = popup ? (typeof popup.getElement === 'function' ? popup.getElement() : popup._container) : null;
+
+                if (mapContainer && popupEl) {
+                    const wrapperEl = popupEl.querySelector('.leaflet-popup-content-wrapper') || popupEl;
+                    const mapRect = mapContainer.getBoundingClientRect();
+                    const popupRect = wrapperEl.getBoundingClientRect();
+
+                    if (mapRect.width > 0 && mapRect.height > 0 && popupRect.width > 0 && popupRect.height > 0) {
+                        const mapCenterX = mapRect.left + (mapRect.width / 2);
+                        const mapCenterY = mapRect.top + (mapRect.height / 2);
+                        const popupCenterX = popupRect.left + (popupRect.width / 2);
+                        const popupCenterY = popupRect.top + (popupRect.height / 2);
+
+                        const diffX = Math.round(popupCenterX - mapCenterX);
+                        const diffY = Math.round(popupCenterY - mapCenterY);
+
+                        if (Math.abs(diffX) > 1 || Math.abs(diffY) > 1) {
+                            map.panBy([diffX, diffY], { animate: true, duration: 0.35 });
+                        }
+                        return;
+                    }
+                }
+
+                // Fallback si éléments DOM non mesurables
+                if (latlng) {
+                    const zoom = map.getZoom();
+                    const point = map.project(latlng, zoom);
+                    const targetPoint = point.subtract([0, 75]);
+                    const targetLatLng = map.unproject(targetPoint, zoom);
+                    map.panTo(targetLatLng, { animate: true, duration: 0.35 });
+                }
+            });
         } catch (e) {
             console.warn('[PropertyRenderer] Erreur recentrage popup :', e);
         }
@@ -647,8 +680,7 @@ export const PropertyRenderer = {
 
             // Centrage automatique au clic sur un marqueur
             map.on('popupopen', (e) => {
-                const latlng = (e.popup && e.popup._source) ? e.popup._source.getLatLng() : (e.popup ? e.popup.getLatLng() : null);
-                if (latlng) this.centerMapOnPopup(map, latlng, 30);
+                if (e.popup) this.centerMapOnPopup(map, e.popup);
             });
 
             // Marqueur doré Carré d'Hôtes avec douce onde de pulsation
@@ -749,14 +781,7 @@ export const PropertyRenderer = {
 
             // Centrage automatique au clic sur un marqueur
             map.on('popupopen', (e) => {
-                if (e.popup) {
-                    const source = e.popup._source;
-                    const latlng = source ? source.getLatLng() : e.popup.getLatLng();
-                    if (latlng) {
-                        const isAccom = source && (source === this._parkingPropMarker);
-                        this.centerMapOnPopup(map, latlng, isAccom ? 30 : 50);
-                    }
-                }
+                if (e.popup) this.centerMapOnPopup(map, e.popup);
             });
 
             this.populateParkingMarkers(prop);
