@@ -5,13 +5,13 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.3';
-import { Utils } from './utils.js?v=12.3';
-import { I18n } from './i18n.js?v=12.3';
-import { ScrollManager } from './scroll.js?v=12.3';
-import { Router, BASE_PATH } from './router.js?v=12.3';
-import { ModalManager } from './modals.js?v=12.3';
-import { PdfViewer } from './pdf-viewer.js?v=12.3';
+import { AppState } from './state.js?v=12.4';
+import { Utils } from './utils.js?v=12.4';
+import { I18n } from './i18n.js?v=12.4';
+import { ScrollManager } from './scroll.js?v=12.4';
+import { Router, BASE_PATH } from './router.js?v=12.4';
+import { ModalManager } from './modals.js?v=12.4';
+import { PdfViewer } from './pdf-viewer.js?v=12.4';
 
 // 8. RENDU DE L'INTERFACE UTILISATEUR (UI RENDERERS)
 // -----------------------------------------------------------------------------
@@ -648,7 +648,7 @@ export const PropertyRenderer = {
             // Centrage automatique au clic sur un marqueur
             map.on('popupopen', (e) => {
                 const latlng = (e.popup && e.popup._source) ? e.popup._source.getLatLng() : (e.popup ? e.popup.getLatLng() : null);
-                if (latlng) this.centerMapOnPopup(map, latlng, 45);
+                if (latlng) this.centerMapOnPopup(map, latlng, 30);
             });
 
             // Marqueur doré Carré d'Hôtes avec douce onde de pulsation
@@ -754,7 +754,7 @@ export const PropertyRenderer = {
                     const latlng = source ? source.getLatLng() : e.popup.getLatLng();
                     if (latlng) {
                         const isAccom = source && (source === this._parkingPropMarker);
-                        this.centerMapOnPopup(map, latlng, isAccom ? 45 : 68);
+                        this.centerMapOnPopup(map, latlng, isAccom ? 30 : 50);
                     }
                 }
             });
@@ -862,7 +862,7 @@ export const PropertyRenderer = {
                 <div class="cdh-map-popup">
                     <span class="cdh-popup-badge ${badgeClass}">${badgeText}</span>
                     <h4 class="cdh-popup-title">${Utils.escapeHtml(name)}</h4>
-                    ${addr ? `<p class="cdh-popup-addr">📍 <span>${Utils.escapeHtml(addr)}</span></p>` : ''}
+                    ${addr && addr.toLowerCase().trim() !== name.toLowerCase().trim() ? `<p class="cdh-popup-addr">📍 <span>${Utils.escapeHtml(addr)}</span></p>` : ''}
                     ${time ? `<div class="cdh-popup-time"><span>⏱️</span><span>${Utils.escapeHtml(time)}</span></div>` : ''}
                     ${pricing ? `<p class="cdh-popup-pricing">💶 <span>${Utils.escapeHtml(pricing)}</span></p>` : ''}
                     ${notes ? `<p class="cdh-popup-notes">ℹ️ <span>${Utils.escapeHtml(notes)}</span></p>` : ''}

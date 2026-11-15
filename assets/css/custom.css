@@ -1307,9 +1307,9 @@ body.modal-open .pwa-install-prompt {
 /* Infobulles / Popups Leaflet élégantes Carré d'Hôtes */
 .leaflet-popup-content-wrapper {
     background: #ffffff !important;
-    border-radius: 14px !important;
+    border-radius: 12px !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.2), 0 4px 10px -2px rgba(0, 0, 0, 0.06) !important;
+    box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.2), 0 3px 8px -2px rgba(0, 0, 0, 0.06) !important;
     padding: 0 !important;
     overflow: hidden !important;
 }
@@ -1318,13 +1318,13 @@ body.modal-open .pwa-install-prompt {
     background: #1e2739 !important;
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.65), 0 4px 12px -2px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.65), 0 4px 10px -2px rgba(0, 0, 0, 0.35) !important;
 }
 
 .leaflet-popup-content {
-    margin: 11px 13px !important;
-    line-height: 1.35 !important;
-    font-size: 11px !important;
+    margin: 8px 10px !important;
+    line-height: 1.25 !important;
+    font-size: 10px !important;
 }
 
 .leaflet-popup-tip {
@@ -1336,12 +1336,12 @@ body.modal-open .pwa-install-prompt {
 }
 
 .leaflet-container a.leaflet-popup-close-button {
-    top: 8px !important;
-    right: 8px !important;
+    top: 5px !important;
+    right: 5px !important;
     color: #64748b !important;
-    font-size: 13px !important;
-    width: 22px !important;
-    height: 22px !important;
+    font-size: 11px !important;
+    width: 18px !important;
+    height: 18px !important;
     border-radius: 9999px !important;
     background: rgba(0, 0, 0, 0.05) !important;
     display: flex !important;
@@ -1364,27 +1364,27 @@ body.modal-open .pwa-install-prompt {
 /* Structure interne & Design System des popups */
 .cdh-map-popup {
     text-align: left;
-    min-width: 180px;
-    max-width: 260px;
+    min-width: 165px;
+    max-width: 240px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    padding-right: 14px; /* Évite tout chevauchement avec le bouton fermer */
+    gap: 2px;
+    padding-right: 12px; /* Évite tout chevauchement avec le bouton fermer */
 }
 
 .cdh-popup-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 9px;
+    gap: 3px;
+    font-size: 8px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 2px 7px;
+    letter-spacing: 0.05em;
+    padding: 1px 5px;
     border-radius: 9999px;
     width: fit-content;
-    line-height: 1.25;
-    margin-bottom: 2px;
+    line-height: 1.2;
+    margin-bottom: 1px;
 }
 
 .cdh-popup-badge-gold {
@@ -1432,24 +1432,24 @@ body.modal-open .pwa-install-prompt {
 }
 
 .cdh-popup-title {
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.25;
     color: #0f172a;
-    margin: 0 0 2px 0;
+    margin: 0 0 1px 0;
 }
 .dark .cdh-popup-title {
     color: #f8fafc;
 }
 
 .cdh-popup-addr {
-    font-size: 11px;
+    font-size: 9.5px;
     color: #475569;
-    margin: 0 0 3px 0;
+    margin: 0;
     display: flex;
     align-items: flex-start;
-    gap: 4px;
-    line-height: 1.35;
+    gap: 3px;
+    line-height: 1.25;
 }
 .dark .cdh-popup-addr {
     color: #cbd5e1;
@@ -1459,16 +1459,17 @@ body.modal-open .pwa-install-prompt {
 .cdh-popup-time {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
+    gap: 4px;
+    font-size: 9.5px;
     font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
+    padding: 2px 6px;
+    border-radius: 5px;
     background: #f1f5f9;
     color: #0f172a;
     border: 1px solid #e2e8f0;
-    margin: 2px 0 3px 0;
+    margin: 1px 0;
     width: fit-content;
+    line-height: 1.2;
 }
 .dark .cdh-popup-time {
     background: rgba(255, 255, 255, 0.14);
@@ -1478,27 +1479,28 @@ body.modal-open .pwa-install-prompt {
 }
 
 .cdh-popup-pricing {
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 600;
     color: #b8995a;
-    margin: 0 0 3px 0;
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
+    line-height: 1.25;
 }
 .dark .cdh-popup-pricing {
     color: #e6ca85;
 }
 
 .cdh-popup-notes {
-    font-size: 10px;
+    font-size: 9px;
     color: #475569;
     font-style: italic;
-    margin: 0 0 5px 0;
-    line-height: 1.35;
+    margin: 0;
+    line-height: 1.25;
     display: flex;
     align-items: flex-start;
-    gap: 4px;
+    gap: 3px;
 }
 .dark .cdh-popup-notes {
     color: #94a3b8;
@@ -1508,22 +1510,23 @@ body.modal-open .pwa-install-prompt {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 4px;
     width: 100%;
-    padding: 6px 10px;
-    border-radius: 8px;
+    padding: 3.5px 8px;
+    border-radius: 6px;
     background: linear-gradient(135deg, #c5a869 0%, #b8995a 100%);
     color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(184, 153, 90, 0.35);
+    box-shadow: 0 1px 4px rgba(184, 153, 90, 0.3);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-    margin-top: 3px;
+    margin-top: 2px;
+    line-height: 1.3;
 }
 .cdh-popup-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(184, 153, 90, 0.5);
+    box-shadow: 0 3px 8px rgba(184, 153, 90, 0.45);
 }
 
 /* ==============================================================================

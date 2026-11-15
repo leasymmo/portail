@@ -5,7 +5,7 @@
  * ==============================================================================
  */
 
-import { AppState } from './state.js?v=12.3';
+import { AppState } from './state.js?v=12.4';
 
 export const BASE_PATH = window.__CDH_BASE_PATH || (window.location.pathname.startsWith('/portail/dev') ? '/portail/dev/' : '/portail/');
 
