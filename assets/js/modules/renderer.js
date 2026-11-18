@@ -1161,7 +1161,7 @@ export const PropertyRenderer = {
             }
         }
 
-        // Statut d'Anthony en direct (heure française : Vert de 7h à 22h, Rouge de 22h à 7h)
+        // Statut d'Anthony en direct (heure française : Vert de 8h à 22h, Rouge de 22h à 8h)
         this.updateAnthonyStatus();
 
         // 3. Actualiser la grille des vidéos avec les titres traduits
@@ -1249,8 +1249,8 @@ export const PropertyRenderer = {
 
     /**
      * Détermine si Anthony est actuellement en ligne selon l'heure de Paris / France
-     * - Entre 7h00 et 21h59 (heure >= 7 et < 22) => En ligne (Point Vert)
-     * - Entre 22h00 et 06h59 (heure >= 22 ou < 7) => Hors ligne / Repos (Point Rouge)
+     * - Entre 8h00 et 21h59 (heure >= 8 et < 22) => En ligne (Point Vert)
+     * - Entre 22h00 et 07h59 (heure >= 22 ou < 8) => Hors ligne / Repos (Point Rouge)
      */
     isAnthonyOnlineInParis() {
         try {
@@ -1261,10 +1261,10 @@ export const PropertyRenderer = {
             }).formatToParts(new Date());
             const hourPart = parts.find(p => p.type === 'hour');
             const hour = hourPart ? parseInt(hourPart.value, 10) : new Date().getHours();
-            return (hour >= 7 && hour < 22);
+            return (hour >= 8 && hour < 22);
         } catch (e) {
             const h = new Date().getHours();
-            return (h >= 7 && h < 22);
+            return (h >= 8 && h < 22);
         }
     },
 
@@ -1285,10 +1285,10 @@ export const PropertyRenderer = {
         if (badgeEl) {
             if (isOnline) {
                 badgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
-                badgeEl.title = (I18n.currentLang === 'en' ? 'Online for your stay (7am - 10pm Paris time)' : 'En ligne pour votre séjour (7h - 22h heure de Paris)');
+                badgeEl.title = (I18n.currentLang === 'en' ? 'Online for your stay (8am - 10pm Paris time)' : 'En ligne pour votre séjour (8h - 22h heure de Paris)');
             } else {
                 badgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
-                badgeEl.title = (I18n.currentLang === 'en' ? 'Currently offline (hours: 7am - 10pm Paris time)' : 'Actuellement en repos (horaires : 7h - 22h heure française)');
+                badgeEl.title = (I18n.currentLang === 'en' ? 'Currently offline (hours: 8am - 10pm Paris time)' : 'Actuellement en repos (horaires : 8h - 22h heure française)');
             }
         }
 
@@ -1317,10 +1317,10 @@ export const PropertyRenderer = {
         if (modalBadgeEl) {
             if (isOnline) {
                 modalBadgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
-                modalBadgeEl.title = (I18n.currentLang === 'en' ? 'Online for your stay (7am - 10pm Paris time)' : 'En ligne pour votre séjour (7h - 22h heure de Paris)');
+                modalBadgeEl.title = (I18n.currentLang === 'en' ? 'Online for your stay (8am - 10pm Paris time)' : 'En ligne pour votre séjour (8h - 22h heure de Paris)');
             } else {
                 modalBadgeEl.className = 'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-[1.5px] border-white dark:border-[#28344c] flex items-center justify-center shadow-xs transition-colors duration-300';
-                modalBadgeEl.title = (I18n.currentLang === 'en' ? 'Currently offline (hours: 7am - 10pm Paris time)' : 'Actuellement en repos (horaires : 7h - 22h heure française)');
+                modalBadgeEl.title = (I18n.currentLang === 'en' ? 'Currently offline (hours: 8am - 10pm Paris time)' : 'Actuellement en repos (horaires : 8h - 22h heure française)');
             }
         }
 
